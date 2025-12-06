@@ -1,0 +1,1716 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriScan - AI-Powered Nutrition Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fffe;
+            overflow-x: hidden;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            background: white;
+            padding: 1.2rem 5%;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #00e676, #00c853);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            font-size: 0.75rem;
+            color: #666;
+            border-left: 2px solid #00e676;
+            padding-left: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-menu a {
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-menu a:hover:not(.disabled) {
+            color: #00c853;
+        }
+
+        .nav-menu a.disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-signup, .btn-login {
+            padding: 0.7rem 1.5rem;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            font-size: 0.95rem;
+        }
+
+        .btn-signup {
+            background: linear-gradient(135deg, #00e676, #00c853);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 230, 118, 0.3);
+        }
+
+        .btn-signup:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 230, 118, 0.4);
+        }
+
+        .btn-login {
+            background: transparent;
+            color: #00c853;
+            border: 2px solid #00c853;
+        }
+
+        .btn-login:hover {
+            background: #00c853;
+            color: white;
+        }
+
+        /* USER PROFILE (Post-Login) */
+        .user-profile {
+            display: none;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00e676, #00c853);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .btn-logout {
+            padding: 0.5rem 1rem;
+            background: #ff5252;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: #ff1744;
+            transform: translateY(-2px);
+        }
+
+        /* MOBILE MENU TOGGLE */
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .menu-toggle span {
+            width: 25px;
+            height: 3px;
+            background: #00c853;
+            border-radius: 3px;
+            transition: all 0.3s;
+        }
+
+        /* MOBILE MENU */
+        .mobile-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            flex-direction: column;
+            padding: 1rem;
+            gap: 0.5rem;
+        }
+
+        .mobile-menu.active {
+            display: flex;
+        }
+
+        .mobile-menu a {
+            padding: 1rem;
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .mobile-menu a:hover:not(.disabled) {
+            background: #e8f5e9;
+            color: #00c853;
+        }
+
+        .mobile-menu a.disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* HERO SECTION */
+        .hero {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            padding: 5rem 5%;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '🥗';
+            position: absolute;
+            font-size: 15rem;
+            opacity: 0.1;
+            top: -50px;
+            right: -50px;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .hero::after {
+            content: '🍎';
+            position: absolute;
+            font-size: 10rem;
+            opacity: 0.1;
+            bottom: -30px;
+            left: -30px;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            color: #1b5e20;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            color: #2e7d32;
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-button {
+            padding: 1rem 3rem;
+            background: linear-gradient(135deg, #00e676, #00c853);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(0, 230, 118, 0.4);
+            transition: all 0.3s;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0, 230, 118, 0.5);
+        }
+
+        /* FEATURES SHOWCASE */
+        .features {
+            padding: 4rem 5%;
+            background: white;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.2rem;
+            color: #1b5e20;
+            margin-bottom: 3rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #f1f8f4 0%, white 100%);
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0, 230, 118, 0.2);
+            border-color: #00e676;
+        }
+
+        .feature-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            color: #00c853;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* VISION & MISSION */
+        .vision-mission {
+            padding: 4rem 5%;
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+        }
+
+        .vm-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .vision {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .vision h2 {
+            color: #00c853;
+            margin-bottom: 1rem;
+        }
+
+        .vision p {
+            color: #333;
+            font-size: 1.2rem;
+            line-height: 1.8;
+        }
+
+        .mission {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .mission h2 {
+            color: #00c853;
+            margin-bottom: 1.5rem;
+        }
+
+        .mission-list {
+            text-align: left;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .mission-item {
+            display: flex;
+            align-items: start;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #f8fffe;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .mission-item:hover {
+            background: #e8f5e9;
+            transform: translateX(10px);
+        }
+
+        .mission-number {
+            background: linear-gradient(135deg, #00e676, #00c853);
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        /* AUTH FORMS */
+        .auth-section {
+            padding: 4rem 5%;
+            background: white;
+            display: block;
+        }
+
+        .auth-section.hidden {
+            display: none;
+        }
+
+        .auth-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #f1f8f4 0%, white 100%);
+            padding: 3rem;
+            border-radius: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .auth-toggle {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            background: #e0e0e0;
+            color: #666;
+            font-weight: 600;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle-btn.active {
+            background: linear-gradient(135deg, #00e676, #00c853);
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #00c853;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #00e676, #00c853);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 230, 118, 0.4);
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #c62828;
+            font-size: 0.9rem;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #2e7d32;
+            font-size: 0.9rem;
+        }
+
+        /* POST-LOGIN CONTENT */
+        .post-login-content {
+            display: none;
+        }
+
+        .post-login-content.active {
+            display: block;
+        }
+
+        .welcome-banner {
+            background: linear-gradient(135deg, #00e676, #00c853);
+            padding: 3rem 5%;
+            text-align: center;
+            color: white;
+        }
+
+        .welcome-banner h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .welcome-banner p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+        }
+
+        .scanner-cta-button {
+            padding: 1.2rem 3rem;
+            background: rgba(255, 255, 255, 0.95);
+            color: #00c853;
+            border: 3px solid white;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .scanner-cta-button span {
+            font-size: 1.5rem;
+        }
+
+        .scanner-cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+            background: white;
+        }
+
+        .scanner-cta-button:active {
+            transform: translateY(-1px);
+        }
+
+        /* ACTION CARDS */
+        .action-cards {
+            padding: 3rem 5%;
+            background: white;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .action-card {
+            background: linear-gradient(135deg, #f1f8f4 0%, white 100%);
+            padding: 2.5rem;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .action-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0, 230, 118, 0.2);
+            border-color: #00e676;
+        }
+
+        .action-card .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .action-card h3 {
+            color: #00c853;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .action-card p {
+            color: #666;
+        }
+
+        /* EDUCATIONAL CONTENT */
+        .educational-content {
+            padding: 4rem 5%;
+            background: #f8fffe;
+        }
+
+        .articles-scroll {
+            display: flex;
+            gap: 2rem;
+            overflow-x: auto;
+            padding: 2rem 0;
+            scroll-behavior: smooth;
+        }
+
+        .articles-scroll::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .articles-scroll::-webkit-scrollbar-track {
+            background: #e0e0e0;
+            border-radius: 10px;
+        }
+
+        .articles-scroll::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #00e676, #00c853);
+            border-radius: 10px;
+        }
+
+        .article-card {
+            min-width: 350px;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s;
+        }
+
+        .article-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .article-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+        }
+
+        .article-content {
+            padding: 1.5rem;
+        }
+
+        .article-content h3 {
+            color: #00c853;
+            margin-bottom: 0.5rem;
+        }
+
+        .article-content p {
+            color: #666;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .read-more {
+            color: #00c853;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .read-more:hover {
+            gap: 1rem;
+        }
+
+        /* HEALTH TIPS CAROUSEL */
+        .health-tips {
+            padding: 3rem 5%;
+            background: linear-gradient(135deg, #00e676, #00c853);
+            text-align: center;
+            color: white;
+        }
+
+        .carousel-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            position: relative;
+        }
+
+        .tip-slide {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2rem;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+
+        .tip-slide.active {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .tip-slide h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .carousel-dots {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .dot.active {
+            background: white;
+            width: 30px;
+            border-radius: 10px;
+        }
+
+        /* RESPONSIVE - DESKTOP (> 1024px) */
+        @media (min-width: 1025px) {
+            .navbar {
+                padding: 1.2rem 5%;
+            }
+
+            .logo {
+                font-size: 1.8rem;
+            }
+
+            .hero {
+                padding: 5rem 5%;
+            }
+
+            .hero h1 {
+                font-size: 3rem;
+            }
+
+            .hero p {
+                font-size: 1.3rem;
+            }
+
+            .features-grid, .action-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .auth-container {
+                max-width: 500px;
+            }
+        }
+
+        /* RESPONSIVE - TABLET (768px - 1024px) */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .navbar {
+                padding: 1rem 4%;
+            }
+
+            .logo {
+                font-size: 1.6rem;
+            }
+
+            .tagline {
+                font-size: 0.7rem;
+            }
+
+            .nav-menu {
+                gap: 1.5rem;
+            }
+
+            .nav-menu a {
+                font-size: 0.9rem;
+            }
+
+            .hero {
+                padding: 4rem 4%;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 1.1rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .features-grid, .action-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
+            }
+
+            .auth-container {
+                max-width: 450px;
+                padding: 2.5rem;
+            }
+
+            .user-name {
+                display: none;
+            }
+
+            .scanner-cta-button {
+                padding: 1rem 2.5rem;
+                font-size: 1.1rem;
+            }
+        }
+
+        /* RESPONSIVE - MOBILE (< 768px) */
+        @media (max-width: 767px) {
+            .navbar {
+                padding: 1rem 4%;
+                flex-wrap: wrap;
+            }
+
+            .logo-section {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.25rem;
+            }
+
+            .logo {
+                font-size: 1.4rem;
+            }
+
+            .tagline {
+                font-size: 0.65rem;
+                margin-top: 0;
+                border-left: none;
+                padding-left: 0;
+                border-top: 2px solid #00e676;
+                padding-top: 0.25rem;
+            }
+
+            .nav-menu {
+                display: none;
+            }
+
+            .menu-toggle {
+                display: flex;
+            }
+
+            .user-profile {
+                gap: 0.5rem;
+            }
+
+            .user-name {
+                display: none;
+            }
+
+            .user-avatar {
+                width: 35px;
+                height: 35px;
+                font-size: 0.9rem;
+            }
+
+            .btn-logout {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.85rem;
+            }
+
+            /* HERO SECTION */
+            .hero {
+                padding: 3rem 4%;
+            }
+
+            .hero::before {
+                font-size: 8rem;
+                top: -20px;
+                right: -20px;
+            }
+
+            .hero::after {
+                font-size: 6rem;
+                bottom: -15px;
+                left: -15px;
+            }
+
+            .hero h1 {
+                font-size: 1.8rem;
+                line-height: 1.3;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .cta-button {
+                padding: 0.9rem 2rem;
+                font-size: 1rem;
+            }
+
+            /* FEATURES & SECTIONS */
+            .features, .action-cards, .educational-content, .vision-mission {
+                padding: 3rem 4%;
+            }
+
+            .section-title {
+                font-size: 1.8rem;
+                margin-bottom: 2rem;
+            }
+
+            .features-grid, .action-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .feature-card, .action-card {
+                padding: 1.5rem;
+            }
+
+            .feature-icon, .action-card .icon {
+                font-size: 3rem;
+            }
+
+            .feature-card h3, .action-card h3 {
+                font-size: 1.3rem;
+            }
+
+            /* AUTH SECTION */
+            .auth-section {
+                padding: 3rem 4%;
+            }
+
+            .auth-container {
+                padding: 2rem 1.5rem;
+                max-width: 100%;
+            }
+
+            .form-group input {
+                padding: 0.9rem;
+                font-size: 0.95rem;
+            }
+
+            .btn-submit {
+                padding: 0.9rem;
+                font-size: 1rem;
+            }
+
+            /* POST-LOGIN CONTENT */
+            .welcome-banner {
+                padding: 2.5rem 4%;
+            }
+
+            .welcome-banner h1 {
+                font-size: 2rem;
+            }
+
+            .welcome-banner p {
+                font-size: 1.1rem;
+            }
+
+            .scanner-cta-button {
+                padding: 1rem 2rem;
+                font-size: 1rem;
+            }
+
+            .scanner-cta-button span {
+                font-size: 1.3rem;
+            }
+
+            /* VISION & MISSION */
+            .vision, .mission {
+                padding: 1.5rem;
+            }
+
+            .vision p {
+                font-size: 1rem;
+            }
+
+            .mission-item {
+                padding: 0.8rem;
+                margin-bottom: 1rem;
+            }
+
+            /* ARTICLES */
+            .articles-scroll {
+                gap: 1.5rem;
+                padding: 1.5rem 0;
+            }
+
+            .article-card {
+                min-width: 280px;
+            }
+
+            .article-content {
+                padding: 1.2rem;
+            }
+
+            .article-content h3 {
+                font-size: 1.2rem;
+            }
+
+            /* HEALTH TIPS */
+            .health-tips {
+                padding: 2.5rem 4%;
+            }
+
+            .tip-slide {
+                padding: 1.5rem;
+            }
+
+            .tip-slide h3 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="logo-section">
+            <div class="logo">NutriScan</div>
+            <div class="tagline">Scan • Analyze • Live Healthy</div>
+        </div>
+        <button class="menu-toggle" id="menuToggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <div class="nav-menu">
+            <a href="#dashboard" id="dashboardLink">Dashboard</a>
+            <a href="#scanner" class="disabled" id="scannerLink">Scanner</a>
+            <a href="#mealplanner" class="disabled" id="mealplannerLink">Meal Planner</a>
+        </div>
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="#dashboard" id="mobileDashboardLink">Dashboard</a>
+            <a href="#scanner" class="disabled" id="mobileScannerLink">Scanner</a>
+            <a href="#mealplanner" class="disabled" id="mobileMealplannerLink">Meal Planner</a>
+        </div>
+        <div class="user-profile" id="userProfile">
+            <div class="user-avatar" id="userAvatar">U</div>
+            <span class="user-name" id="userName">User</span>
+            <button class="btn-logout" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <!-- PRE-LOGIN CONTENT -->
+    <div id="preLoginContent">
+        <!-- HERO SECTION -->
+        <section class="hero">
+            <h1>AI-Powered Nutrition Analysis untuk Kesehatan Indonesia</h1>
+            <p>Scan label, tahu nutrisi, hidup lebih sehat</p>
+            <button class="cta-button" onclick="document.getElementById('authSection').scrollIntoView({ behavior: 'smooth' }); toggleAuth('signup');">Daftar Sekarang</button>
+        </section>
+
+        <!-- FEATURES SHOWCASE -->
+        <section class="features">
+            <h2 class="section-title">Kenapa Memilih NutriScan?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Scan Cerdas</h3>
+                    <p>AI analisis label dalam 3 detik dengan akurasi 92%. Teknologi OCR terkini untuk hasil instan dan akurat.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👤</div>
+                    <h3>Personal</h3>
+                    <p>Rekomendasi sesuai kondisi kesehatan Anda. Khusus untuk diabetes, hipertensi, kolesterol, dan alergi.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Edukasi</h3>
+                    <p>Literasi gizi berbasis data BPOM. Pahami label nutrisi dengan mudah dan tingkatkan kesadaran gizi Anda.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- VISION & MISSION -->
+        <section class="vision-mission">
+            <div class="vm-container">
+                <div class="vision">
+                    <h2>🎯 Visi Kami</h2>
+                    <p>Meningkatkan literasi gizi Indonesia melalui teknologi AI, mendukung masyarakat hidup lebih sehat dengan informasi nutrisi yang akurat dan mudah dipahami.</p>
+                </div>
+                <div class="mission">
+                    <h2>🚀 Misi Kami</h2>
+                    <div class="mission-list">
+                        <div class="mission-item">
+                            <div class="mission-number">1</div>
+                            <p>Membuat analisis nutrisi mudah diakses oleh seluruh masyarakat Indonesia melalui platform digital gratis</p>
+                        </div>
+                        <div class="mission-item">
+                            <div class="mission-number">2</div>
+                            <p>Membantu penderita PTM agar dapat mengendalikan kondisi kesehatan mereka</p>
+                        </div>
+                        <div class="mission-item">
+                            <div class="mission-number">3</div>
+                            <p>Mendukung target RPJMN penurunan 15% beban PTM melalui edukasi gizi digital</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AUTH SECTION -->
+        <section class="auth-section" id="authSection">
+            <h2 class="section-title">Mulai Perjalanan Sehat Anda</h2>
+            <div class="auth-container">
+                <div class="auth-toggle">
+                    <button class="toggle-btn active" id="signupToggle" onclick="toggleAuth('signup')">Sign Up</button>
+                    <button class="toggle-btn" id="loginToggle" onclick="toggleAuth('login')">Login</button>
+                </div>
+
+                <!-- SIGNUP FORM -->
+                <form id="signupForm" onsubmit="handleSignup(event)">
+                    <div id="signupError" class="error-message" style="display: none;"></div>
+                    <div class="form-group">
+                        <label>Nama Lengkap</label>
+                        <input type="text" id="signupName" placeholder="Masukkan nama lengkap" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="signupEmail" placeholder="email@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="signupPassword" placeholder="Minimal 8 karakter" required minlength="8">
+                    </div>
+                    <div class="form-group">
+                        <label>Konfirmasi Password</label>
+                        <input type="password" id="signupConfirmPassword" placeholder="Ulangi password" required>
+                    </div>
+                    <button type="submit" class="btn-submit">Daftar</button>
+                </form>
+
+                <!-- LOGIN FORM -->
+                <form id="loginForm" style="display: none;" onsubmit="handleLogin(event)">
+                    <div id="loginError" class="error-message" style="display: none;"></div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="loginEmail" placeholder="email@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="loginPassword" placeholder="Masukkan password" required>
+                    </div>
+                    <button type="submit" class="btn-submit">Masuk</button>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <!-- POST-LOGIN CONTENT -->
+    <div class="post-login-content" id="postLoginContent">
+        <!-- WELCOME BANNER -->
+        <section class="welcome-banner">
+            <h1>Selamat datang, <span id="welcomeName">User</span>! 👋</h1>
+            <p>Siap scan label makanan hari ini?</p>
+            <button class="scanner-cta-button" onclick="navigateToScanner()">
+                <span>📸</span> Mulai Scan Sekarang
+            </button>
+        </section>
+
+        <!-- ACTION CARDS -->
+        <section class="action-cards">
+            <h2 class="section-title">Mulai dari Sini</h2>
+            <div class="action-grid">
+                <div class="action-card">
+                    <div class="icon">📸</div>
+                    <h3>Scan Pertamamu</h3>
+                    <p>Ambil foto label produk dan dapatkan analisis nutrisi instan</p>
+                </div>
+                <div class="action-card">
+                    <div class="icon">👤</div>
+                    <h3>Lengkapi Profil</h3>
+                    <p>Atur kondisi kesehatan untuk rekomendasi yang lebih personal</p>
+                </div>
+                <div class="action-card"">
+                    <div class="icon">📚</div>
+                    <h3>Belajar Nutrisi</h3>
+                    <p>Akses artikel dan tips kesehatan dari para ahli</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- EDUCATIONAL CONTENT -->
+        <section class="educational-content" id="educationalSection">
+            <h2 class="section-title">📚 Konten Edukasi</h2>
+            <div class="articles-scroll">
+                <div class="article-card">
+                    <div class="article-image">📋</div>
+                    <div class="article-content">
+                        <h3>Memahami Label Gizi BPOM</h3>
+                        <p>Pelajari cara membaca dan memahami informasi nilai gizi pada kemasan produk sesuai standar BPOM Indonesia.</p>
+                    </div>
+                </div>
+                <div class="article-card">
+                    <div class="article-image">🍬</div>
+                    <div class="article-content">
+                        <h3>Batasan Gula Harian untuk Diabetes</h3>
+                        <p>Ketahui berapa batas konsumsi gula yang aman bagi penderita diabetes dan tips mengelola asupan gula harian.</p>
+                    </div>
+                </div>
+                <div class="article-card">
+                    <div class="article-image">⚠️</div>
+                    <div class="article-content">
+                        <h3>Mengenal Alergen dalam Makanan</h3>
+                        <p>Pelajari tentang berbagai jenis alergen yang umum ditemukan dalam makanan dan cara menghindarinya.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Storage Keys
+        const STORAGE_KEY_USERS = 'nutriscan_users';
+        const STORAGE_KEY_CURRENT_USER = 'nutriscan_current_user';
+        const STORAGE_KEY_USER_DATA = 'nutriscan_user_data_';
+
+        // Initialize: Check if user is logged in
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus();
+        });
+
+        // Check authentication status on page load
+        function checkAuthStatus() {
+            const currentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+            if (currentUser) {
+                const userData = getUserData(currentUser);
+                if (userData) {
+                    showPostLoginContent(userData);
+                } else {
+                    logout();
+                }
+            } else {
+                showPreLoginContent();
+            }
+            // Sync mobile menu state on load
+            syncMobileMenuState();
+        }
+
+        // Get all users from storage
+        function getAllUsers() {
+            const usersJson = localStorage.getItem(STORAGE_KEY_USERS);
+            return usersJson ? JSON.parse(usersJson) : [];
+        }
+
+        // Save users to storage
+        function saveUsers(users) {
+            localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+        }
+
+        // Get user data
+        function getUserData(email) {
+            const userDataJson = localStorage.getItem(STORAGE_KEY_USER_DATA + email);
+            return userDataJson ? JSON.parse(userDataJson) : null;
+        }
+
+        // Save user data
+        function saveUserData(email, userData) {
+            localStorage.setItem(STORAGE_KEY_USER_DATA + email, JSON.stringify(userData));
+        }
+
+        // Check if email already exists
+        function emailExists(email) {
+            const users = getAllUsers();
+            return users.some(user => user.email.toLowerCase() === email.toLowerCase());
+        }
+
+        // Toggle between signup and login forms
+        function toggleAuth(type) {
+            const signupForm = document.getElementById('signupForm');
+            const loginForm = document.getElementById('loginForm');
+            const signupToggle = document.getElementById('signupToggle');
+            const loginToggle = document.getElementById('loginToggle');
+            const signupError = document.getElementById('signupError');
+            const loginError = document.getElementById('loginError');
+
+            // Hide error messages
+            if (signupError) signupError.style.display = 'none';
+            if (loginError) loginError.style.display = 'none';
+
+            if (type === 'signup') {
+                signupForm.style.display = 'block';
+                loginForm.style.display = 'none';
+                signupToggle.classList.add('active');
+                loginToggle.classList.remove('active');
+            } else {
+                signupForm.style.display = 'none';
+                loginForm.style.display = 'block';
+                signupToggle.classList.remove('active');
+                loginToggle.classList.add('active');
+            }
+        }
+
+        // Handle Signup
+        function handleSignup(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('signupName').value.trim();
+            const email = document.getElementById('signupEmail').value.trim().toLowerCase();
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('signupConfirmPassword').value;
+            const errorDiv = document.getElementById('signupError');
+
+            // Validation
+            if (!name || name.length < 3) {
+                showError(errorDiv, 'Nama lengkap minimal 3 karakter');
+                return;
+            }
+
+            if (!email || !isValidEmail(email)) {
+                showError(errorDiv, 'Email tidak valid');
+                return;
+            }
+
+            if (emailExists(email)) {
+                showError(errorDiv, 'Email sudah terdaftar. Silakan gunakan email lain atau login.');
+                return;
+            }
+
+            if (password.length < 8) {
+                showError(errorDiv, 'Password minimal 8 karakter');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showError(errorDiv, 'Password dan konfirmasi password tidak cocok');
+                return;
+            }
+
+            // Save user
+            const users = getAllUsers();
+            const newUser = {
+                email: email,
+                name: name,
+                password: password, // In production, this should be hashed
+                createdAt: new Date().toISOString()
+            };
+            users.push(newUser);
+            saveUsers(users);
+
+            // Create user data storage
+            const userData = {
+                email: email,
+                name: name,
+                totalScans: 0,
+                healthConditions: [],
+                riskLevel: '-',
+                createdAt: new Date().toISOString()
+            };
+            saveUserData(email, userData);
+
+            // Set as current user
+            localStorage.setItem(STORAGE_KEY_CURRENT_USER, email);
+
+            // Show success and redirect
+            showSuccess(errorDiv, 'Pendaftaran berhasil! Mengalihkan ke dashboard...');
+            setTimeout(() => {
+                showPostLoginContent(userData);
+            }, 1000);
+        }
+
+        // Handle Login
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+
+            // Validation
+            if (!email || !isValidEmail(email)) {
+                showError(errorDiv, 'Email tidak valid');
+                return;
+            }
+
+            if (!password) {
+                showError(errorDiv, 'Password tidak boleh kosong');
+                return;
+            }
+
+            // Check if user exists
+            if (!emailExists(email)) {
+                showError(errorDiv, 'Email belum terdaftar. Silakan daftar terlebih dahulu.');
+                return;
+            }
+
+            // Verify password
+            const users = getAllUsers();
+            const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+            
+            if (!user || user.password !== password) {
+                showError(errorDiv, 'Email atau password salah');
+                return;
+            }
+
+            // Get user data
+            let userData = getUserData(email);
+            if (!userData) {
+                // Create user data if doesn't exist (for old users)
+                userData = {
+                    email: email,
+                    name: user.name,
+                    totalScans: 0,
+                    healthConditions: [],
+                    riskLevel: '-',
+                    createdAt: user.createdAt || new Date().toISOString()
+                };
+                saveUserData(email, userData);
+            }
+
+            // Set as current user
+            localStorage.setItem(STORAGE_KEY_CURRENT_USER, email);
+
+            // Show success and redirect
+            showSuccess(errorDiv, 'Login berhasil! Mengalihkan ke dashboard...');
+            setTimeout(() => {
+                showPostLoginContent(userData);
+            }, 1000);
+        }
+
+        // Show error message
+        function showError(errorDiv, message) {
+            errorDiv.textContent = message;
+            errorDiv.className = 'error-message';
+            errorDiv.style.display = 'block';
+        }
+
+        // Show success message
+        function showSuccess(errorDiv, message) {
+            errorDiv.textContent = message;
+            errorDiv.className = 'success-message';
+            errorDiv.style.display = 'block';
+        }
+
+        // Validate email format
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        // Show pre-login content
+        function showPreLoginContent() {
+            document.getElementById('preLoginContent').style.display = 'block';
+            document.getElementById('postLoginContent').classList.remove('active');
+            document.getElementById('userProfile').style.display = 'none';
+            
+            // Disable navigation links
+            document.getElementById('scannerLink').classList.add('disabled');
+            document.getElementById('mealplannerLink').classList.add('disabled');
+            
+            // Sync mobile menu
+            syncMobileMenuState();
+        }
+
+        // Show post-login content
+        function showPostLoginContent(userData) {
+            document.getElementById('preLoginContent').style.display = 'none';
+            document.getElementById('postLoginContent').classList.add('active');
+            document.getElementById('userProfile').style.display = 'flex';
+            
+            // Update user info
+            const userName = userData.name || 'User';
+            document.getElementById('userName').textContent = userName;
+            document.getElementById('welcomeName').textContent = userName;
+            document.getElementById('userAvatar').textContent = userName.charAt(0).toUpperCase();
+            
+            // Enable navigation links
+            document.getElementById('scannerLink').classList.remove('disabled');
+            document.getElementById('mealplannerLink').classList.remove('disabled');
+            
+            // Sync mobile menu
+            syncMobileMenuState();
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem(STORAGE_KEY_CURRENT_USER);
+            showPreLoginContent();
+            
+            // Clear forms
+            document.getElementById('signupForm').reset();
+            document.getElementById('loginForm').reset();
+            document.getElementById('signupError').style.display = 'none';
+            document.getElementById('loginError').style.display = 'none';
+            
+            // Reset to signup form
+            toggleAuth('signup');
+            
+            // Scroll to auth section
+            document.getElementById('authSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Scroll to auth section
+        function scrollToAuth(type) {
+            document.getElementById('authSection').scrollIntoView({ behavior: 'smooth' });
+            setTimeout(() => {
+                toggleAuth(type);
+            }, 300);
+        }
+
+        // Handle scanner click
+        function handleScannerClick() {
+            const currentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+            if (!currentUser) {
+                alert('Silakan login terlebih dahulu untuk menggunakan fitur Scanner');
+                showPreLoginContent();
+                scrollToAuth('login');
+                return;
+            }
+            navigateToScanner();
+        }
+
+        // Navigate to scanner page
+        function navigateToScanner() {
+            window.location.href = 'scanner.html';
+        }
+
+        // Navigate to meal planner page
+        function navigateToMealPlanner() {
+            window.location.href = 'mealplanner.html';
+        }
+
+        // Scroll to education
+        function scrollToEducation() {
+            document.getElementById('educationalSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Toggle mobile menu
+        function toggleMobileMenu() {
+            const menuToggle = document.getElementById('menuToggle');
+            const mobileMenu = document.getElementById('mobileMenu');
+            
+            if (menuToggle && mobileMenu) {
+                menuToggle.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+            }
+        }
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const menuToggle = document.getElementById('menuToggle');
+            const mobileMenu = document.getElementById('mobileMenu');
+            const navbar = document.querySelector('.navbar');
+            
+            if (mobileMenu && mobileMenu.classList.contains('active')) {
+                if (!navbar.contains(event.target)) {
+                    if (menuToggle) menuToggle.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                }
+            }
+        });
+
+        // Sync mobile menu with desktop menu state
+        function syncMobileMenuState() {
+            const scannerLink = document.getElementById('scannerLink');
+            const mealplannerLink = document.getElementById('mealplannerLink');
+            const mobileScannerLink = document.getElementById('mobileScannerLink');
+            const mobileMealplannerLink = document.getElementById('mobileMealplannerLink');
+            
+            if (scannerLink && mobileScannerLink) {
+                if (scannerLink.classList.contains('disabled')) {
+                    mobileScannerLink.classList.add('disabled');
+                } else {
+                    mobileScannerLink.classList.remove('disabled');
+                }
+            }
+            
+            if (mealplannerLink && mobileMealplannerLink) {
+                if (mealplannerLink.classList.contains('disabled')) {
+                    mobileMealplannerLink.classList.add('disabled');
+                } else {
+                    mobileMealplannerLink.classList.remove('disabled');
+                }
+            }
+        }
+
+        // Navigation handler function
+        function setupNavigationLink(linkId, handler) {
+            const link = document.getElementById(linkId);
+            if (link) {
+                link.addEventListener('click', handler);
+            }
+        }
+
+        // Navigation handlers
+        document.addEventListener('DOMContentLoaded', function() {
+            // Dashboard navigation
+            const dashboardHandler = function(e) {
+                e.preventDefault();
+                const currentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+                if (currentUser) {
+                    const userData = getUserData(currentUser);
+                    if (userData) {
+                        showPostLoginContent(userData);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                } else {
+                    showPreLoginContent();
+                    scrollToAuth('signup');
+                }
+                // Close mobile menu if open
+                const mobileMenu = document.getElementById('mobileMenu');
+                const menuToggle = document.getElementById('menuToggle');
+                if (mobileMenu && mobileMenu.classList.contains('active')) {
+                    mobileMenu.classList.remove('active');
+                    menuToggle.classList.remove('active');
+                }
+            };
+
+            setupNavigationLink('dashboardLink', dashboardHandler);
+            setupNavigationLink('mobileDashboardLink', dashboardHandler);
+
+            // Scanner navigation
+            const scannerHandler = function(e) {
+                e.preventDefault();
+                const currentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+                if (!currentUser) {
+                    alert('Silakan login terlebih dahulu untuk menggunakan fitur Scanner');
+                    scrollToAuth('login');
+                    return;
+                }
+                // Navigate to scanner (remove disabled check and alert)
+                navigateToScanner();
+                // Close mobile menu if open
+                const mobileMenu = document.getElementById('mobileMenu');
+                const menuToggle = document.getElementById('menuToggle');
+                if (mobileMenu && mobileMenu.classList.contains('active')) {
+                    mobileMenu.classList.remove('active');
+                    menuToggle.classList.remove('active');
+                }
+            };
+
+            setupNavigationLink('scannerLink', scannerHandler);
+            setupNavigationLink('mobileScannerLink', scannerHandler);
+
+            // Meal Planner navigation
+            const mealplannerHandler = function(e) {
+                e.preventDefault();
+                const currentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+                if (!currentUser) {
+                    alert('Silakan login terlebih dahulu untuk menggunakan fitur Meal Planner');
+                    scrollToAuth('login');
+                    return;
+                }
+                // Navigate to meal planner (remove disabled check and alert)
+                navigateToMealPlanner();
+                // Close mobile menu if open
+                const mobileMenu = document.getElementById('mobileMenu');
+                const menuToggle = document.getElementById('menuToggle');
+                if (mobileMenu && mobileMenu.classList.contains('active')) {
+                    mobileMenu.classList.remove('active');
+                    menuToggle.classList.remove('active');
+                }
+            };
+
+            setupNavigationLink('mealplannerLink', mealplannerHandler);
+            setupNavigationLink('mobileMealplannerLink', mealplannerHandler);
+        });
+    </script>
+</body>
+</html>
