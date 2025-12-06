@@ -667,6 +667,45 @@
         <div class="questioner-section">
             <h2 class="section-title">🏥 Informasi Kesehatan</h2>
             <p style="color: #666; margin-bottom: 2rem;">Pilih kondisi kesehatan yang Anda miliki untuk mendapatkan rekomendasi yang lebih personal</p>
+            <div class="disease-group">
+                <div class="disease-title">Alergi Makanan</div>
+                <div class="disease-options">
+                    <div class="disease-option">
+                        <input type="checkbox" id="metabolic1" name="disease" value="susu">
+                        <label for="metabolic1">Susu dan produk olahannya, termasuk alergi protein susu atau intoleransi laktosa</label>
+                    </div>
+                
+                    <div class="disease-option">
+                        <input type="checkbox" id="metabolic2" name="disease" value="kacang_tanah">
+                        <label for="metabolic2">Kacang tanah, dapat memicu gatal, bengkak, atau sesak napas</label>
+                    </div>
+                
+                    <div class="disease-option">
+                        <input type="checkbox" id="metabolic3" name="disease" value="kacang_pohon">
+                        <label for="metabolic3">Kacang pohon, seperti almond, mete, dan walnut, yang dapat memicu reaksi alergi</label>
+                    </div>
+                
+                    <div class="disease-option">
+                        <input type="checkbox" id="metabolic4" name="disease" value="seafood">
+                        <label for="metabolic4">Seafood, seperti udang, kepiting, ikan, dan kerang, yang dapat memicu reaksi alergi</label>
+                    </div>
+                
+                    <div class="disease-option">
+                        <input type="checkbox" id="metabolic5" name="disease" value="gluten">
+                        <label for="metabolic5">Gluten atau gandum, termasuk sensitivitas atau intoleransi terhadap produk berbahan tepung</label>
+                    </div>
+                
+                    <div class="disease-option">
+                        <input type="checkbox" id="metabolic6" name="disease" value="kedelai">
+                        <label for="metabolic6">Kedelai, reaksi terhadap produk berbasis kedelai seperti tahu, tempe, atau susu kedelai</label>
+                    </div>
+                
+                    <div class="disease-option">
+                        <input type="checkbox" id="metabolic7" name="disease" value="telur">
+                        <label for="metabolic7">Telur, terutama alergi terhadap bagian putih telur</label>
+                    </div>
+                </div>
+            </div>
 
             <!-- Penyakit Metabolik -->
             <div class="disease-group">
@@ -797,7 +836,7 @@
 
         <!-- SCAN BUTTON -->
         <div class="scan-section">
-            <button class="btn-scan" id="scanBtn" onclick="analyzeImage()">🚀 ANALISIS DENGAN AI</button>
+            <button class="btn-scan" id="scanBtn" onclick="analyzeImage()" disabled>🚀 ANALISIS DENGAN AI</button>
         </div>
     </div>
 
