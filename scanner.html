@@ -19,7 +19,7 @@
 
         /* NAVBAR */
         .navbar {
-            background: white;
+            background: #ffffff;
             padding: 1.2rem 5%;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             display: flex;
@@ -39,19 +39,11 @@
         .logo {
             font-size: 1.8rem;
             font-weight: bold;
-            background: linear-gradient(135deg, #00e676, #00c853);
+            background: linear-gradient(135deg, #10B981, #00c853);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             cursor: pointer;
-        }
-
-        .tagline {
-            font-size: 0.75rem;
-            color: #666;
-            border-left: 2px solid #00e676;
-            padding-left: 0.5rem;
-            margin-top: 0.5rem;
         }
 
         .nav-menu {
@@ -68,11 +60,11 @@
         }
 
         .nav-menu a:hover {
-            color: #00c853;
+            color: #10B981;
         }
 
         .nav-menu a.active {
-            color: #00c853;
+            color: #10B981;
             font-weight: 600;
         }
 
@@ -589,7 +581,6 @@
     <nav class="navbar">
         <div class="logo-section" onclick="window.location.href='Index.html'">
             <div class="logo">NutriScan</div>
-            <div class="tagline">Scan • Analyze • Live Healthy</div>
         </div>
         <button class="menu-toggle" id="menuToggle" onclick="toggleMobileMenu()">
             <span></span>

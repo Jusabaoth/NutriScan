@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meal Planner - NutriScan</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&family=Roboto+Mono:wght@500&display=swap');
+
+        :root {
+            --primary: #10B981;
+            --secondary: #3B82F6;
+            --accent: #F59E0B;
+            --bg: #F9FAFB;
+            --text: #0F172A;
+            --muted: #6B7280;
+            --card: #FFFFFF;
+            --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+            --radius: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            background: #ffffff;
+            padding: 1.2rem 5%;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #10B981, #00c853);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .nav-menu a {
+            color: #374151;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        .nav-menu a:hover {
+            color: var(--primary);
+        }
+
+        .nav-menu a.active {
+            color: var(--primary);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #10B981, #00c853);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .btn-logout {
+            padding: 0.5rem 1rem;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        /* MOBILE MENU */
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.4rem;
+        }
+
+        .menu-toggle span {
+            width: 24px;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 3px;
+            transition: all 0.3s;
+        }
+
+        .mobile-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            flex-direction: column;
+            padding: 1rem;
+            gap: 0.5rem;
+            z-index: 1000;
+        }
+
+        .mobile-menu a {
+            padding: 0.9rem 1rem;
+            border-radius: 12px;
+            color: #1f2937;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .mobile-menu a:hover {
+            background: #ecfeff;
+            color: var(--primary);
+        }
+
+        .mobile-menu.active {
+            display: flex;
+        }
+
+        /* LAYOUT */
+        .wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 5%;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(59,130,246,0.08));
+            padding: 3rem;
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle, rgba(16,185,129,0.25), transparent 60%);
+            top: -60px;
+            right: -40px;
+            filter: blur(10px);
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+        }
+
+        .hero p {
+            color: var(--muted);
+            font-size: 1.05rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            padding: 0.95rem 1.8rem;
+            border: none;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 12px 25px rgba(16,185,129,0.3);
+        }
+
+        .btn-primary:hover {
+            background: #0ea371;
+            transform: translateY(-2px);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--primary);
+            padding: 0.9rem 1.3rem;
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-ghost:hover {
+            background: rgba(16,185,129,0.08);
+        }
+
+        .section {
+            margin-top: 2.5rem;
+            animation: fadeIn 0.6s ease;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .section h2 {
+            font-size: 1.7rem;
+            font-weight: 700;
+        }
+
+        /* Diet cards */
+        .diet-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .diet-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 1.2rem;
+            box-shadow: var(--shadow);
+            border: 2px solid transparent;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .diet-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(16,185,129,0.25);
+        }
+
+        .diet-icon {
+            font-size: 1.8rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .diet-title {
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .diet-desc {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        /* Form */
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .field-label {
+            font-weight: 700;
+            margin-bottom: 0.6rem;
+            display: block;
+        }
+
+        .radio-group, .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .radio-tile, .checkbox-tile {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 0.9rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fff;
+        }
+
+        .radio-tile:hover, .checkbox-tile:hover {
+            border-color: var(--primary);
+        }
+
+        .radio-tile input, .checkbox-tile input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+        }
+
+        .input-control {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .input-control input,
+        .input-control select,
+        .input-control textarea {
+            padding: 0.85rem 0.9rem;
+            border-radius: 12px;
+            border: 1.5px solid #e5e7eb;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .input-control input:focus,
+        .input-control select:focus,
+        .input-control textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+        }
+
+        .slider-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+            align-items: center;
+        }
+
+        .slider-row input[type="range"] {
+            accent-color: var(--primary);
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.6rem;
+        }
+
+        .chip {
+            background: #ecfdf3;
+            color: #065f46;
+            padding: 0.4rem 0.8rem;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-weight: 600;
+            border: 1px solid rgba(16,185,129,0.25);
+            cursor: pointer;
+        }
+
+        .chip .remove {
+            background: rgba(6, 95, 70, 0.1);
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+        }
+
+        .duration-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.8rem;
+        }
+
+        .duration-card {
+            border: 2px dashed #e5e7eb;
+            border-radius: 14px;
+            padding: 1rem;
+            background: #fff;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .duration-card.active {
+            border-color: var(--secondary);
+            background: #eff6ff;
+            box-shadow: 0 8px 20px rgba(59,130,246,0.15);
+        }
+
+        .budget-wrap {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .budget-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: #ecfdf3;
+            color: #065f46;
+            padding: 0.25rem 0.65rem;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        /* States */
+        .hidden {
+            display: none;
+        }
+
+        .state-card {
+            background: var(--card);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 1.8rem;
+        }
+
+        /* After creation */
+        .planner-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .week-tabs, .day-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+        }
+
+        .tab {
+            padding: 0.55rem 1rem;
+            border-radius: 10px;
+            border: 1.5px solid #e5e7eb;
+            background: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: #ecfdf3;
+            color: #065f46;
+            border-color: rgba(16,185,129,0.4);
+        }
+
+        .planner-layout {
+            display: grid;
+            grid-template-columns: 2.2fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .meal-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 1rem;
+            box-shadow: var(--shadow);
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 0.9rem;
+            border-left: 5px solid var(--primary);
+            position: relative;
+        }
+
+        .meal-card.small {
+            grid-template-columns: 1fr auto;
+        }
+
+        .meal-time {
+            font-family: 'Roboto Mono', monospace;
+            color: var(--secondary);
+            font-weight: 700;
+        }
+
+        .meal-info h4 {
+            font-weight: 700;
+            margin-bottom: 0.15rem;
+        }
+
+        .meta {
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .sidebar {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .progress {
+            width: 100%;
+            height: 12px;
+            border-radius: 999px;
+            background: #e5e7eb;
+            overflow: hidden;
+        }
+
+        .progress span {
+            display: block;
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            width: 70%;
+        }
+
+        .macro-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.6rem;
+        }
+
+        .macro-item {
+            padding: 0.8rem;
+            border-radius: 12px;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+        }
+
+        .accordion {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .accordion-item + .accordion-item {
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .accordion-header {
+            padding: 0.9rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8fafc;
+            cursor: pointer;
+        }
+
+        .accordion-content {
+            padding: 0.9rem 1rem;
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 0.8rem;
+        }
+
+        .stat-card {
+            padding: 1rem;
+            border-radius: 14px;
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+        }
+
+        .notes-list {
+            padding-left: 1.1rem;
+        }
+
+        .notes-list li {
+            margin-bottom: 0.35rem;
+            color: var(--muted);
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 37%, #e5e7eb 63%);
+            background-size: 400% 100%;
+            animation: shine 1.2s ease infinite;
+            border-radius: 10px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shine {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Responsive */
+        @media (max-width: 960px) {
+            .planner-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu { display: none; }
+            .menu-toggle { display: flex; }
+            .user-name { display: none; }
+            .hero { padding: 2rem; }
+            .hero h1 { font-size: 2.1rem; }
+            .section h2 { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="logo-section" onclick="window.location.href='Index.html'">
+            <div class="logo">NutriScan</div>
+        </div>
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <div class="nav-menu">
+            <a href="Index.html">Dashboard</a>
+            <a href="scanner.html">Scanner</a>
+            <a href="mealplanner.html" class="active">Meal Planner</a>
+        </div>
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="Index.html">Dashboard</a>
+            <a href="scanner.html">Scanner</a>
+            <a href="mealplanner.html" class="active">Meal Planner</a>
+        </div>
+        <div class="user-profile" id="userProfile">
+            <div class="user-avatar" id="userAvatar">U</div>
+            <span class="user-name" id="userName">User</span>
+            <button class="btn-logout" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <main class="wrapper">
+        <!-- BEFORE CREATION -->
+        <section id="beforeState">
+            <div class="hero">
+                <div>
+                    <h1>Mulailah Membuat Meal Planner-mu</h1>
+                    <p>Rencanakan makanan sehatmu, wujudkan hidup lebih berkualitas!</p>
+                    <button class="btn-primary" id="ctaButton">Buat Sekarang!</button>
+                </div>
+                <div class="state-card">
+                    <p class="badge">Tip</p>
+                    <h3 style="margin:0.4rem 0 0.2rem;">Butuh inspirasi cepat?</h3>
+                    <p style="color:var(--muted)">Isi preferensi kamu, biarkan AI kami susun menu sehat yang pas dengan tujuan, budget, dan kondisi tubuhmu.</p>
+                </div>
+            </div>
+
+            <div class="section" id="dietInfo">
+                <div class="section-header">
+                    <h2>Kenali Beragam Jenis Diet</h2>
+                </div>
+                <div class="diet-grid">
+                    <div class="diet-card" style="background: #ecfdf3;">
+                        <div class="diet-icon">🥑</div>
+                        <div class="diet-title">Keto</div>
+                        <div class="diet-desc">Tinggi lemak, rendah karbohidrat</div>
+                    </div>
+                    <div class="diet-card" style="background: #eff6ff;">
+                        <div class="diet-icon">🥩</div>
+                        <div class="diet-title">Atkins</div>
+                        <div class="diet-desc">Rendah karbohidrat bertahap</div>
+                    </div>
+                    <div class="diet-card" style="background: #fff7ed;">
+                        <div class="diet-icon">🍇</div>
+                        <div class="diet-title">Mediterania</div>
+                        <div class="diet-desc">Buah, sayur, ikan, minyak zaitun</div>
+                    </div>
+                    <div class="diet-card" style="background: #fef3c7;">
+                        <div class="diet-icon">🍖</div>
+                        <div class="diet-title">Paleo</div>
+                        <div class="diet-desc">Makanan ala manusia purba</div>
+                    </div>
+                    <div class="diet-card" style="background: #eef2ff;">
+                        <div class="diet-icon">🥕</div>
+                        <div class="diet-title">Vegetarian/Vegan</div>
+                        <div class="diet-desc">Tanpa daging/produk hewani</div>
+                    </div>
+                    <div class="diet-card" style="background: #e0f2fe;">
+                        <div class="diet-icon">💓</div>
+                        <div class="diet-title">DASH</div>
+                        <div class="diet-desc">Khusus untuk penderita hipertensi</div>
+                    </div>
+                    <div class="diet-card" style="background: #faf5ff;">
+                        <div class="diet-icon">⏱️</div>
+                        <div class="diet-title">Intermittent Fasting</div>
+                        <div class="diet-desc">Puasa berselang (OCD)</div>
+                    </div>
+                    <div class="diet-card" style="background: #f0fdf4;">
+                        <div class="diet-icon">🥗</div>
+                        <div class="diet-title">Mayo Diet</div>
+                        <div class="diet-desc">Diet seimbang untuk semua</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section" id="formSection">
+                <div class="card">
+                    <label class="field-label">Pilih tujuan meal planner-mu:</label>
+                    <div class="radio-group" id="goalGroup">
+                        <label class="radio-tile"><input type="radio" name="goal" value="Keto">Keto</label>
+                        <label class="radio-tile"><input type="radio" name="goal" value="Atkins">Atkins</label>
+                        <label class="radio-tile"><input type="radio" name="goal" value="Mediterania">Mediterania</label>
+                        <label class="radio-tile"><input type="radio" name="goal" value="Paleo">Paleo</label>
+                        <label class="radio-tile"><input type="radio" name="goal" value="Vegetarian/Vegan">Vegetarian/Vegan</label>
+                        <label class="radio-tile"><input type="radio" name="goal" value="DASH">DASH</label>
+                        <label class="radio-tile"><input type="radio" name="goal" value="Intermittent Fasting">Intermittent Fasting</label>
+                        <label class="radio-tile"><input type="radio" name="goal" value="Mayo Diet">Mayo Diet</label>
+                        <label class="radio-tile"><input type="radio" name="goal" value="Custom">Custom (Saya punya tujuan sendiri)</label>
+                    </div>
+                    <div class="input-control" id="customGoalBox" style="display:none; margin-top:0.8rem;">
+                        <label class="field-label" style="margin:0;">Ceritakan tujuanmu:</label>
+                        <textarea id="customGoal" rows="3" placeholder="Contoh: Diet tinggi protein untuk naik massa otot, tapi tetap ramah kantong."></textarea>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <label class="field-label">Profil Fisik</label>
+                    <div class="input-row">
+                        <div class="input-control">
+                            <span class="badge">Berat Badan (kg)</span>
+                            <div class="slider-row">
+                                <input type="number" id="weightInput" min="30" max="200" value="65">
+                                <input type="range" id="weightRange" min="30" max="200" value="65">
+                            </div>
+                        </div>
+                        <div class="input-control">
+                            <span class="badge">Tinggi Badan (cm)</span>
+                            <div class="slider-row">
+                                <input type="number" id="heightInput" min="120" max="220" value="170">
+                                <input type="range" id="heightRange" min="120" max="220" value="170">
+                            </div>
+                        </div>
+                        <div class="input-control">
+                            <span class="badge">Usia (tahun)</span>
+                            <div class="slider-row">
+                                <input type="number" id="ageInput" min="10" max="90" value="25">
+                                <select id="ageRange">
+                                    <option value="18-25" selected>18-25</option>
+                                    <option value="26-35">26-35</option>
+                                    <option value="36-45">36-45</option>
+                                    <option value="46-55">46-55</option>
+                                    <option value="56+">56+</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-control">
+                            <span class="badge">Jenis Kelamin</span>
+                            <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
+                                <label class="radio-tile" style="padding:0.6rem 0.9rem;">
+                                    <input type="radio" name="gender" value="Pria" checked>Pria
+                                </label>
+                                <label class="radio-tile" style="padding:0.6rem 0.9rem;">
+                                    <input type="radio" name="gender" value="Wanita">Wanita
+                                </label>
+                            </div>
+                        </div>
+                        <div class="input-control">
+                            <span class="badge">Aktivitas Harian</span>
+                            <select id="activity">
+                                <option value="Sedentary">Sedentary</option>
+                                <option value="Light">Light</option>
+                                <option value="Moderate" selected>Moderate</option>
+                                <option value="Active">Active</option>
+                                <option value="Very Active">Very Active</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <label class="field-label">Berapa lama kamu ingin konsisten?</label>
+                    <div class="duration-grid" id="durationGrid">
+                        <div class="duration-card active" data-duration="Seminggu">🗓️ Seminggu</div>
+                        <div class="duration-card" data-duration="Sebulan">📅 Sebulan</div>
+                        <div class="duration-card" data-duration="3 Bulan">📆 3 Bulan</div>
+                        <div class="duration-card" data-duration="Setahun">🎯 Setahun</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <label class="field-label">Budget makanan per hari:</label>
+                    <div class="budget-wrap">
+                        <div class="budget-labels">
+                            <span>Ekonomis (&lt; Rp 30.000)</span>
+                            <span>Standar (30-75k)</span>
+                            <span>Premium (&gt; 75k)</span>
+                        </div>
+                        <input type="range" id="budgetRange" min="1" max="3" value="2">
+                        <small style="color:var(--muted);">AI akan menyesuaikan rekomendasi dengan budgetmu</small>
+                        <strong id="budgetValue">Standar</strong>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <label class="field-label">Kondisi kesehatan khusus:</label>
+                    <div class="checkbox-group" id="healthGroup">
+                        <label class="checkbox-tile"><input type="checkbox" value="Diabetes / Prediabetes">Diabetes / Prediabetes</label>
+                        <label class="checkbox-tile"><input type="checkbox" value="Hipertensi">Hipertensi</label>
+                        <label class="checkbox-tile"><input type="checkbox" value="Kolesterol tinggi">Kolesterol tinggi</label>
+                        <label class="checkbox-tile"><input type="checkbox" value="Asam urat">Asam urat</label>
+                        <label class="checkbox-tile"><input type="checkbox" value="Maag / GERD">Maag / GERD</label>
+                        <label class="checkbox-tile"><input type="checkbox" value="Gangguan pencernaan">Gangguan pencernaan</label>
+                        <label class="checkbox-tile"><input type="checkbox" value="Sedang hamil / Menyusui">Sedang hamil / Menyusui</label>
+                        <label class="checkbox-tile" id="otherConditionTile">
+                            <input type="checkbox" value="Lainnya">Lainnya
+                        </label>
+                    </div>
+                    <div class="input-control" id="otherConditionBox" style="display:none; margin-top:0.7rem;">
+                        <textarea id="otherConditionInput" rows="2" placeholder="Tuliskan kondisi kesehatan lain..."></textarea>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <label class="field-label">Alergi atau pantangan makanan:</label>
+                    <input type="text" id="tagInput" placeholder="Ketik lalu tekan Enter (contoh: Kacang, Seafood, Laktosa)" />
+                    <div class="chips" id="tagContainer"></div>
+                </div>
+
+                <div style="text-align:center; margin-top:1.5rem;">
+                    <button class="btn-primary" id="analyzeBtn" style="min-width:260px; font-size:1.05rem;">🤖 ANALISIS DENGAN AI</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- AFTER CREATION -->
+        <section id="afterState" class="hidden">
+            <div class="state-card">
+                <div class="planner-header">
+                    <div>
+                        <h1 style="font-size:2rem;">🎉 Meal Planner-mu Sudah Siap!</h1>
+                        <p style="color:var(--muted);">Tidak puas dengan meal planner ini?</p>
+                    </div>
+                    <button class="btn-ghost" id="editBtn">✏️ Ubah</button>
+                </div>
+            </div>
+
+            <div class="state-card" style="margin-top:1rem;">
+                <div class="week-tabs" id="weekTabs">
+                    <div class="tab active" data-week="1">Minggu 1</div>
+                    <div class="tab" data-week="2">Minggu 2</div>
+                    <div class="tab" data-week="3">Minggu 3</div>
+                    <div class="tab" data-week="4">Minggu 4</div>
+                </div>
+                <div class="day-tabs" id="dayTabs" style="margin-top:0.8rem;">
+                    <div class="tab active" data-day="Senin">Senin</div>
+                    <div class="tab" data-day="Selasa">Selasa</div>
+                    <div class="tab" data-day="Rabu">Rabu</div>
+                    <div class="tab" data-day="Kamis">Kamis</div>
+                    <div class="tab" data-day="Jumat">Jumat</div>
+                    <div class="tab" data-day="Sabtu">Sabtu</div>
+                    <div class="tab" data-day="Minggu">Minggu</div>
+                </div>
+
+                <div class="planner-layout">
+                    <div class="timeline" id="timeline"></div>
+                    <div class="sidebar">
+                        <div class="card">
+                            <h3>Ringkasan Nutrisi</h3>
+                            <p>Total Kalori: <strong id="calorieLabel">1850/2000 kcal</strong></p>
+                            <div class="progress"><span id="calorieProgress" style="width:92%;"></span></div>
+                            <div class="macro-grid" style="margin-top:0.8rem;">
+                                <div class="macro-item">
+                                    <strong>Protein</strong>
+                                    <p class="meta">75g (30%)</p>
+                                </div>
+                                <div class="macro-item">
+                                    <strong>Karbo</strong>
+                                    <p class="meta">200g (40%)</p>
+                                </div>
+                                <div class="macro-item">
+                                    <strong>Lemak</strong>
+                                    <p class="meta">65g (30%)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>Statistik</h3>
+                            <div class="stat-grid">
+                                <div class="stat-card">
+                                    <strong>Estimasi biaya</strong>
+                                    <p>Rp 450.000/minggu</p>
+                                </div>
+                                <div class="stat-card" style="background:#eef2ff; border-color:#c7d2fe;">
+                                    <strong>Skor Kesehatan</strong>
+                                    <p>92/100 ⭐⭐⭐⭐☆</p>
+                                </div>
+                                <div class="stat-card" style="background:#f0fdf4; border-color:#bbf7d0;">
+                                    <strong>Sustainability</strong>
+                                    <p>Ramah untuk: Diabetes & Budget Terbatas</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const STORAGE_KEY_CURRENT_USER = 'nutriscan_current_user';
+        const STORAGE_KEY_USER_DATA = 'nutriscan_user_data_';
+
+        let selectedDuration = 'Seminggu';
+        let allergies = [];
+        let currentWeek = 1;
+        let currentDay = 'Senin';
+
+        const mealSlots = [
+            { type: 'Sarapan', time: '06:30', window: '06:00 - 09:00' },
+            { type: 'Snack Pagi', time: '10:30', window: '10:00 - 11:00' },
+            { type: 'Makan Siang', time: '12:30', window: '12:00 - 14:00' },
+            { type: 'Snack Sore', time: '15:30', window: '15:00 - 16:00' },
+            { type: 'Makan Malam', time: '19:00', window: '18:00 - 20:00' },
+            { type: 'Snack Malam', time: '21:00', window: '21:00' },
+        ];
+
+        const mealsState = {};
+
+        document.addEventListener('DOMContentLoaded', () => {
+            authCheck();
+            initNav();
+            bindForm();
+            renderTimeline();
+            document.getElementById('ctaButton').addEventListener('click', () => {
+                document.getElementById('formSection').scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+
+        function authCheck() {
+            const currentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+            if (!currentUser) {
+                window.location.href = 'Index.html';
+                return;
+            }
+            const userData = getUserData(currentUser);
+            if (userData) {
+                document.getElementById('userName').textContent = userData.name || 'User';
+                document.getElementById('userAvatar').textContent = (userData.name || 'User').charAt(0).toUpperCase();
+            }
+        }
+
+        function getUserData(email) {
+            const json = localStorage.getItem(STORAGE_KEY_USER_DATA + email);
+            return json ? JSON.parse(json) : null;
+        }
+
+        function logout() {
+            localStorage.removeItem(STORAGE_KEY_CURRENT_USER);
+            window.location.href = 'Index.html';
+        }
+
+        function initNav() {
+            const menuToggle = document.getElementById('menuToggle');
+            const mobileMenu = document.getElementById('mobileMenu');
+            menuToggle?.addEventListener('click', () => {
+                menuToggle.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+            });
+            document.addEventListener('click', (e) => {
+                if (!mobileMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+                    mobileMenu.classList.remove('active');
+                    menuToggle.classList.remove('active');
+                }
+            });
+        }
+
+        function bindForm() {
+            // Goal custom
+            document.getElementById('goalGroup').addEventListener('change', (e) => {
+                if (e.target.name === 'goal') {
+                    document.getElementById('customGoalBox').style.display = e.target.value === 'Custom' ? 'block' : 'none';
+                }
+            });
+
+            // Sliders sync
+            linkRange('weightInput', 'weightRange');
+            linkRange('heightInput', 'heightRange');
+
+            // Duration cards
+            document.querySelectorAll('.duration-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.duration-card').forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+                    selectedDuration = card.dataset.duration;
+                });
+            });
+
+            // Budget slider
+            const budgetRange = document.getElementById('budgetRange');
+            const budgetValue = document.getElementById('budgetValue');
+            const budgetMap = { '1': 'Ekonomis (&lt; Rp 30.000)', '2': 'Standar (Rp 30-75k)', '3': 'Premium (&gt; Rp 75k)' };
+            budgetRange.addEventListener('input', () => budgetValue.innerHTML = budgetMap[budgetRange.value]);
+            budgetValue.innerHTML = budgetMap[budgetRange.value];
+
+            // Other condition toggle
+            document.getElementById('healthGroup').addEventListener('change', (e) => {
+                if (e.target.value === 'Lainnya') {
+                    document.getElementById('otherConditionBox').style.display = e.target.checked ? 'block' : 'none';
+                }
+            });
+
+            // Tag input
+            const tagInput = document.getElementById('tagInput');
+            tagInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ',') {
+                    e.preventDefault();
+                    const value = tagInput.value.trim();
+                    if (value && !allergies.includes(value)) {
+                        allergies.push(value);
+                        renderTags();
+                    }
+                    tagInput.value = '';
+                }
+            });
+
+            // Analyze button
+            document.getElementById('analyzeBtn').addEventListener('click', () => {
+                switchState('after');
+            });
+
+            // Week tabs
+            document.getElementById('weekTabs').addEventListener('click', (e) => {
+                if (e.target.classList.contains('tab')) {
+                    document.querySelectorAll('#weekTabs .tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentWeek = Number(e.target.dataset.week);
+                    renderTimeline();
+                }
+            });
+
+            // Day tabs
+            document.getElementById('dayTabs').addEventListener('click', (e) => {
+                if (e.target.classList.contains('tab')) {
+                    document.querySelectorAll('#dayTabs .tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentDay = e.target.dataset.day;
+                    renderTimeline();
+                }
+            });
+
+            // Edit button
+            document.getElementById('editBtn').addEventListener('click', () => {
+                const yes = confirm('Yakin ingin mengubah? Semua data akan direset.');
+                if (yes) {
+                    resetForm();
+                    switchState('before');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
+        }
+
+        function linkRange(numberId, rangeId) {
+            const num = document.getElementById(numberId);
+            const range = document.getElementById(rangeId);
+            num.addEventListener('input', () => range.value = num.value);
+            range.addEventListener('input', () => num.value = range.value);
+        }
+
+        function renderTags() {
+            const container = document.getElementById('tagContainer');
+            container.innerHTML = '';
+            allergies.forEach(tag => {
+                const el = document.createElement('div');
+                el.className = 'chip';
+                el.innerHTML = `${tag} <span class="remove">×</span>`;
+                el.addEventListener('click', () => {
+                    allergies = allergies.filter(t => t !== tag);
+                    renderTags();
+                });
+                container.appendChild(el);
+            });
+        }
+
+        function switchState(state) {
+            const before = document.getElementById('beforeState');
+            const after = document.getElementById('afterState');
+            if (state === 'after') {
+                before.classList.add('hidden');
+                after.classList.remove('hidden');
+                after.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                after.classList.add('hidden');
+                before.classList.remove('hidden');
+            }
+        }
+
+        function resetForm() {
+            document.querySelectorAll('input[type="radio"][name="goal"]').forEach(r => r.checked = false);
+            document.getElementById('customGoal').value = '';
+            document.getElementById('customGoalBox').style.display = 'none';
+            document.getElementById('otherConditionBox').style.display = 'none';
+            document.getElementById('tagInput').value = '';
+            allergies = [];
+            renderTags();
+            document.querySelectorAll('#healthGroup input[type="checkbox"]').forEach(c => c.checked = false);
+        }
+
+        function getDayState(week, day) {
+            if (!mealsState[week]) mealsState[week] = {};
+            if (!mealsState[week][day]) {
+                mealsState[week][day] = mealSlots.map(slot => ({ ...slot, name: '', weight: '' }));
+            }
+            return mealsState[week][day];
+        }
+
+        function renderTimeline() {
+            const container = document.getElementById('timeline');
+            container.innerHTML = '';
+            const dayMeals = getDayState(currentWeek, currentDay);
+
+            dayMeals.forEach((meal, idx) => {
+                const card = document.createElement('div');
+                card.className = 'meal-card' + (meal.type.includes('Snack') ? ' small' : '');
+                const hasData = meal.name || meal.weight;
+                card.innerHTML = `
+                    <div class="meal-time">${meal.time}</div>
+                    <div class="meal-info">
+                        <h4>${meal.type}</h4>
+                        <p class="meta">${meal.window}</p>
+                        <p class="meta">${hasData ? `Makanan: ${meal.name || '-'}` : 'Belum ada meal'}</p>
+                        <p class="meta">${hasData ? `Berat: ${meal.weight || '-'} g` : 'Masukkan makanan dan berat (g/kg)'}</p>
+                        <div style="display:grid; grid-template-columns:1fr 140px; gap:0.5rem; margin-top:0.5rem;">
+                            <input type="text" placeholder="Nama makanan" value="${meal.name || ''}" data-idx="${idx}" data-field="name" class="meal-input">
+                            <input type="number" min="1" placeholder="Berat (g)" value="${meal.weight || ''}" data-idx="${idx}" data-field="weight" class="meal-input">
+                        </div>
+                    </div>
+                    <button class="btn-ghost" data-idx="${idx}">Add Meal</button>
+                `;
+                card.querySelector('button').addEventListener('click', (e) => saveMeal(e, idx));
+                card.querySelectorAll('.meal-input').forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        const field = e.target.dataset.field;
+                        dayMeals[idx][field] = e.target.value;
+                    });
+                });
+                container.appendChild(card);
+            });
+        }
+
+        function saveMeal(event, idx) {
+            const dayMeals = getDayState(currentWeek, currentDay);
+            const meal = dayMeals[idx];
+            if (!meal.name || !meal.weight) {
+                alert('Isi nama makanan dan berat terlebih dahulu.');
+                return;
+            }
+            alert('Meal disimpan! (Analisis gizi AI akan ditambahkan)');
+            renderTimeline();
+        }
+    </script>
+</body>
+</html>
+
