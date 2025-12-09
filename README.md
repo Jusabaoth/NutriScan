@@ -1,15 +1,13 @@
 Buka terminal/PowerShell di folder project dan jalankan:
 
+install node.js
+
 ```bash
 npm install
 ```
 
 ```bash
 npm start
-```
-
-```bash
-npm run dev
 ```
 
 Expected output:
