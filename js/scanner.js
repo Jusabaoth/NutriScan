@@ -3,8 +3,8 @@ let capturedImage = null;
 let videoStream = null;
 let healthData = null;
 
-const API_KEY = 'AIzaSyB8fv3baKrk2sl9rkctHa980eUK86IQ5d0';
-const API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+// API configuration loaded from config.js
+// API Key tidak disimpan di frontend untuk keamanan
 
 const STORAGE_KEY_CURRENT_USER = 'nutriscan_current_user';
 const STORAGE_KEY_USER_DATA = 'nutriscan_user_data_';
@@ -423,21 +423,9 @@ Analisis DETAIL dan PERSONAL berdasarkan kondisi kesehatan pengguna!`;
         }]
     };
 
-    // Call Gemini API
-    const response = await fetch(`${API_ENDPOINT}?key=${API_KEY}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
-    });
-
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`API Error: ${errorData.error?.message || 'Unknown error'}`);
-    }
-
-    const data = await response.json();
+    // Call Gemini API through secure backend proxy
+    // API Key tersembunyi di backend, frontend hanya kirim request
+    const data = await callGeminiAPI(requestBody, 'default');
 
     // Extract response text
     const responseText = data.candidates[0].content.parts[0].text;
@@ -512,6 +500,12 @@ function formatHealthDataForPrompt(healthData) {
 
 function displayResults(result) {
     hideLoadingState();
+
+    // Hide the scan button section
+    const scanSection = document.querySelector('.scan-section');
+    if (scanSection) {
+        scanSection.style.display = 'none';
+    }
 
     // Create results HTML
     const resultsHTML = `
@@ -784,6 +778,12 @@ function resetScanner() {
     // Remove results
     const results = document.querySelector('.results-container');
     if (results) results.remove();
+
+    // Show scan button again
+    const scanSection = document.querySelector('.scan-section');
+    if (scanSection) {
+        scanSection.style.display = 'block';
+    }
 
     // Reset image
     removeImage();

@@ -1,28 +1,15 @@
-// ===================================
-// NUTRISCAN MEAL PLANNER MODULE
-// ===================================
-// Handles meal plan creation, AI generation,
-// weekly/daily navigation, and nutrition tracking
-
-// ===================================
-// GLOBAL STATE
-// ===================================
-
 let currentMealPlan = null;
 let currentWeek = 1;
 let currentDay = 1;
 let isCreating = false;
 
-const API_KEY = 'AIzaSyB8fv3baKrk2sl9rkctHa980eUK86IQ5d0';
-const API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+// API configuration loaded from config.js
+// API Key tidak disimpan di frontend untuk keamanan
 
-// Storage Keys (sama seperti Index.html)
 const STORAGE_KEY_CURRENT_USER = 'nutriscan_current_user';
 const STORAGE_KEY_USER_DATA = 'nutriscan_user_data_';
 
-// ===================================
 // INITIALIZATION
-// ===================================
 
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthStatus();
@@ -41,9 +28,7 @@ function initializeApp() {
     }
 }
 
-// ===================================
 // AUTHENTICATION
-// ===================================
 
 function checkAuthStatus() {
     const currentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
@@ -408,7 +393,7 @@ PENTING:
 
 Berikan HANYA JSON tanpa teks tambahan!`;
 
-    // Call Gemini API
+    // Prepare request body
     const requestBody = {
         contents: [{
             parts: [{ text: prompt }]
@@ -419,20 +404,9 @@ Berikan HANYA JSON tanpa teks tambahan!`;
         }
     };
 
-    const response = await fetch(`${API_ENDPOINT}?key=${API_KEY}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
-    });
-
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`API Error: ${errorData.error?.message || 'Unknown error'}`);
-    }
-
-    const data = await response.json();
+    // Call Gemini API through secure backend proxy
+    // API Key tersembunyi di backend, frontend hanya kirim request
+    const data = await callGeminiAPI(requestBody, 'meal-plan');
     const responseText = data.candidates[0].content.parts[0].text;
 
     // Parse JSON
