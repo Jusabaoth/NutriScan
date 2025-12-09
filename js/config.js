@@ -1,19 +1,18 @@
-/**
- * NutriScan Configuration
- * Konfigurasi untuk koneksi dengan backend proxy
- * 
- * API Key disembunyikan di backend (server.js)
- * Frontend hanya mengirim request ke endpoint proxy
- */
-
-// ===================================
 // API CONFIGURATION
-// ===================================
 
-// Development dan Production URLs
-const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+/**
+ * Deteksi environment dan tentukan backend URL
+ * 
+ * Development: http://localhost:3000
+ * Production Netlify: https://nutriscan-backend.onrender.com (atau service lain)
+ * 
+ * Untuk production, ubah REACT_APP_BACKEND_URL sesuai backend service Anda
+ */
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+const API_BASE_URL = isLocalhost
     ? 'http://localhost:3000'  // Development
-    : '/';  // Production (sama domain dengan frontend)
+    : (window.NUTRISCAN_BACKEND_URL || 'https://nutriscan-backend.onrender.com');  // Production
 
 const API_ENDPOINTS = {
     ANALYZE: `${API_BASE_URL}/api/analyze`,
@@ -21,9 +20,6 @@ const API_ENDPOINTS = {
     HEALTH: `${API_BASE_URL}/api/health`
 };
 
-// ===================================
-// UTILITY FUNCTIONS
-// ===================================
 
 /**
  * Fungsi untuk call Gemini API melalui proxy backend
@@ -75,9 +71,7 @@ async function checkBackendHealth() {
     }
 }
 
-// ===================================
 // ENVIRONMENT DETECTION
-// ===================================
 
 const CONFIG = {
     API_BASE_URL,
@@ -88,7 +82,6 @@ const CONFIG = {
     VERSION: '1.0.0'
 };
 
-// Export untuk digunakan di file lain (jika menggunakan module system)
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { callGeminiAPI, checkBackendHealth, API_ENDPOINTS, CONFIG };
 }
