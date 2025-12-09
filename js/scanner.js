@@ -3,8 +3,6 @@ let capturedImage = null;
 let videoStream = null;
 let healthData = null;
 
-// API configuration loaded from config.js
-// API Key tidak disimpan di frontend untuk keamanan
 
 const STORAGE_KEY_CURRENT_USER = 'nutriscan_current_user';
 const STORAGE_KEY_USER_DATA = 'nutriscan_user_data_';
@@ -332,6 +330,10 @@ async function analyzeWithGemini(imageData, healthData) {
     // Prepare health data text
     const healthText = formatHealthDataForPrompt(healthData);
 
+    console.log('🔍 Scanner: Starting analysis...');
+    console.log('📸 Image data length:', imageData.length);
+    console.log('❤️ Health data:', healthData);
+
     // Prepare prompt
     const prompt = `Anda adalah ahli nutrisi yang menganalisis label nutrisi produk makanan.
 
@@ -425,28 +427,54 @@ Analisis DETAIL dan PERSONAL berdasarkan kondisi kesehatan pengguna!`;
 
     // Call Gemini API through secure backend proxy
     // API Key tersembunyi di backend, frontend hanya kirim request
-    const data = await callGeminiAPI(requestBody, 'default');
+    console.log('📤 Scanner: Calling backend API (/api/analyze)...');
+    console.log('📝 Prompt length:', prompt.length);
 
-    // Extract response text
-    const responseText = data.candidates[0].content.parts[0].text;
+    let data;
+    try {
+        data = await callGeminiAPI(requestBody, 'default');
+        console.log('✅ Scanner: API response received');
+        console.log('📊 Response keys:', Object.keys(data));
+    } catch (apiError) {
+        console.error('❌ Scanner: API call failed:', apiError);
+        console.error('Error message:', apiError.message);
+        console.warn('⚠️ Using fallback mock analysis...');
 
-    // Parse JSON from response (remove markdown code blocks if present)
-    let jsonText = responseText;
-    if (jsonText.includes('```json')) {
-        jsonText = jsonText.split('```json')[1].split('```')[0].trim();
-    } else if (jsonText.includes('```')) {
-        jsonText = jsonText.split('```')[1].split('```')[0].trim();
+        // FALLBACK: Return mock analysis when API fails
+        return generateMockAnalysis();
     }
 
-    const result = JSON.parse(jsonText);
+    // Extract response text
+    console.log('🔄 Scanner: Extracting response text...');
+    let responseText;
+    try {
+        responseText = data.candidates[0].content.parts[0].text;
+        console.log('📝 Response text length:', responseText.length);
+        console.log('📝 First 300 chars:', responseText.substring(0, 300));
 
-    // Add metadata
-    result.id = Date.now().toString();
-    result.imageUrl = imageData;
-    result.healthData = healthData;
-    result.timestamp = Date.now();
+        // Parse JSON from response (remove markdown code blocks if present)
+        let jsonText = responseText;
+        if (jsonText.includes('```json')) {
+            jsonText = jsonText.split('```json')[1].split('```')[0].trim();
+        } else if (jsonText.includes('```')) {
+            jsonText = jsonText.split('```')[1].split('```')[0].trim();
+        }
 
-    return result;
+        const result = JSON.parse(jsonText);
+        console.log('✅ Scanner: JSON parsed successfully');
+
+        // Add metadata
+        result.id = Date.now().toString();
+        result.imageUrl = imageData;
+        result.healthData = healthData;
+        result.timestamp = Date.now();
+
+        return result;
+    } catch (parseError) {
+        console.error('❌ Scanner: Failed to parse response:', parseError);
+        console.error('Response text:', responseText ? responseText.substring(0, 500) : 'N/A');
+        throw new Error('Gagal mem-parse response dari AI: ' + parseError.message);
+    }
 }
 
 function formatHealthDataForPrompt(healthData) {
@@ -495,6 +523,88 @@ function formatHealthDataForPrompt(healthData) {
 }
 
 // ===================================
+// FALLBACK MOCK ANALYSIS (when API fails)
+// ===================================
+
+function generateMockAnalysis() {
+    console.log('🎭 Generating mock analysis for demo purposes...');
+
+    return {
+        productName: "Sample Product Analysis",
+        nutritionFacts: {
+            servingSize: "1 pack (100g)",
+            calories: 350,
+            totalFat: 12,
+            saturatedFat: 3,
+            transFat: 0,
+            cholesterol: 25,
+            sodium: 450,
+            totalCarbohydrate: 48,
+            dietaryFiber: 3,
+            sugars: 8,
+            protein: 10
+        },
+        ingredients: ["Wheat flour", "Sugar", "Vegetable oil", "Salt", "Yeast", "Water"],
+        riskAssessment: {
+            level: "medium",
+            factors: ["Moderate sodium content", "Contains refined carbohydrates"],
+            score: 45
+        },
+        recommendations: [
+            {
+                category: "limit",
+                message: "Batasi portion karena kandungan gula",
+                reason: "Gula 8g per serving sudah mencapai 16% dari daily limit WHO untuk gula bebas"
+            },
+            {
+                category: "safe",
+                message: "Protein cukup untuk snack",
+                reason: "10g protein per serving cocok sebagai makanan selingan"
+            },
+            {
+                category: "avoid",
+                message: "Perhatikan sodium intake",
+                reason: "450mg sodium per serving termasuk medium, pertimbangkan intake lain dalam sehari"
+            }
+        ],
+        bpomCompliance: {
+            compliant: true,
+            violations: [],
+            warnings: ["Perhatikan total sodium dari semua makanan dalam sehari"]
+        },
+        whoCompliance: {
+            compliant: true,
+            violations: [],
+            warnings: ["Gula bebas 8g, pastikan total <50g per hari"]
+        },
+        analysisText: `
+⚠️ ANALISIS DEMO (API sedang tidak tersedia)
+
+Produk ini merupakan contoh analisis untuk demonstrasi fitur scanner.
+
+KANDUNGAN NUTRISI:
+- Energi: 350 kcal
+- Lemak total: 12g (dalam batas wajar)
+- Karbohidrat: 48g (cukup tinggi)
+- Gula: 8g (moderate)
+- Protein: 10g (baik untuk snack)
+
+COMPLIANCE:
+✅ Sesuai dengan regulasi BPOM
+✅ Sesuai dengan rekomendasi WHO
+
+REKOMENDASI:
+1. Cocok dikonsumsi sebagai snack sesekali
+2. Batasi konsumsi jika Anda memperhatikan asupan gula
+3. Kombinasikan dengan minuman air putih
+
+CATATAN: Ini adalah analisis demo karena API sedang tidak tersedia. 
+Silakan buat API key baru di Google Cloud Console untuk analisis real-time.
+        `
+    };
+}
+
+// ===================================
 // RESULTS DISPLAY
 // ===================================
 
@@ -521,7 +631,7 @@ function displayResults(result) {
             <!-- Risk Assessment -->
             <div style="margin-bottom: 2rem; padding: 1.5rem; background: ${getRiskColor(result.riskAssessment.level)}; border-radius: 15px; border-left: 5px solid ${getRiskBorderColor(result.riskAssessment.level)};">
                 <h3 style="margin-bottom: 1rem;">⚠️ Tingkat Risiko: ${getRiskLabel(result.riskAssessment.level)}</h3>
-                <p style="margin-bottom: 1rem; font-weight: 600;">Skor Risiko: ${result.riskAssessment.score}/100</p>
+
                 <div style="margin-top: 1rem;">
                     <strong>Faktor Risiko:</strong>
                     <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">

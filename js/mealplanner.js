@@ -3,9 +3,6 @@ let currentWeek = 1;
 let currentDay = 1;
 let isCreating = false;
 
-// API configuration loaded from config.js
-// API Key tidak disimpan di frontend untuk keamanan
-
 const STORAGE_KEY_CURRENT_USER = 'nutriscan_current_user';
 const STORAGE_KEY_USER_DATA = 'nutriscan_user_data_';
 
@@ -72,6 +69,12 @@ function setupEventListeners() {
         ctaButton.addEventListener('click', scrollToForm);
     }
 
+    // Edit button in afterState
+    const editBtn = document.getElementById('editBtn');
+    if (editBtn) {
+        editBtn.addEventListener('click', resetMealPlan);
+    }
+
     // Form submission (we'll handle this with button click)
     setupFormValidation();
 }
@@ -88,7 +91,49 @@ function scrollToForm() {
 // ===================================
 
 function setupFormValidation() {
-    // Duration cards
+    // ===== WEIGHT SYNC =====
+    const weightInput = document.getElementById('weightInput');
+    const weightRange = document.getElementById('weightRange');
+    
+    if (weightInput && weightRange) {
+        weightInput.addEventListener('input', (e) => {
+            weightRange.value = e.target.value;
+        });
+        weightRange.addEventListener('input', (e) => {
+            weightInput.value = e.target.value;
+        });
+    }
+
+    // ===== HEIGHT SYNC =====
+    const heightInput = document.getElementById('heightInput');
+    const heightRange = document.getElementById('heightRange');
+    
+    if (heightInput && heightRange) {
+        heightInput.addEventListener('input', (e) => {
+            heightRange.value = e.target.value;
+        });
+        heightRange.addEventListener('input', (e) => {
+            heightInput.value = e.target.value;
+        });
+    }
+
+    // ===== CUSTOM GOAL TOGGLE =====
+    const goalRadios = document.querySelectorAll('input[name="goal"]');
+    const customGoalBox = document.getElementById('customGoalBox');
+    
+    if (goalRadios && customGoalBox) {
+        goalRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.value === 'Custom') {
+                    customGoalBox.style.display = 'block';
+                } else {
+                    customGoalBox.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    // ===== DURATION CARDS =====
     const durationCards = document.querySelectorAll('.duration-card');
     durationCards.forEach(card => {
         card.addEventListener('click', () => {
@@ -97,14 +142,68 @@ function setupFormValidation() {
         });
     });
 
-    // Budget slider
-    const budgetSlider = document.getElementById('budgetSlider');
+    // ===== BUDGET SLIDER =====
+    const budgetRange = document.getElementById('budgetRange');
     const budgetValue = document.getElementById('budgetValue');
-    if (budgetSlider && budgetValue) {
-        budgetSlider.addEventListener('input', (e) => {
+    
+    if (budgetRange && budgetValue) {
+        budgetRange.addEventListener('input', (e) => {
             const value = parseInt(e.target.value);
-            budgetValue.textContent = formatCurrency(value);
+            const budgetTexts = ['Ekonomis (< Rp 30k)', 'Standar (30-75k)', 'Premium (> 75k)'];
+            budgetValue.textContent = budgetTexts[value - 1] || 'Standar';
         });
+    }
+
+    // ===== OTHER HEALTH CONDITION TOGGLE =====
+    const otherConditionTile = document.getElementById('otherConditionTile');
+    const otherConditionBox = document.getElementById('otherConditionBox');
+    
+    if (otherConditionTile && otherConditionBox) {
+        const otherCheckbox = otherConditionTile.querySelector('input[type="checkbox"]');
+        if (otherCheckbox) {
+            otherCheckbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    otherConditionBox.style.display = 'block';
+                } else {
+                    otherConditionBox.style.display = 'none';
+                }
+            });
+        }
+    }
+
+    // ===== ALLERGIES / TAGS =====
+    const tagInput = document.getElementById('tagInput');
+    const tagContainer = document.getElementById('tagContainer');
+    let allergies = [];
+    
+    if (tagInput && tagContainer) {
+        tagInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const value = tagInput.value.trim();
+                if (value && !allergies.includes(value)) {
+                    allergies.push(value);
+                    renderTags();
+                    tagInput.value = '';
+                }
+            }
+        });
+    }
+
+    function renderTags() {
+        if (!tagContainer) return;
+        tagContainer.innerHTML = allergies.map(allergy => `
+            <div class="chip">
+                ${allergy}
+                <div class="remove" onclick="removeTag('${allergy}')">×</div>
+            </div>
+        `).join('');
+    }
+
+    // ===== ANALYZE BUTTON =====
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    if (analyzeBtn) {
+        analyzeBtn.addEventListener('click', generateMealPlan);
     }
 }
 
@@ -114,14 +213,23 @@ function collectFormData() {
     if (!goalRadio) {
         throw new Error('Pilih tujuan diet Anda');
     }
-    const dietGoal = goalRadio.value;
+    let dietGoal = goalRadio.value;
+    
+    // Handle custom goal
+    if (dietGoal === 'Custom') {
+        const customGoal = document.getElementById('customGoal')?.value;
+        if (!customGoal || customGoal.trim() === '') {
+            throw new Error('Tuliskan tujuan diet custom Anda');
+        }
+        dietGoal = customGoal;
+    }
 
     // Physical Profile
-    const age = parseInt(document.getElementById('age')?.value || '25');
-    const gender = document.getElementById('gender')?.value || 'Laki-laki';
-    const weight = parseFloat(document.getElementById('weight')?.value || '70');
-    const height = parseFloat(document.getElementById('height')?.value || '170');
-    const activityLevel = document.getElementById('activityLevel')?.value || 'Moderate';
+    const age = parseInt(document.getElementById('ageInput')?.value || '25');
+    const gender = document.querySelector('input[name="gender"]:checked')?.value || 'Pria';
+    const weight = parseFloat(document.getElementById('weightInput')?.value || '70');
+    const height = parseFloat(document.getElementById('heightInput')?.value || '170');
+    const activityLevel = document.getElementById('activity')?.value || 'Moderate';
 
     if (!age || !weight || !height) {
         throw new Error('Lengkapi profil fisik Anda (umur, berat, tinggi)');
@@ -132,21 +240,42 @@ function collectFormData() {
     if (!durationCard) {
         throw new Error('Pilih durasi meal plan');
     }
-    const duration = parseInt(durationCard.dataset.weeks || '1');
+    const durationText = durationCard.dataset.duration;
+    
+    // Convert duration text to weeks
+    let duration = 1;
+    if (durationText === 'Seminggu') duration = 1;
+    else if (durationText === 'Sebulan') duration = 4;
+    else if (durationText === '3 Bulan') duration = 12;
+    else if (durationText === 'Setahun') duration = 52;
 
     // Budget
-    const budget = parseInt(document.getElementById('budgetSlider')?.value || '500000');
+    const budgetRange = document.getElementById('budgetRange')?.value || '2';
+    const budgetValues = { 1: 25000, 2: 50000, 3: 100000 };
+    const budget = budgetValues[parseInt(budgetRange)] || 50000;
 
-    // Conditions
-    const conditionCheckboxes = document.querySelectorAll('input[name="condition"]:checked');
-    const conditions = Array.from(conditionCheckboxes).map(cb => cb.value);
+    // Health Conditions
+    const conditionCheckboxes = document.querySelectorAll('#healthGroup input[type="checkbox"]:checked');
+    const conditions = Array.from(conditionCheckboxes)
+        .filter(cb => cb.value !== 'Lainnya')
+        .map(cb => cb.value);
+    
+    // Other condition
+    const otherConditionCheckbox = document.querySelector('input[value="Lainnya"]:checked');
+    if (otherConditionCheckbox) {
+        const otherConditionInput = document.getElementById('otherConditionInput')?.value || '';
+        if (otherConditionInput.trim()) {
+            conditions.push(otherConditionInput);
+        }
+    }
 
     // Allergies
-    const allergiesInput = document.getElementById('allergiesInput')?.value || '';
-    const allergies = allergiesInput.split(',').map(a => a.trim()).filter(a => a);
+    const tagContainer = document.getElementById('tagContainer');
+    const allergies = Array.from(tagContainer?.querySelectorAll('.chip') || [])
+        .map(chip => chip.textContent.replace('×', '').trim());
 
     // Other notes
-    const otherNotes = document.getElementById('otherNotes')?.value || '';
+    const otherNotes = '';
 
     return {
         dietGoal,
@@ -175,6 +304,7 @@ async function generateMealPlan() {
     try {
         // Collect form data
         const preferences = collectFormData();
+        console.log('📋 Preferences collected:', preferences);
 
         // Show loading
         isCreating = true;
@@ -182,9 +312,16 @@ async function generateMealPlan() {
 
         // Calculate nutritional targets
         const targets = calculateNutritionTargets(preferences);
+        console.log('🎯 Nutrition targets calculated:', targets);
 
-        // Generate with AI
-        const mealPlan = await generateWithGemini(preferences, targets);
+        // STEP 1: Generate meal recommendations (LOW TOKEN)
+        console.log('🤖 Calling Gemini API for meal recommendations...');
+        const mealRecommendations = await generateMealRecommendations(preferences, targets);
+        console.log('✅ Meal recommendations generated:', mealRecommendations);
+
+        // STEP 2: Create initial meal plan structure with recommendations
+        const mealPlan = createMealPlanFromRecommendations(preferences, targets, mealRecommendations);
+        console.log('✅ Meal plan structure created:', mealPlan);
 
         // Save meal plan
         currentMealPlan = {
@@ -192,6 +329,12 @@ async function generateMealPlan() {
             userId: 'user1',
             preferences,
             ...mealPlan,
+            // Add target nutrition for summary display
+            targetDailyCalories: targets.targetDailyCalories,
+            targetProtein: targets.targetProtein,
+            targetCarbs: targets.targetCarbs,
+            targetFat: targets.targetFat,
+            recommendations: mealRecommendations,
             createdAt: Date.now(),
             updatedAt: Date.now()
         };
@@ -206,7 +349,7 @@ async function generateMealPlan() {
         showMealPlanView();
 
     } catch (error) {
-        console.error('Error generating meal plan:', error);
+        console.error('❌ Error generating meal plan:', error);
         hideLoadingState();
         isCreating = false;
         alert('Gagal membuat meal plan: ' + error.message);
@@ -295,131 +438,151 @@ function calculateNutritionTargets(preferences) {
     };
 }
 
-async function generateWithGemini(preferences, targets) {
-    const { dietGoal, physicalProfile, duration, budget, conditions, allergies, otherNotes } = preferences;
+async function generateMealRecommendations(preferences, targets) {
+    const { dietGoal, physicalProfile, budget, conditions, allergies } = preferences;
 
-    // Diet principles
-    const dietPrinciples = {
-        'Keto': 'Tinggi lemak (70-75%), protein sedang (20-25%), sangat rendah karbohidrat (5-10%). Fokus: daging, ikan, telur, sayuran rendah karbo, alpukat, kacang-kacangan.',
-        'Atkins': 'Fase bertahap rendah karbo. Fokus: protein tinggi, lemak sehat, tingkatkan karbo bertahap.',
-        'Mediterania': 'Tinggi buah, sayur, whole grains, ikan, minyak zaitun. Rendah daging merah.',
-        'Paleo': 'Makanan alami era paleolitik. Fokus: daging, ikan, telur, sayur, buah. Hindari: grains, dairy, processed food.',
-        'Vegetarian/Vegan': 'Tanpa daging atau produk hewani. Fokus: tahu, tempe, kacang-kacangan, sayuran, buah.',
-        'DASH': 'Untuk hipertensi. Rendah sodium (<1500mg), tinggi kalium, kalsium, magnesium.',
-        'Intermittent Fasting': 'Pola makan berselang. Fokus: nutrisi seimbang dalam eating window.',
-        'Mayo Diet': 'Diet seimbang. Fokus: sayur, buah, whole grains, lean protein, lemak sehat.'
-    };
-
-    const prompt = `Anda adalah ahli nutrisi dan meal planner profesional.
-
-PROFIL PENGGUNA:
-- Umur: ${physicalProfile.age} tahun
-- Gender: ${physicalProfile.gender}
-- Berat: ${physicalProfile.weight} kg
-- Tinggi: ${physicalProfile.height} cm
-- Aktivitas: ${physicalProfile.activityLevel}
-
-PREFERENSI DIET:
-- Tujuan: ${dietGoal}
-- Durasi: ${duration} minggu
-- Budget: Rp ${formatCurrency(budget)} per hari
-- Kondisi Kesehatan: ${conditions.length > 0 ? conditions.join(', ') : 'Tidak ada'}
-- Alergi: ${allergies.length > 0 ? allergies.join(', ') : 'Tidak ada'}
-${otherNotes ? `- Catatan: ${otherNotes}` : ''}
-
-PRINSIP DIET ${dietGoal}:
-${dietPrinciples[dietGoal]}
-
-TARGET NUTRISI HARIAN:
-- Kalori: ${targets.targetDailyCalories} kcal
-- Protein: ${targets.targetProtein}g
-- Karbohidrat: ${targets.targetCarbs}g
-- Lemak: ${targets.targetFat}g
-
-TUGAS:
-Buat meal plan lengkap untuk ${duration} minggu (${duration * 7} hari) dengan:
-1. Menu untuk setiap hari: Sarapan (07:00), Makan Siang (12:00), Makan Malam (19:00), Snack (15:00)
-2. Resep detail dengan bahan dan cara masak
-3. Perhitungan nutrisi akurat
-4. Menu BERVARIASI dan sesuai budget
-5. Hindari alergi yang disebutkan
-6. Pertimbangkan kondisi kesehatan
-
-FORMAT OUTPUT (JSON):
+    // MINIMAL prompt - hanya recommendations, NOT full plan
+    const prompt = `Sarankan meal recommendations (makanan & minuman lokal Indonesia) dengan format JSON:
 {
-  "weeks": [
-    {
-      "week": 1,
-      "days": [
-        {
-          "day": 1,
-          "dayName": "Senin",
-          "meals": [
-            {
-              "id": "meal_1_1_1",
-              "name": "Nama Makanan",
-              "description": "Deskripsi singkat",
-              "time": "07:00",
-              "type": "Sarapan",
-              "calories": 500,
-              "protein": 25,
-              "carbs": 50,
-              "fat": 15,
-              "ingredients": ["bahan 1", "bahan 2"],
-              "recipe": "Cara memasak lengkap step by step"
-            }
-          ],
-          "totalCalories": 2000,
-          "totalProtein": 100,
-          "totalCarbs": 200,
-          "totalFat": 70
-        }
-      ]
-    }
+  "breakfasts": [
+    {"name":"Nasi Goreng","calories":350,"protein":10,"carbs":50,"fat":12,"time":"07:00"},
+    {"name":"Roti Bakar Telur","calories":300,"protein":12,"carbs":35,"fat":10,"time":"07:00"}
   ],
-  "targetDailyCalories": ${targets.targetDailyCalories},
-  "targetProtein": ${targets.targetProtein},
-  "targetCarbs": ${targets.targetCarbs},
-  "targetFat": ${targets.targetFat}
+  "snacks": [
+    {"name":"Banana","calories":89,"protein":1,"carbs":23,"fat":0.3,"time":"10:00"},
+    {"name":"Yogurt","calories":100,"protein":3,"carbs":7,"fat":5,"time":"10:00"}
+  ],
+  "lunches": [
+    {"name":"Soto Ayam","calories":350,"protein":25,"carbs":30,"fat":12,"time":"12:00"},
+    {"name":"Gado-Gado","calories":300,"protein":12,"carbs":35,"fat":10,"time":"12:00"}
+  ],
+  "dinners": [
+    {"name":"Ikan Bakar","calories":300,"protein":35,"carbs":0,"fat":15,"time":"18:00"},
+    {"name":"Pepes Ayam","calories":280,"protein":30,"carbs":5,"fat":12,"time":"18:00"}
+  ]
 }
 
-PENTING:
-- Menu harus BERVARIASI setiap hari
-- Gunakan bahan lokal Indonesia yang mudah didapat
-- Resep harus DETAIL dan mudah diikuti
-- Perhitungan nutrisi harus AKURAT
-- Total nutrisi per hari harus mendekati target ±10%
-- Meal plan harus untuk SEMUA ${duration * 7} hari
+PENGGUNA: ${physicalProfile.gender}, ${physicalProfile.age}yo, ${physicalProfile.weight}kg
+DIET: ${dietGoal} | BUDGET: Rp${budget}/hari
+ALERGI: ${allergies.length ? allergies.join(', ') : 'Tidak'}
+KONDISI: ${conditions.length ? conditions.join(', ') : 'Sehat'}
+TARGET HARIAN: ${targets.targetDailyCalories}kcal, Protein ${targets.targetProtein}g
 
-Berikan HANYA JSON tanpa teks tambahan!`;
+RULES: Sesuai alergi & kondisi. Minimal 2 pilihan per meal time. HANYA JSON, TANPA TEKS!`;
 
-    // Prepare request body
+    console.log('📤 Meal Recommendations Prompt Length:', prompt.length, 'chars');
+
     const requestBody = {
         contents: [{
             parts: [{ text: prompt }]
         }],
         generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 8000
+            temperature: 0.5,
+            maxOutputTokens: 2000,  // JAUH lebih kecil
+            topP: 0.8,
+            topK: 40
         }
     };
 
-    // Call Gemini API through secure backend proxy
-    // API Key tersembunyi di backend, frontend hanya kirim request
-    const data = await callGeminiAPI(requestBody, 'meal-plan');
-    const responseText = data.candidates[0].content.parts[0].text;
+    let responseText = null;
 
-    // Parse JSON
-    let jsonText = responseText;
-    if (jsonText.includes('```json')) {
-        jsonText = jsonText.split('```json')[1].split('```')[0].trim();
-    } else if (jsonText.includes('```')) {
-        jsonText = jsonText.split('```')[1].split('```')[0].trim();
+    try {
+        const data = await callGeminiAPI(requestBody, 'meal-plan');
+        
+        responseText = data.candidates[0].content.parts[0].text;
+        console.log('📝 Recommendations response length:', responseText.length);
+
+        let jsonStr = responseText;
+        if (jsonStr.includes('```json')) jsonStr = jsonStr.split('```json')[1].split('```')[0];
+        else if (jsonStr.includes('```')) jsonStr = jsonStr.split('```')[1].split('```')[0];
+        jsonStr = jsonStr.trim();
+
+        const recommendations = JSON.parse(jsonStr);
+        console.log('✅ Recommendations parsed successfully');
+        return recommendations;
+
+    } catch (error) {
+        console.error('❌ Error generating recommendations:', error);
+        console.error('Response:', responseText ? responseText.substring(0, 300) : 'N/A');
+        
+        // FALLBACK: Return hardcoded recommendations
+        console.log('⚠️ Using fallback recommendations');
+        return {
+            breakfasts: [
+                {"name":"Nasi Goreng","calories":350,"protein":10,"carbs":50,"fat":12,"time":"07:00"},
+                {"name":"Roti Bakar Telur","calories":300,"protein":12,"carbs":35,"fat":10,"time":"07:00"}
+            ],
+            snacks: [
+                {"name":"Banana","calories":89,"protein":1,"carbs":23,"fat":0.3,"time":"10:00"},
+                {"name":"Yogurt","calories":100,"protein":3,"carbs":7,"fat":5,"time":"10:00"}
+            ],
+            lunches: [
+                {"name":"Soto Ayam","calories":350,"protein":25,"carbs":30,"fat":12,"time":"12:00"},
+                {"name":"Gado-Gado","calories":300,"protein":12,"carbs":35,"fat":10,"time":"12:00"}
+            ],
+            dinners: [
+                {"name":"Ikan Bakar","calories":300,"protein":35,"carbs":0,"fat":15,"time":"18:00"},
+                {"name":"Pepes Ayam","calories":280,"protein":30,"carbs":5,"fat":12,"time":"18:00"}
+            ]
+        };
     }
+}
 
-    const mealPlan = JSON.parse(jsonText);
+function createMealPlanFromRecommendations(preferences, targets, recommendations) {
+    const { duration } = preferences;
+    const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    
+    const weeks = [];
+    
+    // Create weeks structure
+    for (let w = 1; w <= duration; w++) {
+        const days = [];
+        
+        // Create days
+        for (let d = 1; d <= 7; d++) {
+            // Randomly select from recommendations
+            const meals = [
+                randomFromArray(recommendations.breakfasts || []),
+                randomFromArray(recommendations.snacks || []),
+                randomFromArray(recommendations.lunches || []),
+                randomFromArray(recommendations.dinners || [])
+            ].filter(m => m);
+            
+            const mealTypes = ['Sarapan', 'Snack', 'Makan Siang', 'Makan Malam'];
+            
+            days.push({
+                day: d,
+                dayName: dayNames[d % 7],
+                meals: meals.map((m, idx) => ({
+                    id: `meal_${w}_${d}_${idx}`,
+                    name: m.name || 'Meal',
+                    time: m.time || '09:00',
+                    type: mealTypes[idx] || 'Meal',
+                    calories: Math.round(parseFloat(m.calories) || 0),
+                    protein: Math.round(parseFloat(m.protein) || 0),
+                    carbs: Math.round(parseFloat(m.carbs) || 0),
+                    fat: Math.round(parseFloat(m.fat) || 0),
+                    description: m.description || ''
+                })),
+                totalCalories: Math.round(meals.reduce((sum, m) => sum + (parseFloat(m.calories) || 0), 0)),
+                totalProtein: Math.round(meals.reduce((sum, m) => sum + (parseFloat(m.protein) || 0), 0)),
+                totalCarbs: Math.round(meals.reduce((sum, m) => sum + (parseFloat(m.carbs) || 0), 0)),
+                totalFat: Math.round(meals.reduce((sum, m) => sum + (parseFloat(m.fat) || 0), 0))
+            });
+        }
+        
+        weeks.push({
+            week: w,
+            days: days
+        });
+    }
+    
+    console.log('✅ Meal plan created with', weeks.length, 'weeks');
+    return { weeks };
+}
 
-    return mealPlan;
+function randomFromArray(arr) {
+    return arr && arr.length > 0 ? arr[Math.floor(Math.random() * arr.length)] : null;
 }
 
 // ===================================
@@ -427,13 +590,30 @@ Berikan HANYA JSON tanpa teks tambahan!`;
 // ===================================
 
 function showBeforeView() {
-    document.getElementById('beforeState').style.display = 'block';
-    document.getElementById('afterState').style.display = 'none';
+    const beforeState = document.getElementById('beforeState');
+    const afterState = document.getElementById('afterState');
+    
+    if (!beforeState || !afterState) {
+        console.error('❌ DOM elements not found: beforeState or afterState');
+        return;
+    }
+    
+    beforeState.style.display = 'block';
+    afterState.style.display = 'none';
 }
 
 function showMealPlanView() {
-    document.getElementById('beforeState').style.display = 'none';
-    document.getElementById('afterState').style.display = 'block';
+    const beforeState = document.getElementById('beforeState');
+    const afterState = document.getElementById('afterState');
+    
+    if (!beforeState || !afterState) {
+        console.error('❌ DOM elements not found: beforeState or afterState');
+        alert('Halaman tidak siap. Silahkan refresh.');
+        return;
+    }
+    
+    beforeState.style.display = 'none';
+    afterState.style.display = 'block';
 
     // Reset to week 1, day 1
     currentWeek = 1;
@@ -454,63 +634,64 @@ function renderMealPlan() {
 
 function renderWeekTabs() {
     const weekTabs = document.getElementById('weekTabs');
-    if (!weekTabs) return;
+    if (!weekTabs || !currentMealPlan) return;
 
-    const weeks = currentMealPlan.weeks;
+    const weeks = currentMealPlan.weeks || [];
     weekTabs.innerHTML = weeks.map(week => `
-        <button class="tab ${week.week === currentWeek ? 'active' : ''}" 
-                onclick="switchWeek(${week.week})">
+        <div class="tab ${week.week === currentWeek ? 'active' : ''}" 
+             onclick="switchWeek(${week.week})" 
+             style="cursor:pointer;">
             Minggu ${week.week}
-        </button>
+        </div>
     `).join('');
 }
 
 function renderDayTabs() {
     const dayTabs = document.getElementById('dayTabs');
-    if (!dayTabs) return;
+    if (!dayTabs || !currentMealPlan) return;
 
     const week = currentMealPlan.weeks.find(w => w.week === currentWeek);
     if (!week) return;
 
-    const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
-    dayTabs.innerHTML = week.days.map(day => `
-        <button class="tab ${day.day === currentDay ? 'active' : ''}" 
-                onclick="switchDay(${day.day})">
-            ${dayNames[day.day % 7]}
-        </button>
+    dayTabs.innerHTML = week.days.map((day, index) => `
+        <div class="tab ${day.day === currentDay ? 'active' : ''}" 
+             onclick="switchDay(${day.day})"
+             style="cursor:pointer;">
+            ${dayNames[index % 7]}
+        </div>
     `).join('');
 }
 
 function renderMeals() {
     const timeline = document.getElementById('mealTimeline');
-    if (!timeline) return;
+    if (!timeline || !currentMealPlan) return;
 
     const week = currentMealPlan.weeks.find(w => w.week === currentWeek);
     if (!week) return;
 
     const day = week.days.find(d => d.day === currentDay);
-    if (!day) return;
+    if (!day || !day.meals || !Array.isArray(day.meals)) return;
 
-    timeline.innerHTML = day.meals.map(meal => `
+    timeline.innerHTML = day.meals.map((meal, idx) => {
+        const mealId = meal.id || `meal_${currentWeek}_${currentDay}_${idx}`;
+        return `
         <div class="meal-card">
-            <div class="meal-time">${meal.time}</div>
+            <div class="meal-time">${meal.time || '-'}</div>
             <div class="meal-info">
-                <h4>${meal.name}</h4>
-                <p class="meta">${meal.type} • ${meal.calories} kcal</p>
-                <p style="color: #666; margin-top: 0.5rem; font-size: 0.9rem;">${meal.description}</p>
+                <h4>${meal.name || 'Meal'}</h4>
+                <p class="meta">${meal.type || 'Meal'} • ${Math.round(meal.calories || 0)} kcal</p>
+                <p style="color: #666; margin-top: 0.5rem; font-size: 0.9rem;">${meal.description || ''}</p>
                 <div style="margin-top: 0.5rem;">
-                    <span class="badge" style="margin-right: 0.5rem;">P: ${meal.protein}g</span>
-                    <span class="badge" style="margin-right: 0.5rem;">C: ${meal.carbs}g</span>
-                    <span class="badge">F: ${meal.fat}g</span>
+                    <span class="badge" style="margin-right: 0.5rem;">P: ${Math.round(meal.protein || 0)}g</span>
+                    <span class="badge" style="margin-right: 0.5rem;">C: ${Math.round(meal.carbs || 0)}g</span>
+                    <span class="badge">F: ${Math.round(meal.fat || 0)}g</span>
                 </div>
             </div>
-            <button class="btn-ghost" style="padding: 0.5rem 1rem; font-size: 0.9rem;" 
-                    onclick="showMealDetails('${meal.id}')">
-                Detail
-            </button>
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function renderNutritionSummary() {
@@ -522,26 +703,30 @@ function renderNutritionSummary() {
 
     const targets = currentMealPlan;
 
-    // Update summary
-    document.getElementById('currentCalories').textContent = day.totalCalories;
-    document.getElementById('targetCalories').textContent = targets.targetDailyCalories;
-    document.getElementById('currentProtein').textContent = day.totalProtein;
-    document.getElementById('targetProtein').textContent = targets.targetProtein;
-    document.getElementById('currentCarbs').textContent = day.totalCarbs;
-    document.getElementById('targetCarbs').textContent = targets.targetCarbs;
-    document.getElementById('currentFat').textContent = day.totalFat;
-    document.getElementById('targetFat').textContent = targets.targetFat;
+    // Safe element access
+    const caloriesEl = document.getElementById('currentCalories');
+    const targetCaloriesEl = document.getElementById('targetCalories');
+    const proteinEl = document.getElementById('currentProtein');
+    const targetProteinEl = document.getElementById('targetProtein');
+    const carbsEl = document.getElementById('currentCarbs');
+    const targetCarbsEl = document.getElementById('targetCarbs');
+    const fatEl = document.getElementById('currentFat');
+    const targetFatEl = document.getElementById('targetFat');
+    const calorieProgressEl = document.getElementById('calorieProgress');
+
+    // Only update if elements exist
+    if (caloriesEl) caloriesEl.textContent = Math.round(day.totalCalories || 0);
+    if (targetCaloriesEl) targetCaloriesEl.textContent = Math.round(targets.targetDailyCalories || 0);
+    if (proteinEl) proteinEl.textContent = Math.round(day.totalProtein || 0);
+    if (targetProteinEl) targetProteinEl.textContent = Math.round(targets.targetProtein || 0);
+    if (carbsEl) carbsEl.textContent = Math.round(day.totalCarbs || 0);
+    if (targetCarbsEl) targetCarbsEl.textContent = Math.round(targets.targetCarbs || 0);
+    if (fatEl) fatEl.textContent = Math.round(day.totalFat || 0);
+    if (targetFatEl) targetFatEl.textContent = Math.round(targets.targetFat || 0);
 
     // Update progress bars
-    const caloriePercent = Math.min((day.totalCalories / targets.targetDailyCalories) * 100, 100);
-    const proteinPercent = Math.min((day.totalProtein / targets.targetProtein) * 100, 100);
-    const carbsPercent = Math.min((day.totalCarbs / targets.targetCarbs) * 100, 100);
-    const fatPercent = Math.min((day.totalFat / targets.targetFat) * 100, 100);
-
-    document.getElementById('calorieProgress').style.width = caloriePercent + '%';
-    document.getElementById('proteinProgress').style.width = proteinPercent + '%';
-    document.getElementById('carbsProgress').style.width = carbsPercent + '%';
-    document.getElementById('fatProgress').style.width = fatPercent + '%';
+    const caloriePercent = Math.min((day.totalCalories / (targets.targetDailyCalories || 1)) * 100, 100);
+    if (calorieProgressEl) calorieProgressEl.style.width = caloriePercent + '%';
 }
 
 // ===================================
@@ -715,6 +900,26 @@ function hideLoadingState() {
 // ===================================
 // HELPER FUNCTIONS
 // ===================================
+
+function removeTag(tag) {
+    const tagContainer = document.getElementById('tagContainer');
+    const chips = Array.from(tagContainer?.querySelectorAll('.chip') || []);
+    const allergies = chips.map(chip => chip.textContent.replace('×', '').trim());
+    
+    // Remove the tag
+    const index = allergies.indexOf(tag);
+    if (index > -1) {
+        allergies.splice(index, 1);
+    }
+    
+    // Re-render
+    tagContainer.innerHTML = allergies.map(allergy => `
+        <div class="chip">
+            ${allergy}
+            <div class="remove" onclick="removeTag('${allergy}')">×</div>
+        </div>
+    `).join('');
+}
 
 function formatCurrency(value) {
     return new Intl.NumberFormat('id-ID').format(value);

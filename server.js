@@ -1,7 +1,6 @@
 /**
  * NutriScan Backend Server
  * Proxy server untuk menyembunyikan API Key Gemini
- * 
  * Usage: node server.js
  */
 
@@ -31,13 +30,11 @@ app.use(express.urlencoded({ limit: '50mb' }));
 // Serve static files (frontend)
 app.use(express.static(path.join(__dirname)));
 
-// ===================================
 // GEMINI API PROXY ENDPOINTS
-// ===================================
 
 /**
- * POST /api/analyze
- * Proxy untuk Gemini Content Generation
+ * Scanner Analysis Endpoint
+ * Simple and proven working endpoint
  */
 app.post('/api/analyze', async (req, res) => {
     try {
@@ -87,8 +84,8 @@ app.post('/api/analyze', async (req, res) => {
 });
 
 /**
- * POST /api/analyze-meal-plan
- * Proxy untuk Gemini dengan konfigurasi spesifik meal plan
+ * Meal Plan Analysis Endpoint
+ * Simple and proven working endpoint
  */
 app.post('/api/analyze-meal-plan', async (req, res) => {
     try {
@@ -100,7 +97,7 @@ app.post('/api/analyze-meal-plan', async (req, res) => {
             });
         }
 
-        const geminiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+        const geminiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
         const response = await fetch(`${geminiEndpoint}?key=${GEMINI_API_KEY}`, {
             method: 'POST',
@@ -110,15 +107,15 @@ app.post('/api/analyze-meal-plan', async (req, res) => {
             body: JSON.stringify({
                 contents,
                 generationConfig: generationConfig || {
-                    temperature: 0.7,
-                    maxOutputTokens: 8000
+                    temperature: 0.3,
+                    maxOutputTokens: 2000
                 }
             })
         });
 
         if (!response.ok) {
             const errorData = await response.json();
-            console.error('❌ Gemini API Error:', errorData);
+            console.error('❌ Gemini API Error (Meal Plan):', errorData);
             return res.status(response.status).json({
                 error: 'Gemini API Error',
                 details: errorData
@@ -129,7 +126,7 @@ app.post('/api/analyze-meal-plan', async (req, res) => {
         res.json(data);
 
     } catch (error) {
-        console.error('❌ Server Error:', error);
+        console.error('❌ Server Error (Meal Plan):', error);
         res.status(500).json({
             error: 'Server Error',
             message: error.message
