@@ -6,9 +6,13 @@
   publish = "."
 
 [[redirects]]
-  # Redirect API calls ke backend (production)
+  # Redirect API calls ke backend (production - Glitch)
+  # ⚠️ UPDATE THIS WITH YOUR GLITCH URL:
+  # from = "/api/*"
+  # to = "https://your-project-name.glitch.me/api/:splat"
+  # Example: to = "https://nutriscan-backend.glitch.me/api/:splat"
   from = "/api/*"
-  to = "https://nutriscan-backend.onrender.com/api/:splat"
+  to = "https://nutriscan-backend.glitch.me/api/:splat"
   status = 200
 
 # Development environment variables (untuk testing)
