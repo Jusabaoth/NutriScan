@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -59,12 +60,17 @@
             transition: color 0.3s;
         }
 
-        .nav-menu a:hover {
-            color: #10B981;
+        .nav-menu a:hover:not(.disabled) {
+            color: #00c853;
+        }
+
+        .nav-menu a.disabled {
+            color: #ccc;
+            cursor: not-allowed;
         }
 
         .nav-menu a.active {
-            color: #10B981;
+            color: #00c853;
             font-weight: 600;
         }
 
@@ -560,7 +566,8 @@
                 justify-content: center;
             }
 
-            .upload-section, .questioner-section {
+            .upload-section,
+            .questioner-section {
                 padding: 1.5rem;
             }
 
@@ -576,32 +583,33 @@
         }
     </style>
 </head>
+
 <body>
     <!-- NAVBAR -->
     <nav class="navbar">
-        <div class="logo-section" onclick="window.location.href='Index.html'">
+        <div class="logo-section">
             <div class="logo">NutriScan</div>
         </div>
-        <button class="menu-toggle" id="menuToggle" onclick="toggleMobileMenu()">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
         <div class="nav-menu">
-            <a href="Index.html">Dashboard</a>
-            <a href="scanner.html" class="active">Scanner</a>
-            <a href="mealplanner.html">Meal Planner</a>
+            <a href="Index.html" id="dashboardLink">Dashboard</a>
+            <a href="scanner.html" class="active" id="scannerLink">Scanner</a>
+            <a href="mealplanner.html" id="mealplannerLink">Meal Planner</a>
         </div>
         <div class="mobile-menu" id="mobileMenu">
-            <a href="Index.html">Dashboard</a>
-            <a href="scanner.html" class="active">Scanner</a>
-            <a href="mealplanner.html">Meal Planner</a>
+            <a href="Index.html" id="mobileDashboardLink">Dashboard</a>
+            <a href="scanner.html" class="active" id="mobileScannerLink">Scanner</a>
+            <a href="mealplanner.html" id="mobileMealplannerLink">Meal Planner</a>
         </div>
         <div class="user-profile" id="userProfile">
             <div class="user-avatar" id="userAvatar">U</div>
             <span class="user-name" id="userName">User</span>
             <button class="btn-logout" onclick="logout()">Logout</button>
         </div>
+        <button class="menu-toggle" id="menuToggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
     </nav>
 
     <!-- MAIN CONTAINER -->
@@ -628,8 +636,10 @@
                 </div>
                 <div class="camera-controls" id="cameraControls">
                     <button class="btn-capture" onclick="startCamera()">📷 Aktifkan Kamera</button>
-                    <button class="btn-capture" id="captureBtn" onclick="capturePhoto()" style="display: none;">📸 Ambil Foto</button>
-                    <button class="btn-cancel" id="cancelBtn" onclick="stopCamera()" style="display: none;">❌ Batal</button>
+                    <button class="btn-capture" id="captureBtn" onclick="capturePhoto()" style="display: none;">📸 Ambil
+                        Foto</button>
+                    <button class="btn-cancel" id="cancelBtn" onclick="stopCamera()" style="display: none;">❌
+                        Batal</button>
                 </div>
             </div>
 
@@ -640,9 +650,12 @@
                     <div class="drop-zone-text">Drag & Drop gambar di sini</div>
                     <div class="drop-zone-hint">atau klik untuk memilih file</div>
                     <div class="drop-zone-hint">Format: JPG, PNG</div>
-                    <button class="btn-select-file" onclick="event.stopPropagation(); document.getElementById('fileInput').click();">Pilih File</button>
+                    <button class="btn-select-file"
+                        onclick="event.stopPropagation(); document.getElementById('fileInput').click();">Pilih
+                        File</button>
                 </div>
-                <input type="file" id="fileInput" class="file-input" accept="image/jpeg,image/png,image/jpg" onchange="handleFileSelect(event)">
+                <input type="file" id="fileInput" class="file-input" accept="image/jpeg,image/png,image/jpg"
+                    onchange="handleFileSelect(event)">
             </div>
 
             <!-- IMAGE PREVIEW -->
@@ -657,41 +670,47 @@
         <!-- QUESTIONER SECTION -->
         <div class="questioner-section">
             <h2 class="section-title">🏥 Informasi Kesehatan</h2>
-            <p style="color: #666; margin-bottom: 2rem;">Pilih kondisi kesehatan yang Anda miliki untuk mendapatkan rekomendasi yang lebih personal</p>
+            <p style="color: #666; margin-bottom: 2rem;">Pilih kondisi kesehatan yang Anda miliki untuk mendapatkan
+                rekomendasi yang lebih personal</p>
 
             <div class="disease-group">
                 <div class="disease-title">Alergi Makanan</div>
                 <div class="disease-options">
                     <div class="disease-option">
                         <input type="checkbox" id="allergy1" name="disease" value="susu">
-                        <label for="allergy1">Susu dan produk olahannya, termasuk alergi protein susu atau intoleransi laktosa</label>
+                        <label for="allergy1">Susu dan produk olahannya, termasuk alergi protein susu atau intoleransi
+                            laktosa</label>
                     </div>
-                
+
                     <div class="disease-option">
                         <input type="checkbox" id="allergy2" name="disease" value="kacang_tanah">
                         <label for="allergy2">Kacang tanah, dapat memicu gatal, bengkak, atau sesak napas</label>
                     </div>
-                
+
                     <div class="disease-option">
                         <input type="checkbox" id="allergy3" name="disease" value="kacang_pohon">
-                        <label for="allergy3">Kacang pohon, seperti almond, mete, dan walnut, yang dapat memicu reaksi alergi</label>
+                        <label for="allergy3">Kacang pohon, seperti almond, mete, dan walnut, yang dapat memicu reaksi
+                            alergi</label>
                     </div>
-                
+
                     <div class="disease-option">
                         <input type="checkbox" id="allergy4" name="disease" value="seafood">
-                        <label for="allergy4">Seafood, seperti udang, kepiting, ikan, dan kerang, yang dapat memicu reaksi alergi</label>
+                        <label for="allergy4">Seafood, seperti udang, kepiting, ikan, dan kerang, yang dapat memicu
+                            reaksi alergi</label>
                     </div>
-                
+
                     <div class="disease-option">
                         <input type="checkbox" id="allergy5" name="disease" value="gluten">
-                        <label for="allergy5">Gluten atau gandum, termasuk sensitivitas atau intoleransi terhadap produk berbahan tepung</label>
+                        <label for="allergy5">Gluten atau gandum, termasuk sensitivitas atau intoleransi terhadap produk
+                            berbahan tepung</label>
                     </div>
-                
+
                     <div class="disease-option">
                         <input type="checkbox" id="allergy6" name="disease" value="kedelai">
-                        <label for="allergy6">Kedelai, reaksi terhadap produk berbasis kedelai seperti tahu, tempe, atau susu kedelai</label>
+                        <label for="allergy6">Kedelai, reaksi terhadap produk berbasis kedelai seperti tahu, tempe, atau
+                            susu kedelai</label>
                     </div>
-                
+
                     <div class="disease-option">
                         <input type="checkbox" id="allergy7" name="disease" value="telur">
                         <label for="allergy7">Telur, terutama alergi terhadap bagian putih telur</label>
@@ -706,7 +725,8 @@
                 <div class="disease-options">
                     <div class="disease-option">
                         <input type="checkbox" id="metabolic1" name="disease" value="diabetes">
-                        <label for="metabolic1">Diabetes Mellitus, gula darah (glukosa) dalam tubuh terlalu tinggi</label>
+                        <label for="metabolic1">Diabetes Mellitus, gula darah (glukosa) dalam tubuh terlalu
+                            tinggi</label>
                     </div>
                     <div class="disease-option">
                         <input type="checkbox" id="metabolic2" name="disease" value="obesitas">
@@ -722,7 +742,8 @@
                     </div>
                     <div class="disease-option">
                         <input type="checkbox" id="metabolic5" name="disease" value="sindrom_metabolik">
-                        <label for="metabolic5">Sindrom Metabolik, kombinasi obesitas, hipertensi, gula darah tinggi, dan trigliserida tinggi</label>
+                        <label for="metabolic5">Sindrom Metabolik, kombinasi obesitas, hipertensi, gula darah tinggi,
+                            dan trigliserida tinggi</label>
                     </div>
                 </div>
             </div>
@@ -822,277 +843,18 @@
             <!-- Other Diseases -->
             <div class="other-disease">
                 <label for="otherDisease">Penyakit Lainnya (opsional)</label>
-                <textarea id="otherDisease" placeholder="Masukkan penyakit atau kondisi kesehatan lain yang tidak terdaftar di atas..."></textarea>
+                <textarea id="otherDisease"
+                    placeholder="Masukkan penyakit atau kondisi kesehatan lain yang tidak terdaftar di atas..."></textarea>
             </div>
         </div>
 
-        <!-- SCAN BUTTON -->
+        <!-- SCAN BUTTON SECTION -->
         <div class="scan-section">
-            <button class="btn-scan" id="scanBtn" onclick="analyzeImage()" disabled>🚀 ANALISIS DENGAN AI</button>
+            <button class="btn-scan" onclick="performScan()">🔍 Analisis dengan AI</button>
         </div>
     </div>
 
-    <script>
-        // Storage Keys
-        const STORAGE_KEY_CURRENT_USER = 'nutriscan_current_user';
-        const STORAGE_KEY_USER_DATA = 'nutriscan_user_data_';
-
-        let currentMode = 'camera';
-        let stream = null;
-        let capturedImage = null;
-        const API_KEY = ''; // Set your API key here
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            checkAuthStatus();
-            setupDragAndDrop();
-            updateScanButton();
-        });
-
-        // Check authentication
-        function checkAuthStatus() {
-            const currentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-            if (!currentUser) {
-                window.location.href = 'Index.html';
-                return;
-            }
-
-            const userData = getUserData(currentUser);
-            if (userData) {
-                document.getElementById('userName').textContent = userData.name || 'User';
-                document.getElementById('userAvatar').textContent = (userData.name || 'User').charAt(0).toUpperCase();
-            }
-        }
-
-        function getUserData(email) {
-            const userDataJson = localStorage.getItem(STORAGE_KEY_USER_DATA + email);
-            return userDataJson ? JSON.parse(userDataJson) : null;
-        }
-
-        // Logout
-        function logout() {
-            localStorage.removeItem(STORAGE_KEY_CURRENT_USER);
-            window.location.href = 'Index.html';
-        }
-
-        // Toggle mobile menu
-        function toggleMobileMenu() {
-            const menuToggle = document.getElementById('menuToggle');
-            const mobileMenu = document.getElementById('mobileMenu');
-            if (menuToggle && mobileMenu) {
-                menuToggle.classList.toggle('active');
-                mobileMenu.classList.toggle('active');
-            }
-        }
-
-        // Switch between camera and upload mode
-        function switchMode(mode) {
-            currentMode = mode;
-            const cameraBtn = document.getElementById('cameraBtn');
-            const uploadBtn = document.getElementById('uploadBtn');
-            const cameraContainer = document.getElementById('cameraContainer');
-            const uploadContainer = document.getElementById('uploadContainer');
-
-            if (mode === 'camera') {
-                cameraBtn.classList.add('active');
-                uploadBtn.classList.remove('active');
-                cameraContainer.classList.add('active');
-                uploadContainer.classList.remove('active');
-                stopCamera();
-            } else {
-                cameraBtn.classList.remove('active');
-                uploadBtn.classList.add('active');
-                cameraContainer.classList.remove('active');
-                uploadContainer.classList.add('active');
-                stopCamera();
-            }
-            removeImage();
-        }
-
-        // Start camera
-        async function startCamera() {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: 'environment' // Use back camera on mobile
-                    } 
-                });
-                const video = document.getElementById('videoElement');
-                video.srcObject = stream;
-                
-                document.querySelector('.btn-capture').style.display = 'none';
-                document.getElementById('captureBtn').style.display = 'inline-block';
-                document.getElementById('cancelBtn').style.display = 'inline-block';
-            } catch (error) {
-                alert('Tidak dapat mengakses kamera. Pastikan Anda memberikan izin akses kamera.');
-                console.error('Camera error:', error);
-            }
-        }
-
-        // Capture photo
-        function capturePhoto() {
-            const video = document.getElementById('videoElement');
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0);
-            
-            capturedImage = canvas.toDataURL('image/jpeg');
-            stopCamera();
-            showPreview(capturedImage);
-        }
-
-        // Stop camera
-        function stopCamera() {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-            }
-            const video = document.getElementById('videoElement');
-            video.srcObject = null;
-            
-            document.querySelector('.btn-capture').style.display = 'inline-block';
-            document.getElementById('captureBtn').style.display = 'none';
-            document.getElementById('cancelBtn').style.display = 'none';
-        }
-
-        // Setup drag and drop
-        function setupDragAndDrop() {
-            const dropZone = document.getElementById('dropZone');
-            
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('dragover');
-            });
-
-            dropZone.addEventListener('dragleave', () => {
-                dropZone.classList.remove('dragover');
-            });
-
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('dragover');
-                
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    handleFile(files[0]);
-                }
-            });
-        }
-
-        // Handle file select
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (file) {
-                handleFile(file);
-            }
-        }
-
-        // Handle file
-        function handleFile(file) {
-            if (!file.type.match('image.*')) {
-                alert('Harap pilih file gambar (JPG, PNG)');
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                capturedImage = e.target.result;
-                showPreview(capturedImage);
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // Show preview
-        function showPreview(imageSrc) {
-            const preview = document.getElementById('imagePreview');
-            const previewImage = document.getElementById('previewImage');
-            previewImage.src = imageSrc;
-            preview.classList.add('active');
-            updateScanButton();
-        }
-
-        // Remove image
-        function removeImage() {
-            capturedImage = null;
-            document.getElementById('imagePreview').classList.remove('active');
-            document.getElementById('fileInput').value = '';
-            updateScanButton();
-        }
-
-        // Update scan button state
-        function updateScanButton() {
-            const scanBtn = document.getElementById('scanBtn');
-            if (!API_KEY || !capturedImage) {
-                scanBtn.disabled = true;
-            } else {
-                scanBtn.disabled = false;
-            }
-        }
-
-        // Analyze image
-        function analyzeImage() {
-            if (!capturedImage) {
-                alert('Harap pilih atau ambil foto terlebih dahulu');
-                return;
-            }
-
-            if (!API_KEY) {
-                alert('API Key belum dikonfigurasi. Harap hubungi administrator.');
-                return;
-            }
-
-            // Get selected diseases
-            const selectedDiseases = [];
-            document.querySelectorAll('input[name="disease"]:checked').forEach(checkbox => {
-                selectedDiseases.push(checkbox.value);
-            });
-
-            const otherDisease = document.getElementById('otherDisease').value.trim();
-
-            // Show loading
-            const scanBtn = document.getElementById('scanBtn');
-            const originalText = scanBtn.innerHTML;
-            scanBtn.disabled = true;
-            scanBtn.innerHTML = '⏳ Menganalisis...';
-
-            // Here you would send the image to your API
-            // Example:
-            // fetch('YOUR_API_ENDPOINT', {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //         'Authorization': `Bearer ${API_KEY}`
-            //     },
-            //     body: JSON.stringify({
-            //         image: capturedImage,
-            //         diseases: selectedDiseases,
-            //         otherDisease: otherDisease
-            //     })
-            // })
-            // .then(response => response.json())
-            // .then(data => {
-            //     // Handle response
-            //     console.log('Analysis result:', data);
-            // })
-            // .catch(error => {
-            //     console.error('Error:', error);
-            //     alert('Terjadi kesalahan saat menganalisis gambar');
-            // })
-            // .finally(() => {
-            //     scanBtn.disabled = false;
-            //     scanBtn.innerHTML = originalText;
-            // });
-
-            // Placeholder for now
-            setTimeout(() => {
-                alert('Fitur analisis sedang dalam pengembangan. API akan diintegrasikan segera.');
-                scanBtn.disabled = false;
-                scanBtn.innerHTML = originalText;
-            }, 2000);
-        }
-    </script>
+    <script src="js/scanner.js"></script>
 </body>
-</html>
 
+</html>

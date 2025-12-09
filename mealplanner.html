@@ -1,22 +1,21 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meal Planner - NutriScan</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&family=Roboto+Mono:wght@500&display=swap');
-
         :root {
             --primary: #10B981;
             --secondary: #3B82F6;
             --accent: #F59E0B;
-            --bg: #F9FAFB;
-            --text: #0F172A;
-            --muted: #6B7280;
+            --bg: #f8fffe;
+            --text: #333;
+            --muted: #666;
             --card: #FFFFFF;
-            --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-            --radius: 16px;
+            --shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            --radius: 20px;
         }
 
         * {
@@ -26,15 +25,19 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: var(--bg);
             color: var(--text);
             overflow-x: hidden;
             line-height: 1.6;
         }
 
-        h1, h2, h3, h4 {
-            font-family: 'Poppins', sans-serif;
+        h1,
+        h2,
+        h3,
+        h4 {
+            /* font-family: 'Poppins', sans-serif; REMOVED to match scanner.html */
+            color: #1b5e20;
         }
 
         /* NAVBAR */
@@ -59,7 +62,7 @@
 
         .logo {
             font-size: 1.8rem;
-            font-weight: 700;
+            font-weight: bold;
             background: linear-gradient(135deg, #10B981, #00c853);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -73,18 +76,24 @@
         }
 
         .nav-menu a {
-            color: #374151;
+            color: #333;
             text-decoration: none;
-            font-weight: 600;
+            font-weight: 500;
             transition: color 0.3s;
         }
 
-        .nav-menu a:hover {
-            color: var(--primary);
+        .nav-menu a:hover:not(.disabled) {
+            color: #00c853;
+        }
+
+        .nav-menu a.disabled {
+            color: #ccc;
+            cursor: not-allowed;
         }
 
         .nav-menu a.active {
-            color: var(--primary);
+            color: #00c853;
+            font-weight: 600;
         }
 
         .user-profile {
@@ -107,22 +116,22 @@
 
         .user-name {
             font-weight: 600;
-            color: #111827;
+            color: #333;
         }
 
         .btn-logout {
             padding: 0.5rem 1rem;
-            background: #ef4444;
+            background: #ff5252;
             color: white;
             border: none;
-            border-radius: 999px;
+            border-radius: 20px;
             cursor: pointer;
             font-weight: 600;
             transition: all 0.3s;
         }
 
         .btn-logout:hover {
-            background: #dc2626;
+            background: #ff1744;
             transform: translateY(-2px);
         }
 
@@ -185,7 +194,7 @@
         }
 
         .hero {
-            background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(59,130,246,0.08));
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.08));
             padding: 3rem;
             border-radius: 24px;
             box-shadow: var(--shadow);
@@ -202,16 +211,17 @@
             position: absolute;
             width: 180px;
             height: 180px;
-            background: radial-gradient(circle, rgba(16,185,129,0.25), transparent 60%);
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.25), transparent 60%);
             top: -60px;
             right: -40px;
             filter: blur(10px);
         }
 
         .hero h1 {
-            font-size: 2.5rem;
+            font-size: 3rem;
             margin-bottom: 0.75rem;
             font-weight: 700;
+            color: #1b5e20;
         }
 
         .hero p {
@@ -221,21 +231,21 @@
         }
 
         .btn-primary {
-            background: var(--primary);
+            background: linear-gradient(135deg, #00e676, #00c853);
             color: white;
-            padding: 0.95rem 1.8rem;
+            padding: 1rem 3rem;
             border: none;
-            border-radius: 14px;
-            font-size: 1rem;
+            border-radius: 30px;
+            font-size: 1.1rem;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 12px 25px rgba(16,185,129,0.3);
+            box-shadow: 0 8px 25px rgba(0, 230, 118, 0.4);
         }
 
         .btn-primary:hover {
-            background: #0ea371;
-            transform: translateY(-2px);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0, 230, 118, 0.5);
         }
 
         .btn-ghost {
@@ -250,12 +260,12 @@
         }
 
         .btn-ghost:hover {
-            background: rgba(16,185,129,0.08);
+            background: rgba(16, 185, 129, 0.08);
         }
 
         .section {
             margin-top: 2.5rem;
-            animation: fadeIn 0.6s ease;
+            /* animation: fadeIn 0.6s ease; REMOVED */
         }
 
         .section-header {
@@ -267,8 +277,9 @@
         }
 
         .section h2 {
-            font-size: 1.7rem;
+            font-size: 2.2rem;
             font-weight: 700;
+            color: #1b5e20;
         }
 
         /* Diet cards */
@@ -291,7 +302,7 @@
 
         .diet-card:hover {
             transform: translateY(-4px);
-            border-color: rgba(16,185,129,0.25);
+            border-color: rgba(16, 185, 129, 0.25);
         }
 
         .diet-icon {
@@ -324,13 +335,15 @@
             display: block;
         }
 
-        .radio-group, .checkbox-group {
+        .radio-group,
+        .checkbox-group {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 0.75rem;
         }
 
-        .radio-tile, .checkbox-tile {
+        .radio-tile,
+        .checkbox-tile {
             border: 2px solid #e5e7eb;
             border-radius: 12px;
             padding: 0.9rem 1rem;
@@ -342,11 +355,13 @@
             background: #fff;
         }
 
-        .radio-tile:hover, .checkbox-tile:hover {
+        .radio-tile:hover,
+        .checkbox-tile:hover {
             border-color: var(--primary);
         }
 
-        .radio-tile input, .checkbox-tile input {
+        .radio-tile input,
+        .checkbox-tile input {
             width: 18px;
             height: 18px;
             accent-color: var(--primary);
@@ -379,7 +394,7 @@
         .input-control textarea:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
         }
 
         .slider-row {
@@ -409,7 +424,7 @@
             align-items: center;
             gap: 0.4rem;
             font-weight: 600;
-            border: 1px solid rgba(16,185,129,0.25);
+            border: 1px solid rgba(16, 185, 129, 0.25);
             cursor: pointer;
         }
 
@@ -442,7 +457,7 @@
         .duration-card.active {
             border-color: var(--secondary);
             background: #eff6ff;
-            box-shadow: 0 8px 20px rgba(59,130,246,0.15);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
         }
 
         .budget-wrap {
@@ -490,7 +505,8 @@
             gap: 1rem;
         }
 
-        .week-tabs, .day-tabs {
+        .week-tabs,
+        .day-tabs {
             display: flex;
             flex-wrap: wrap;
             gap: 0.6rem;
@@ -509,7 +525,7 @@
         .tab.active {
             background: #ecfdf3;
             color: #065f46;
-            border-color: rgba(16,185,129,0.4);
+            border-color: rgba(16, 185, 129, 0.4);
         }
 
         .planner-layout {
@@ -597,7 +613,7 @@
             overflow: hidden;
         }
 
-        .accordion-item + .accordion-item {
+        .accordion-item+.accordion-item {
             border-top: 1px solid #e5e7eb;
         }
 
@@ -641,25 +657,11 @@
         .skeleton {
             background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 37%, #e5e7eb 63%);
             background-size: 400% 100%;
-            animation: shine 1.2s ease infinite;
+            /* animation: shine 1.2s ease infinite; REMOVED */
             border-radius: 10px;
         }
 
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes shine {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
+        /* Animations Removed */
 
         /* Responsive */
         @media (max-width: 960px) {
@@ -669,41 +671,59 @@
         }
 
         @media (max-width: 768px) {
-            .nav-menu { display: none; }
-            .menu-toggle { display: flex; }
-            .user-name { display: none; }
-            .hero { padding: 2rem; }
-            .hero h1 { font-size: 2.1rem; }
-            .section h2 { font-size: 1.4rem; }
+            .nav-menu {
+                display: none;
+            }
+
+            .menu-toggle {
+                display: flex;
+            }
+
+            .user-name {
+                display: none;
+            }
+
+            .hero {
+                padding: 2rem;
+            }
+
+            .hero h1 {
+                font-size: 2.1rem;
+            }
+
+            .section h2 {
+                font-size: 1.4rem;
+            }
         }
     </style>
 </head>
+
 <body>
     <!-- NAVBAR -->
     <nav class="navbar">
-        <div class="logo-section" onclick="window.location.href='Index.html'">
+        <div class="logo-section">
             <div class="logo">NutriScan</div>
         </div>
-        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
         <div class="nav-menu">
-            <a href="Index.html">Dashboard</a>
-            <a href="scanner.html">Scanner</a>
-            <a href="mealplanner.html" class="active">Meal Planner</a>
+            <a href="Index.html" id="dashboardLink">Dashboard</a>
+            <a href="scanner.html" id="scannerLink">Scanner</a>
+            <a href="mealplanner.html" class="active" id="mealplannerLink">Meal Planner</a>
         </div>
         <div class="mobile-menu" id="mobileMenu">
-            <a href="Index.html">Dashboard</a>
-            <a href="scanner.html">Scanner</a>
-            <a href="mealplanner.html" class="active">Meal Planner</a>
+            <a href="Index.html" id="mobileDashboardLink">Dashboard</a>
+            <a href="scanner.html" id="mobileScannerLink">Scanner</a>
+            <a href="mealplanner.html" class="active" id="mobileMealplannerLink">Meal Planner</a>
         </div>
         <div class="user-profile" id="userProfile">
             <div class="user-avatar" id="userAvatar">U</div>
             <span class="user-name" id="userName">User</span>
             <button class="btn-logout" onclick="logout()">Logout</button>
         </div>
+        <button class="menu-toggle" id="menuToggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
     </nav>
 
     <main class="wrapper">
@@ -718,7 +738,8 @@
                 <div class="state-card">
                     <p class="badge">Tip</p>
                     <h3 style="margin:0.4rem 0 0.2rem;">Butuh inspirasi cepat?</h3>
-                    <p style="color:var(--muted)">Isi preferensi kamu, biarkan AI kami susun menu sehat yang pas dengan tujuan, budget, dan kondisi tubuhmu.</p>
+                    <p style="color:var(--muted)">Isi preferensi kamu, biarkan AI kami susun menu sehat yang pas dengan
+                        tujuan, budget, dan kondisi tubuhmu.</p>
                 </div>
             </div>
 
@@ -776,17 +797,22 @@
                     <div class="radio-group" id="goalGroup">
                         <label class="radio-tile"><input type="radio" name="goal" value="Keto">Keto</label>
                         <label class="radio-tile"><input type="radio" name="goal" value="Atkins">Atkins</label>
-                        <label class="radio-tile"><input type="radio" name="goal" value="Mediterania">Mediterania</label>
+                        <label class="radio-tile"><input type="radio" name="goal"
+                                value="Mediterania">Mediterania</label>
                         <label class="radio-tile"><input type="radio" name="goal" value="Paleo">Paleo</label>
-                        <label class="radio-tile"><input type="radio" name="goal" value="Vegetarian/Vegan">Vegetarian/Vegan</label>
+                        <label class="radio-tile"><input type="radio" name="goal"
+                                value="Vegetarian/Vegan">Vegetarian/Vegan</label>
                         <label class="radio-tile"><input type="radio" name="goal" value="DASH">DASH</label>
-                        <label class="radio-tile"><input type="radio" name="goal" value="Intermittent Fasting">Intermittent Fasting</label>
+                        <label class="radio-tile"><input type="radio" name="goal"
+                                value="Intermittent Fasting">Intermittent Fasting</label>
                         <label class="radio-tile"><input type="radio" name="goal" value="Mayo Diet">Mayo Diet</label>
-                        <label class="radio-tile"><input type="radio" name="goal" value="Custom">Custom (Saya punya tujuan sendiri)</label>
+                        <label class="radio-tile"><input type="radio" name="goal" value="Custom">Custom (Saya punya
+                            tujuan sendiri)</label>
                     </div>
                     <div class="input-control" id="customGoalBox" style="display:none; margin-top:0.8rem;">
                         <label class="field-label" style="margin:0;">Ceritakan tujuanmu:</label>
-                        <textarea id="customGoal" rows="3" placeholder="Contoh: Diet tinggi protein untuk naik massa otot, tapi tetap ramah kantong."></textarea>
+                        <textarea id="customGoal" rows="3"
+                            placeholder="Contoh: Diet tinggi protein untuk naik massa otot, tapi tetap ramah kantong."></textarea>
                     </div>
                 </div>
 
@@ -871,31 +897,233 @@
                 <div class="card">
                     <label class="field-label">Kondisi kesehatan khusus:</label>
                     <div class="checkbox-group" id="healthGroup">
-                        <label class="checkbox-tile"><input type="checkbox" value="Diabetes / Prediabetes">Diabetes / Prediabetes</label>
+                        <label class="checkbox-tile"><input type="checkbox" value="Diabetes / Prediabetes">Diabetes /
+                            Prediabetes</label>
                         <label class="checkbox-tile"><input type="checkbox" value="Hipertensi">Hipertensi</label>
-                        <label class="checkbox-tile"><input type="checkbox" value="Kolesterol tinggi">Kolesterol tinggi</label>
+                        <label class="checkbox-tile"><input type="checkbox" value="Kolesterol tinggi">Kolesterol
+                            tinggi</label>
                         <label class="checkbox-tile"><input type="checkbox" value="Asam urat">Asam urat</label>
                         <label class="checkbox-tile"><input type="checkbox" value="Maag / GERD">Maag / GERD</label>
-                        <label class="checkbox-tile"><input type="checkbox" value="Gangguan pencernaan">Gangguan pencernaan</label>
-                        <label class="checkbox-tile"><input type="checkbox" value="Sedang hamil / Menyusui">Sedang hamil / Menyusui</label>
+                        <label class="checkbox-tile"><input type="checkbox" value="Gangguan pencernaan">Gangguan
+                            pencernaan</label>
+                        <label class="checkbox-tile"><input type="checkbox" value="Sedang hamil / Menyusui">Sedang hamil
+                            / Menyusui</label>
                         <label class="checkbox-tile" id="otherConditionTile">
                             <input type="checkbox" value="Lainnya">Lainnya
                         </label>
                     </div>
                     <div class="input-control" id="otherConditionBox" style="display:none; margin-top:0.7rem;">
-                        <textarea id="otherConditionInput" rows="2" placeholder="Tuliskan kondisi kesehatan lain..."></textarea>
+                        <textarea id="otherConditionInput" rows="2"
+                            placeholder="Tuliskan kondisi kesehatan lain..."></textarea>
                     </div>
                 </div>
 
                 <div class="card">
                     <label class="field-label">Alergi atau pantangan makanan:</label>
-                    <input type="text" id="tagInput" placeholder="Ketik lalu tekan Enter (contoh: Kacang, Seafood, Laktosa)" />
+                    <input type="text" id="tagInput"
+                        placeholder="Ketik lalu tekan Enter (contoh: Kacang, Seafood, Laktosa)" />
                     <div class="chips" id="tagContainer"></div>
                 </div>
 
                 <div style="text-align:center; margin-top:1.5rem;">
-                    <button class="btn-primary" id="analyzeBtn" style="min-width:260px; font-size:1.05rem;">🤖 ANALISIS DENGAN AI</button>
+                    <button class="btn-primary" id="analyzeBtn" style="min-width:260px; font-size:1.05rem;">🤖 ANALISIS
+                        DENGAN AI</button>
                 </div>
+            </div>
+        </section>
+
+        <!-- AFTER CREATION -->
+        <section id="afterState" class="hidden">
+            <div class="state-card">
+                <div class="planner-header">
+                    <div>
+                        <h1 style="font-size:2rem;">🎉 Meal Planner-mu Sudah Siap!</h1>
+                        <p style="color:var(--muted);">Tidak puas dengan meal planner ini?</p>
+                    </div>
+                    <button class="btn-ghost" id="editBtn">✏️ Ubah</button>
+                </div>
+            </div>
+
+            <div class="state-card" style="margin-top:1rem;">
+                <div class="week-tabs" id="weekTabs">
+                    <div class="tab active" data-week="1">Minggu 1</div>
+                    <div class="tab" data-week="2">Minggu 2</div>
+                    <div class="tab" data-week="3">Minggu 3</div>
+                    <div class="tab" data-week="4">Minggu 4</div>
+                </div>
+                <div class="day-tabs" id="dayTabs" style="margin-top:0.8rem;">
+                    <div class="tab active" data-day="Senin">Senin</div>
+                    <div class="tab" data-day="Selasa">Selasa</div>
+                    <div class="tab" data-day="Rabu">Rabu</div>
+                    <div class="tab" data-day="Kamis">Kamis</div>
+                    <div class="tab" data-day="Jumat">Jumat</div>
+                    <div class="tab" data-day="Sabtu">Sabtu</div>
+                    <div class="tab" data-day="Minggu">Minggu</div>
+                </div>
+
+                <div class="planner-layout">
+                    <div class="timeline" id="timeline"></div>
+                    <div class="sidebar">
+                        <div class="card">
+                            <h3>Ringkasan Nutrisi</h3>
+                            <p>Total Kalori: <strong id="calorieLabel">1850/2000 kcal</strong></p>
+                            <div class="progress"><span id="calorieProgress" style="width:92%;"></span></div>
+                            <div class="macro-grid" style="margin-top:0.8rem;">
+                                <div class="macro-item">
+                                    <strong>Protein</strong>
+                                    <p class="meta">75g (30%)</p>
+                                </div>
+                                <div class="macro-item">
+                                    <strong>Karbo</strong>
+                                    <p class="meta">200g (40%)</p>
+                                </div>
+                                <div class="macro-item">
+                                    <strong>Lemak</strong>
+                                    <p class="meta">65g (30%)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>Statistik</h3>
+                            <div class="stat-grid">
+                                <div class="stat-card">
+                                    <strong>Estimasi biaya</strong>
+                                    <p>Rp 450.000/minggu</p>
+                                </div>
+                                <div class="stat-card" style="background:#eef2ff; border-color:#c7d2fe;">
+                                    <strong>Skor Kesehatan</strong>
+                                    <p>92/100 ⭐⭐⭐⭐☆</p>
+                                </div>
+                                <div class="stat-card" style="background:#f0fdf4; border-color:#bbf7d0;">
+                                    <strong>Sustainability</strong>
+                                    <p>Ramah untuk: Diabetes & Budget Terbatas</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    tujuan sendiri)</label>
+                </div>
+                <div class="input-control" id="customGoalBox" style="display:none; margin-top:0.8rem;">
+                    <label class="field-label" style="margin:0;">Ceritakan tujuanmu:</label>
+                    <textarea id="customGoal" rows="3"
+                        placeholder="Contoh: Diet tinggi protein untuk naik massa otot, tapi tetap ramah kantong."></textarea>
+                </div>
+            </div>
+
+            <div class="card">
+                <label class="field-label">Profil Fisik</label>
+                <div class="input-row">
+                    <div class="input-control">
+                        <span class="badge">Berat Badan (kg)</span>
+                        <div class="slider-row">
+                            <input type="number" id="weightInput" min="30" max="200" value="65">
+                            <input type="range" id="weightRange" min="30" max="200" value="65">
+                        </div>
+                    </div>
+                    <div class="input-control">
+                        <span class="badge">Tinggi Badan (cm)</span>
+                        <div class="slider-row">
+                            <input type="number" id="heightInput" min="120" max="220" value="170">
+                            <input type="range" id="heightRange" min="120" max="220" value="170">
+                        </div>
+                    </div>
+                    <div class="input-control">
+                        <span class="badge">Usia (tahun)</span>
+                        <div class="slider-row">
+                            <input type="number" id="ageInput" min="10" max="90" value="25">
+                            <select id="ageRange">
+                                <option value="18-25" selected>18-25</option>
+                                <option value="26-35">26-35</option>
+                                <option value="36-45">36-45</option>
+                                <option value="46-55">46-55</option>
+                                <option value="56+">56+</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-control">
+                        <span class="badge">Jenis Kelamin</span>
+                        <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
+                            <label class="radio-tile" style="padding:0.6rem 0.9rem;">
+                                <input type="radio" name="gender" value="Pria" checked>Pria
+                            </label>
+                            <label class="radio-tile" style="padding:0.6rem 0.9rem;">
+                                <input type="radio" name="gender" value="Wanita">Wanita
+                            </label>
+                        </div>
+                    </div>
+                    <div class="input-control">
+                        <span class="badge">Aktivitas Harian</span>
+                        <select id="activity">
+                            <option value="Sedentary">Sedentary</option>
+                            <option value="Light">Light</option>
+                            <option value="Moderate" selected>Moderate</option>
+                            <option value="Active">Active</option>
+                            <option value="Very Active">Very Active</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <label class="field-label">Berapa lama kamu ingin konsisten?</label>
+                <div class="duration-grid" id="durationGrid">
+                    <div class="duration-card active" data-duration="Seminggu">🗓️ Seminggu</div>
+                    <div class="duration-card" data-duration="Sebulan">📅 Sebulan</div>
+                    <div class="duration-card" data-duration="3 Bulan">📆 3 Bulan</div>
+                    <div class="duration-card" data-duration="Setahun">🎯 Setahun</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <label class="field-label">Budget makanan per hari:</label>
+                <div class="budget-wrap">
+                    <div class="budget-labels">
+                        <span>Ekonomis (&lt; Rp 30.000)</span>
+                        <span>Standar (30-75k)</span>
+                        <span>Premium (&gt; 75k)</span>
+                    </div>
+                    <input type="range" id="budgetRange" min="1" max="3" value="2">
+                    <small style="color:var(--muted);">AI akan menyesuaikan rekomendasi dengan budgetmu</small>
+                    <strong id="budgetValue">Standar</strong>
+                </div>
+            </div>
+
+            <div class="card">
+                <label class="field-label">Kondisi kesehatan khusus:</label>
+                <div class="checkbox-group" id="healthGroup">
+                    <label class="checkbox-tile"><input type="checkbox" value="Diabetes / Prediabetes">Diabetes /
+                        Prediabetes</label>
+                    <label class="checkbox-tile"><input type="checkbox" value="Hipertensi">Hipertensi</label>
+                    <label class="checkbox-tile"><input type="checkbox" value="Kolesterol tinggi">Kolesterol
+                        tinggi</label>
+                    <label class="checkbox-tile"><input type="checkbox" value="Asam urat">Asam urat</label>
+                    <label class="checkbox-tile"><input type="checkbox" value="Maag / GERD">Maag / GERD</label>
+                    <label class="checkbox-tile"><input type="checkbox" value="Gangguan pencernaan">Gangguan
+                        pencernaan</label>
+                    <label class="checkbox-tile"><input type="checkbox" value="Sedang hamil / Menyusui">Sedang hamil
+                        / Menyusui</label>
+                    <label class="checkbox-tile" id="otherConditionTile">
+                        <input type="checkbox" value="Lainnya">Lainnya
+                    </label>
+                </div>
+                <div class="input-control" id="otherConditionBox" style="display:none; margin-top:0.7rem;">
+                    <textarea id="otherConditionInput" rows="2"
+                        placeholder="Tuliskan kondisi kesehatan lain..."></textarea>
+                </div>
+            </div>
+
+            <div class="card">
+                <label class="field-label">Alergi atau pantangan makanan:</label>
+                <input type="text" id="tagInput"
+                    placeholder="Ketik lalu tekan Enter (contoh: Kacang, Seafood, Laktosa)" />
+                <div class="chips" id="tagContainer"></div>
+            </div>
+
+            <div style="text-align:center; margin-top:1.5rem;">
+                <button class="btn-primary" id="analyzeBtn" style="min-width:260px; font-size:1.05rem;">🤖 ANALISIS
+                    DENGAN AI</button>
+            </div>
             </div>
         </section>
 
@@ -974,258 +1202,7 @@
         </section>
     </main>
 
-    <script>
-        const STORAGE_KEY_CURRENT_USER = 'nutriscan_current_user';
-        const STORAGE_KEY_USER_DATA = 'nutriscan_user_data_';
-
-        let selectedDuration = 'Seminggu';
-        let allergies = [];
-        let currentWeek = 1;
-        let currentDay = 'Senin';
-
-        const mealSlots = [
-            { type: 'Sarapan', time: '06:30', window: '06:00 - 09:00' },
-            { type: 'Snack Pagi', time: '10:30', window: '10:00 - 11:00' },
-            { type: 'Makan Siang', time: '12:30', window: '12:00 - 14:00' },
-            { type: 'Snack Sore', time: '15:30', window: '15:00 - 16:00' },
-            { type: 'Makan Malam', time: '19:00', window: '18:00 - 20:00' },
-            { type: 'Snack Malam', time: '21:00', window: '21:00' },
-        ];
-
-        const mealsState = {};
-
-        document.addEventListener('DOMContentLoaded', () => {
-            authCheck();
-            initNav();
-            bindForm();
-            renderTimeline();
-            document.getElementById('ctaButton').addEventListener('click', () => {
-                document.getElementById('formSection').scrollIntoView({ behavior: 'smooth' });
-            });
-        });
-
-        function authCheck() {
-            const currentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-            if (!currentUser) {
-                window.location.href = 'Index.html';
-                return;
-            }
-            const userData = getUserData(currentUser);
-            if (userData) {
-                document.getElementById('userName').textContent = userData.name || 'User';
-                document.getElementById('userAvatar').textContent = (userData.name || 'User').charAt(0).toUpperCase();
-            }
-        }
-
-        function getUserData(email) {
-            const json = localStorage.getItem(STORAGE_KEY_USER_DATA + email);
-            return json ? JSON.parse(json) : null;
-        }
-
-        function logout() {
-            localStorage.removeItem(STORAGE_KEY_CURRENT_USER);
-            window.location.href = 'Index.html';
-        }
-
-        function initNav() {
-            const menuToggle = document.getElementById('menuToggle');
-            const mobileMenu = document.getElementById('mobileMenu');
-            menuToggle?.addEventListener('click', () => {
-                menuToggle.classList.toggle('active');
-                mobileMenu.classList.toggle('active');
-            });
-            document.addEventListener('click', (e) => {
-                if (!mobileMenu.contains(e.target) && !menuToggle.contains(e.target)) {
-                    mobileMenu.classList.remove('active');
-                    menuToggle.classList.remove('active');
-                }
-            });
-        }
-
-        function bindForm() {
-            // Goal custom
-            document.getElementById('goalGroup').addEventListener('change', (e) => {
-                if (e.target.name === 'goal') {
-                    document.getElementById('customGoalBox').style.display = e.target.value === 'Custom' ? 'block' : 'none';
-                }
-            });
-
-            // Sliders sync
-            linkRange('weightInput', 'weightRange');
-            linkRange('heightInput', 'heightRange');
-
-            // Duration cards
-            document.querySelectorAll('.duration-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    document.querySelectorAll('.duration-card').forEach(c => c.classList.remove('active'));
-                    card.classList.add('active');
-                    selectedDuration = card.dataset.duration;
-                });
-            });
-
-            // Budget slider
-            const budgetRange = document.getElementById('budgetRange');
-            const budgetValue = document.getElementById('budgetValue');
-            const budgetMap = { '1': 'Ekonomis (&lt; Rp 30.000)', '2': 'Standar (Rp 30-75k)', '3': 'Premium (&gt; Rp 75k)' };
-            budgetRange.addEventListener('input', () => budgetValue.innerHTML = budgetMap[budgetRange.value]);
-            budgetValue.innerHTML = budgetMap[budgetRange.value];
-
-            // Other condition toggle
-            document.getElementById('healthGroup').addEventListener('change', (e) => {
-                if (e.target.value === 'Lainnya') {
-                    document.getElementById('otherConditionBox').style.display = e.target.checked ? 'block' : 'none';
-                }
-            });
-
-            // Tag input
-            const tagInput = document.getElementById('tagInput');
-            tagInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ',') {
-                    e.preventDefault();
-                    const value = tagInput.value.trim();
-                    if (value && !allergies.includes(value)) {
-                        allergies.push(value);
-                        renderTags();
-                    }
-                    tagInput.value = '';
-                }
-            });
-
-            // Analyze button
-            document.getElementById('analyzeBtn').addEventListener('click', () => {
-                switchState('after');
-            });
-
-            // Week tabs
-            document.getElementById('weekTabs').addEventListener('click', (e) => {
-                if (e.target.classList.contains('tab')) {
-                    document.querySelectorAll('#weekTabs .tab').forEach(t => t.classList.remove('active'));
-                    e.target.classList.add('active');
-                    currentWeek = Number(e.target.dataset.week);
-                    renderTimeline();
-                }
-            });
-
-            // Day tabs
-            document.getElementById('dayTabs').addEventListener('click', (e) => {
-                if (e.target.classList.contains('tab')) {
-                    document.querySelectorAll('#dayTabs .tab').forEach(t => t.classList.remove('active'));
-                    e.target.classList.add('active');
-                    currentDay = e.target.dataset.day;
-                    renderTimeline();
-                }
-            });
-
-            // Edit button
-            document.getElementById('editBtn').addEventListener('click', () => {
-                const yes = confirm('Yakin ingin mengubah? Semua data akan direset.');
-                if (yes) {
-                    resetForm();
-                    switchState('before');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-            });
-        }
-
-        function linkRange(numberId, rangeId) {
-            const num = document.getElementById(numberId);
-            const range = document.getElementById(rangeId);
-            num.addEventListener('input', () => range.value = num.value);
-            range.addEventListener('input', () => num.value = range.value);
-        }
-
-        function renderTags() {
-            const container = document.getElementById('tagContainer');
-            container.innerHTML = '';
-            allergies.forEach(tag => {
-                const el = document.createElement('div');
-                el.className = 'chip';
-                el.innerHTML = `${tag} <span class="remove">×</span>`;
-                el.addEventListener('click', () => {
-                    allergies = allergies.filter(t => t !== tag);
-                    renderTags();
-                });
-                container.appendChild(el);
-            });
-        }
-
-        function switchState(state) {
-            const before = document.getElementById('beforeState');
-            const after = document.getElementById('afterState');
-            if (state === 'after') {
-                before.classList.add('hidden');
-                after.classList.remove('hidden');
-                after.scrollIntoView({ behavior: 'smooth' });
-            } else {
-                after.classList.add('hidden');
-                before.classList.remove('hidden');
-            }
-        }
-
-        function resetForm() {
-            document.querySelectorAll('input[type="radio"][name="goal"]').forEach(r => r.checked = false);
-            document.getElementById('customGoal').value = '';
-            document.getElementById('customGoalBox').style.display = 'none';
-            document.getElementById('otherConditionBox').style.display = 'none';
-            document.getElementById('tagInput').value = '';
-            allergies = [];
-            renderTags();
-            document.querySelectorAll('#healthGroup input[type="checkbox"]').forEach(c => c.checked = false);
-        }
-
-        function getDayState(week, day) {
-            if (!mealsState[week]) mealsState[week] = {};
-            if (!mealsState[week][day]) {
-                mealsState[week][day] = mealSlots.map(slot => ({ ...slot, name: '', weight: '' }));
-            }
-            return mealsState[week][day];
-        }
-
-        function renderTimeline() {
-            const container = document.getElementById('timeline');
-            container.innerHTML = '';
-            const dayMeals = getDayState(currentWeek, currentDay);
-
-            dayMeals.forEach((meal, idx) => {
-                const card = document.createElement('div');
-                card.className = 'meal-card' + (meal.type.includes('Snack') ? ' small' : '');
-                const hasData = meal.name || meal.weight;
-                card.innerHTML = `
-                    <div class="meal-time">${meal.time}</div>
-                    <div class="meal-info">
-                        <h4>${meal.type}</h4>
-                        <p class="meta">${meal.window}</p>
-                        <p class="meta">${hasData ? `Makanan: ${meal.name || '-'}` : 'Belum ada meal'}</p>
-                        <p class="meta">${hasData ? `Berat: ${meal.weight || '-'} g` : 'Masukkan makanan dan berat (g/kg)'}</p>
-                        <div style="display:grid; grid-template-columns:1fr 140px; gap:0.5rem; margin-top:0.5rem;">
-                            <input type="text" placeholder="Nama makanan" value="${meal.name || ''}" data-idx="${idx}" data-field="name" class="meal-input">
-                            <input type="number" min="1" placeholder="Berat (g)" value="${meal.weight || ''}" data-idx="${idx}" data-field="weight" class="meal-input">
-                        </div>
-                    </div>
-                    <button class="btn-ghost" data-idx="${idx}">Add Meal</button>
-                `;
-                card.querySelector('button').addEventListener('click', (e) => saveMeal(e, idx));
-                card.querySelectorAll('.meal-input').forEach(input => {
-                    input.addEventListener('input', (e) => {
-                        const field = e.target.dataset.field;
-                        dayMeals[idx][field] = e.target.value;
-                    });
-                });
-                container.appendChild(card);
-            });
-        }
-
-        function saveMeal(event, idx) {
-            const dayMeals = getDayState(currentWeek, currentDay);
-            const meal = dayMeals[idx];
-            if (!meal.name || !meal.weight) {
-                alert('Isi nama makanan dan berat terlebih dahulu.');
-                return;
-            }
-            alert('Meal disimpan! (Analisis gizi AI akan ditambahkan)');
-            renderTimeline();
-        }
-    </script>
+    <script src="js/mealplanner.js"></script>
 </body>
-</html>
 
+</html>
