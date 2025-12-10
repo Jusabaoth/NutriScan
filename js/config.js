@@ -6,7 +6,7 @@
  * Menu: Project Settings -> API
  */
 const SUPABASE_PROJECT_URL = window.SUPABASE_PROJECT_URL || 'https://zclpywientjorspzzybk.supabase.co';
-const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjbHB5d2llbnRqb3JzcHp6eWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNjYwNTYsImV4cCI6MjA4MDk0MjA1Nn0.0AgBqMwm2lZjjiiLdyPqGWFmZrh5XVIx3pJ_hIuH8dE';
 
 const API_ENDPOINTS = {
     // Direct link to Edge Functions
