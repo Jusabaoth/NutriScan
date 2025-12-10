@@ -869,15 +869,37 @@ function hideLoadingState() {
 // ===================================
 
 function saveResult(result) {
-    const results = JSON.parse(localStorage.getItem('nutriscan_scan_results') || '[]');
-    results.unshift(result);
+    try {
+        const results = JSON.parse(localStorage.getItem('nutriscan_scan_results') || '[]');
 
-    // Keep only last 10 results
-    if (results.length > 10) {
-        results.pop();
+        // Create a copy and remove huge image data before saving to avoid quota exceeded error
+        const resultToSave = { ...result };
+        if (resultToSave.imageUrl) {
+            delete resultToSave.imageUrl;
+        }
+
+        results.unshift(resultToSave);
+
+        // Keep only last 10 results
+        if (results.length > 10) {
+            results.pop();
+        }
+
+        localStorage.setItem('nutriscan_scan_results', JSON.stringify(results));
+    } catch (e) {
+        console.warn('Gagal menyimpan riwayat scan (quota exceeded):', e);
+        // If quota still exceeded, we could clear older results
+        if (e.name === 'QuotaExceededError') {
+            // Try to clear half of the results
+            try {
+                const results = JSON.parse(localStorage.getItem('nutriscan_scan_results') || '[]');
+                const newResults = results.slice(0, 5); // Keep only top 5
+                localStorage.setItem('nutriscan_scan_results', JSON.stringify(newResults));
+            } catch (retryError) {
+                console.error('CRITICAL: Cannot save even after reducing storage', retryError);
+            }
+        }
     }
-
-    localStorage.setItem('nutriscan_scan_results', JSON.stringify(results));
 }
 
 // ===================================

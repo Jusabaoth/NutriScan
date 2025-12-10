@@ -12,7 +12,7 @@ const isLocalhost = window.location.hostname === 'localhost' || window.location.
 
 const API_BASE_URL = isLocalhost
     ? 'http://localhost:3000'  // Development
-    : (window.NUTRISCAN_BACKEND_URL || 'https://nutriscan-backend.onrender.com');  // Production
+    : (window.NUTRISCAN_BACKEND_URL || 'https://YOUR-GLITCH-PROJECT-NAME.glitch.me');  // Production (GANTI INI!)
 
 const API_ENDPOINTS = {
     ANALYZE: `${API_BASE_URL}/api/analyze`,
@@ -28,8 +28,8 @@ const API_ENDPOINTS = {
  * @returns {Promise<Object>} Response dari Gemini API
  */
 async function callGeminiAPI(requestBody, type = 'default') {
-    const endpoint = type === 'meal-plan' 
-        ? API_ENDPOINTS.ANALYZE_MEAL_PLAN 
+    const endpoint = type === 'meal-plan'
+        ? API_ENDPOINTS.ANALYZE_MEAL_PLAN
         : API_ENDPOINTS.ANALYZE;
 
     try {
