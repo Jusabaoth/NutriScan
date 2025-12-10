@@ -1,28 +1,22 @@
-// API CONFIGURATION
+// API CONFIGURATION (SUPABASE)
 
 /**
- * Deteksi environment dan tentukan backend URL
- * 
- * Development: http://localhost:3000
- * Production Netlify: https://nutriscan-backend.onrender.com (atau service lain)
- * 
- * Untuk production, ubah REACT_APP_BACKEND_URL sesuai backend service Anda
+ * Konfigurasi Supabase
+ * Ganti nilai di bawah ini dengan Project URL dan Anon Key dari Dashboard Supabase Anda.
+ * Menu: Project Settings -> API
  */
-const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-const API_BASE_URL = isLocalhost
-    ? 'http://localhost:3000'  // Development
-    : (window.NUTRISCAN_BACKEND_URL || 'https://YOUR-GLITCH-PROJECT-NAME.glitch.me');  // Production (GANTI INI!)
+const SUPABASE_PROJECT_URL = window.SUPABASE_PROJECT_URL || 'https://zclpywientjorspzzybk.supabase.co';
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
 
 const API_ENDPOINTS = {
-    ANALYZE: `${API_BASE_URL}/api/analyze`,
-    ANALYZE_MEAL_PLAN: `${API_BASE_URL}/api/analyze-meal-plan`,
-    HEALTH: `${API_BASE_URL}/api/health`
+    // Direct link to Edge Functions
+    ANALYZE: `${SUPABASE_PROJECT_URL}/functions/v1/analyze`,
+    ANALYZE_MEAL_PLAN: `${SUPABASE_PROJECT_URL}/functions/v1/analyze-meal-plan`,
+    HEALTH: `${SUPABASE_PROJECT_URL}/functions/v1/health`
 };
 
-
 /**
- * Fungsi untuk call Gemini API melalui proxy backend
+ * Fungsi untuk call Gemini API melalui Supabase Edge Functions
  * @param {Object} requestBody - Body request dengan contents dan generationConfig
  * @param {string} type - Tipe analisis ('default' atau 'meal-plan')
  * @returns {Promise<Object>} Response dari Gemini API
@@ -37,6 +31,7 @@ async function callGeminiAPI(requestBody, type = 'default') {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
             },
             body: JSON.stringify(requestBody)
         });
@@ -51,30 +46,24 @@ async function callGeminiAPI(requestBody, type = 'default') {
         return data;
 
     } catch (error) {
-        console.error('❌ Gemini API Call Error:', error);
+        console.error('❌ Supabase Function Call Error:', error);
         throw error;
     }
 }
 
 /**
- * Check health status backend
+ * Check health status (Serverless version)
  * @returns {Promise<Object>} Health status
  */
 async function checkBackendHealth() {
-    try {
-        const response = await fetch(API_ENDPOINTS.HEALTH);
-        if (!response.ok) throw new Error('Backend tidak tersedia');
-        return await response.json();
-    } catch (error) {
-        console.error('❌ Backend Health Check Failed:', error);
-        return null;
-    }
+    // For serverless, no need to perform explicit health check on load
+    return { status: 'Serverless Ready' };
 }
 
 // ENVIRONMENT DETECTION
 
 const CONFIG = {
-    API_BASE_URL,
+    SUPABASE_PROJECT_URL,
     API_ENDPOINTS,
     IS_DEVELOPMENT: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
     IS_PRODUCTION: !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1',
