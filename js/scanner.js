@@ -47,12 +47,11 @@ function loadUserProfile() {
     }
 }
 
-// ===================================
+
 // EVENT LISTENERS
-// ===================================
+
 
 function setupEventListeners() {
-    // Drop zone events
     const dropZone = document.getElementById('dropZone');
     if (dropZone) {
         dropZone.addEventListener('dragover', handleDragOver);
@@ -67,9 +66,7 @@ function setupEventListeners() {
     }
 }
 
-// ===================================
 // MODE SWITCHING
-// ===================================
 
 function switchMode(mode) {
     currentMode = mode;
@@ -94,9 +91,7 @@ function switchMode(mode) {
     }
 }
 
-// ===================================
 // CAMERA FUNCTIONALITY
-// ===================================
 
 async function startCamera() {
     try {
@@ -121,15 +116,33 @@ async function startCamera() {
 
 function capturePhoto() {
     const video = document.getElementById('videoElement');
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    const canvas = document.createElement('canvas'); // Re-added this line
+
+    // Set max dimensions (optimize for API payload size)
+    const MAX_DIMENSION = 800; // Resize to max 800px
+    let width = video.videoWidth;
+    let height = video.videoHeight;
+
+    if (width > height) {
+        if (width > MAX_DIMENSION) {
+            height *= MAX_DIMENSION / width;
+            width = MAX_DIMENSION;
+        }
+    } else {
+        if (height > MAX_DIMENSION) {
+            width *= MAX_DIMENSION / height;
+            height = MAX_DIMENSION;
+        }
+    }
+
+    canvas.width = width;
+    canvas.height = height;
 
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0);
+    ctx.drawImage(video, 0, 0, width, height);
 
-    // Convert to base64
-    const imageData = canvas.toDataURL('image/jpeg', 0.9);
+    // Convert to base64 (reduce quality slightly for smaller size)
+    const imageData = canvas.toDataURL('image/jpeg', 0.8);
 
     // Display preview
     displayImagePreview(imageData);
