@@ -1,7 +1,5 @@
 /**
  * NutriScan Backend Server
- * Proxy server untuk menyembunyikan API Key Gemini
- * Usage: node server.js
  */
 
 const express = require('express');
@@ -48,6 +46,11 @@ app.post('/api/analyze', async (req, res) => {
 
         const geminiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
+        console.log('🔵 Server: Calling Gemini API...');
+        console.log('🔵 Endpoint:', geminiEndpoint);
+        console.log('🔵 API Key exists:', !!GEMINI_API_KEY);
+        console.log('🔵 API Key length:', GEMINI_API_KEY ? GEMINI_API_KEY.length : 0);
+
         const response = await fetch(`${geminiEndpoint}?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: {
@@ -62,9 +65,12 @@ app.post('/api/analyze', async (req, res) => {
             })
         });
 
+        console.log('🔵 Gemini Response Status:', response.status);
+        console.log('🔵 Gemini Response OK:', response.ok);
+
         if (!response.ok) {
             const errorData = await response.json();
-            console.error('❌ Gemini API Error:', errorData);
+            console.error('❌ Gemini API Error Details:', JSON.stringify(errorData, null, 2));
             return res.status(response.status).json({
                 error: 'Gemini API Error',
                 details: errorData

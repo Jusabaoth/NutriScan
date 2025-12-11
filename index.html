@@ -1075,6 +1075,185 @@
                 font-size: 1.5rem;
             }
         }
+
+        /* HEALTH PROFILE BUTTON & MODAL */
+        .health-profile-button {
+            padding: 1.5rem 3rem;
+            background: white;
+            color: #00e676;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .health-profile-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .health-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s;
+            padding: 1rem;
+        }
+
+        .health-modal-overlay.active {
+            display: flex;
+        }
+
+        .health-modal {
+            background: white;
+            border-radius: 20px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 2rem;
+            position: relative;
+            animation: slideUp 0.3s;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .health-modal-close {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: #ff5252;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .health-modal-close:hover {
+            background: #ff1744;
+            transform: rotate(90deg);
+        }
+
+        .health-modal-title {
+            color: #00c853;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            padding-right: 3rem;
+        }
+
+        .health-modal-subtitle {
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .health-modal-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            justify-content: flex-end;
+        }
+
+        .btn-save-health {
+            padding: 1rem 2.5rem;
+            background: linear-gradient(135deg, #00e676, #00c853);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-save-health:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 230, 118, 0.4);
+        }
+
+        .btn-cancel-health {
+            padding: 1rem 2.5rem;
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+            border-radius: 15px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-cancel-health:hover {
+            background: #bdbdbd;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .health-profile-button {
+                padding: 1rem 2rem;
+                font-size: 1rem;
+                width: 100%;
+            }
+
+            .health-modal {
+                padding: 1.5rem;
+                max-height: 95vh;
+            }
+
+            .health-modal-title {
+                font-size: 1.5rem;
+            }
+
+            .health-modal-actions {
+                flex-direction: column;
+            }
+
+            .btn-save-health,
+            .btn-cancel-health {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 
@@ -1225,8 +1404,11 @@
         <!-- WELCOME BANNER -->
         <section class="welcome-banner">
             <h1>Selamat datang, <span id="welcomeName">User</span>! 👋</h1>
-            <p>Siap scan label makanan hari ini?</p>
-            <button class="scanner-cta-button" onclick="navigateToScanner()">
+            <p>Lengkapi profil kesehatan untuk rekomendasi nutrisi yang lebih personal</p>
+            <button class="health-profile-button" id="healthProfileButton" onclick="openHealthProfileModal()">
+                <span id="healthButtonIcon">🏥</span> <span id="healthButtonText">Setup Profil Kesehatan</span>
+            </button>
+            <button class="scanner-cta-button" onclick="navigateToScanner()" style="margin-top: 1rem;">
                 <span>📸</span> Mulai Scan Sekarang
             </button>
         </section>
@@ -1283,6 +1465,194 @@
             </div>
         </div>
     </section>
+    </div>
+
+    <!-- HEALTH PROFILE MODAL -->
+    <div class="health-modal-overlay" id="healthModalOverlay" onclick="closeHealthProfileModal(event)">
+        <div class="health-modal" onclick="event.stopPropagation()">
+            <button class="health-modal-close" onclick="closeHealthProfileModal()">&times;</button>
+
+            <h2 class="health-modal-title">🏥 Profil Kesehatan</h2>
+            <p class="health-modal-subtitle">Pilih kondisi kesehatan yang Anda miliki untuk mendapatkan rekomendasi
+                nutrisi yang lebih personal</p>
+
+            <!-- Alergi Makanan -->
+            <div class="disease-group">
+                <div class="disease-title">Alergi Makanan</div>
+                <div class="disease-options">
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_allergy1" name="disease" value="susu">
+                        <label for="modal_allergy1">Susu dan produk olahannya, termasuk alergi protein susu atau
+                            intoleransi laktosa</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_allergy2" name="disease" value="kacang_tanah">
+                        <label for="modal_allergy2">Kacang tanah, dapat memicu gatal, bengkak, atau sesak napas</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_allergy3" name="disease" value="kacang_pohon">
+                        <label for="modal_allergy3">Kacang pohon, seperti almond, mete, dan walnut, yang dapat memicu
+                            reaksi alergi</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_allergy4" name="disease" value="seafood">
+                        <label for="modal_allergy4">Seafood, seperti udang, kepiting, ikan, dan kerang, yang dapat
+                            memicu reaksi alergi</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_allergy5" name="disease" value="gluten">
+                        <label for="modal_allergy5">Gluten atau gandum, termasuk sensitivitas atau intoleransi terhadap
+                            produk berbahan tepung</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_allergy6" name="disease" value="kedelai">
+                        <label for="modal_allergy6">Kedelai, reaksi terhadap produk berbasis kedelai seperti tahu,
+                            tempe, atau susu kedelai</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_allergy7" name="disease" value="telur">
+                        <label for="modal_allergy7">Telur, terutama alergi terhadap bagian putih telur</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Penyakit Metabolik -->
+            <div class="disease-group">
+                <div class="disease-title">Penyakit Metabolik</div>
+                <div class="disease-description">Penyakit/kelainan yang terkait metabolisme tubuh</div>
+                <div class="disease-options">
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_metabolic1" name="disease" value="diabetes">
+                        <label for="modal_metabolic1">Diabetes Mellitus, gula darah (glukosa) dalam tubuh terlalu
+                            tinggi</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_metabolic2" name="disease" value="obesitas">
+                        <label for="modal_metabolic2">Obesitas, lemak tubuh menumpuk secara berlebihan</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_metabolic3" name="disease" value="dislipidemia">
+                        <label for="modal_metabolic3">Dislipidemia, kadar kolesterol/lemak darah tidak normal</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_metabolic4" name="disease" value="hipertensi">
+                        <label for="modal_metabolic4">Hipertensi, tekanan darah tinggi</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_metabolic5" name="disease" value="sindrom_metabolik">
+                        <label for="modal_metabolic5">Sindrom Metabolik, kombinasi obesitas, hipertensi, gula darah
+                            tinggi, dan trigliserida tinggi</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Penyakit Kardiovaskular -->
+            <div class="disease-group">
+                <div class="disease-title">Penyakit Kardiovaskular</div>
+                <div class="disease-description">Gangguan pada jantung dan pembuluh darah</div>
+                <div class="disease-options">
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_cardio1" name="disease" value="jantung_koroner">
+                        <label for="modal_cardio1">Penyakit Jantung Koroner, penyempitan pembuluh darah jantung</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_cardio2" name="disease" value="gagal_jantung">
+                        <label for="modal_cardio2">Gagal Jantung, jantung tidak mampu memompa darah dengan baik</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_cardio3" name="disease" value="stroke_iskemik">
+                        <label for="modal_cardio3">Stroke Iskemik, aliran darah ke otak tersumbat</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_cardio4" name="disease" value="aritmia">
+                        <label for="modal_cardio4">Aritmia, irama detak jantung tidak normal</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Penyakit Paru Kronis -->
+            <div class="disease-group">
+                <div class="disease-title">Penyakit Paru Kronis</div>
+                <div class="disease-description">Gangguan pernapasan jangka panjang</div>
+                <div class="disease-options">
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_lung1" name="disease" value="ppok">
+                        <label for="modal_lung1">PPOK, kerusakan paru akibat iritasi jangka panjang seperti
+                            rokok</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_lung2" name="disease" value="asma_kronis">
+                        <label for="modal_lung2">Asma Kronis, penyempitan saluran napas berulang</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_lung3" name="disease" value="bronkitis_kronis">
+                        <label for="modal_lung3">Bronkitis Kronis, peradangan selaput bronkus dalam waktu lama</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kanker -->
+            <div class="disease-group">
+                <div class="disease-title">Kanker</div>
+                <div class="disease-description">Pertumbuhan sel abnormal yang menyerang jaringan tubuh</div>
+                <div class="disease-options">
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_cancer1" name="disease" value="kanker_payudara">
+                        <label for="modal_cancer1">Kanker Payudara, pertumbuhan sel abnormal pada jaringan
+                            payudara</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_cancer2" name="disease" value="kanker_serviks">
+                        <label for="modal_cancer2">Kanker Serviks, kanker pada leher rahim</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_cancer3" name="disease" value="kanker_paru">
+                        <label for="modal_cancer3">Kanker Paru, pertumbuhan sel ganas pada jaringan paru</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_cancer4" name="disease" value="kanker_usus_besar">
+                        <label for="modal_cancer4">Kanker Usus Besar, pertumbuhan sel abnormal di kolon</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_cancer5" name="disease" value="kanker_hati">
+                        <label for="modal_cancer5">Kanker Hati, sel kanker pada organ hati</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gangguan Pencernaan Kronis -->
+            <div class="disease-group">
+                <div class="disease-title">Gangguan Pencernaan Kronis</div>
+                <div class="disease-description">Penyakit jangka panjang pada sistem pencernaan</div>
+                <div class="disease-options">
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_digestive1" name="disease" value="gerd">
+                        <label for="modal_digestive1">GERD, asam lambung naik ke kerongkongan secara kronis</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_digestive2" name="disease" value="ibs">
+                        <label for="modal_digestive2">IBS, gangguan fungsi usus besar tanpa sebab jelas</label>
+                    </div>
+                    <div class="disease-option">
+                        <input type="checkbox" id="modal_digestive3" name="disease" value="intoleransi_laktosa">
+                        <label for="modal_digestive3">Intoleransi Laktosa, tubuh tidak dapat mencerna laktosa</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other Diseases -->
+            <div class="other-disease">
+                <label for="modal_otherDisease">Penyakit Lainnya (opsional)</label>
+                <textarea id="modal_otherDisease"
+                    placeholder="Masukkan penyakit atau kondisi kesehatan lain yang tidak terdaftar di atas..."></textarea>
+            </div>
+
+            <!-- Actions -->
+            <div class="health-modal-actions">
+                <button class="btn-cancel-health" onclick="closeHealthProfileModal()">Batal</button>
+                <button class="btn-save-health" onclick="saveHealthProfile()">💾 Simpan Profil</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1547,8 +1917,153 @@
             // Sync mobile menu
             syncMobileMenuState();
 
+            // Update health profile button
+            updateHealthProfileButton();
+
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ===================================
+        // HEALTH PROFILE MODAL FUNCTIONS
+        // ===================================
+
+        // Open health profile modal
+        function openHealthProfileModal() {
+            const overlay = document.getElementById('healthModalOverlay');
+            overlay.classList.add('active');
+
+            // Load existing health data if any
+            loadHealthProfileData();
+
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Close health profile modal
+        function closeHealthProfileModal(event) {
+            // If event exists and target is not the overlay, don't close
+            if (event && event.target !== event.currentTarget) {
+                return;
+            }
+
+            const overlay = document.getElementById('healthModalOverlay');
+            overlay.classList.remove('active');
+
+            // Restore body scroll
+            document.body.style.overflow = '';
+        }
+
+        // Load health profile data from localStorage
+        function loadHealthProfileData() {
+            const healthData = localStorage.getItem('nutriscan_health_data');
+
+            if (!healthData) {
+                // Clear all checkboxes if no data
+                const checkboxes = document.querySelectorAll('#healthModalOverlay input[type="checkbox"]');
+                checkboxes.forEach(cb => cb.checked = false);
+                document.getElementById('modal_otherDisease').value = '';
+                return;
+            }
+
+            try {
+                const data = JSON.parse(healthData);
+
+                // Check the appropriate checkboxes
+                if (data.diseases && Array.isArray(data.diseases)) {
+                    data.diseases.forEach(disease => {
+                        const checkbox = document.querySelector(`#healthModalOverlay input[value="${disease}"]`);
+                        if (checkbox) {
+                            checkbox.checked = true;
+                        }
+                    });
+                }
+
+                // Fill in other conditions
+                if (data.otherConditions) {
+                    document.getElementById('modal_otherDisease').value = data.otherConditions;
+                }
+            } catch (error) {
+                console.error('Error loading health data:', error);
+            }
+        }
+
+        // Save health profile data to localStorage
+        function saveHealthProfile() {
+            // Collect selected diseases
+            const diseases = [];
+            const checkboxes = document.querySelectorAll('#healthModalOverlay input[name="disease"]:checked');
+            checkboxes.forEach(cb => diseases.push(cb.value));
+
+            // Get other conditions
+            const otherConditions = document.getElementById('modal_otherDisease').value.trim();
+
+            // Create health data object
+            const healthData = {
+                diseases: diseases,
+                otherConditions: otherConditions,
+                timestamp: Date.now()
+            };
+
+            // Save to localStorage
+            localStorage.setItem('nutriscan_health_data', JSON.stringify(healthData));
+
+            // Update button state
+            updateHealthProfileButton();
+
+            // Close modal
+            closeHealthProfileModal();
+
+            // Show success message
+            showSuccessMessage('✅ Profil kesehatan berhasil disimpan!');
+        }
+
+        // Update health profile button text based on data existence
+        function updateHealthProfileButton() {
+            const healthData = localStorage.getItem('nutriscan_health_data');
+            const button = document.getElementById('healthProfileButton');
+            const icon = document.getElementById('healthButtonIcon');
+            const text = document.getElementById('healthButtonText');
+
+            if (!button) return;
+
+            if (healthData) {
+                // Data exists - show "Edit" button
+                icon.textContent = '✏️';
+                text.textContent = 'Ubah Profil Kesehatan';
+            } else {
+                // No data - show "Setup" button
+                icon.textContent = '🏥';
+                text.textContent = 'Setup Profil Kesehatan';
+            }
+        }
+
+        // Show success message
+        function showSuccessMessage(message) {
+            // Create toast notification
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #00e676, #00c853);
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 10px;
+                box-shadow: 0 8px 25px rgba(0, 230, 118, 0.4);
+                z-index: 10001;
+                font-weight: 600;
+                animation: slideInRight 0.3s ease-out;
+            `;
+            toast.textContent = message;
+
+            document.body.appendChild(toast);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
 
         // Logout
@@ -1721,9 +2236,7 @@
                     scrollToAuth('login');
                     return;
                 }
-                // Navigate to meal planner (remove disabled check and alert)
                 navigateToMealPlanner();
-                // Close mobile menu if open
                 const mobileMenu = document.getElementById('mobileMenu');
                 const menuToggle = document.getElementById('menuToggle');
                 if (mobileMenu && mobileMenu.classList.contains('active')) {

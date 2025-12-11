@@ -165,9 +165,7 @@ function stopCamera() {
     }
 }
 
-// ===================================
 // FILE UPLOAD FUNCTIONALITY
-// ===================================
 
 function handleDragOver(e) {
     e.preventDefault();
@@ -248,51 +246,22 @@ function removeImage() {
     updateScanButton();
 }
 
-// ===================================
 // HEALTH QUESTIONNAIRE
-// ===================================
 
 function loadHealthData() {
     const saved = localStorage.getItem('nutriscan_health_data');
     if (saved) {
         healthData = JSON.parse(saved);
-        populateHealthForm(healthData);
-    }
-}
-
-function populateHealthForm(data) {
-    // Populate checkboxes based on saved data
-    if (data.diseases) {
-        data.diseases.forEach(disease => {
-            const checkbox = document.querySelector(`input[value="${disease}"]`);
-            if (checkbox) checkbox.checked = true;
-        });
-    }
-
-    if (data.otherConditions) {
-        const textarea = document.querySelector('textarea[placeholder*="kondisi lain"]');
-        if (textarea) textarea.value = data.otherConditions;
+        console.log('✅ Health data loaded from localStorage:', healthData);
+    } else {
+        console.log('ℹ️ No health data found in localStorage');
     }
 }
 
 function collectHealthData() {
-    const diseases = [];
-    const checkboxes = document.querySelectorAll('input[name="disease"]:checked');
-    checkboxes.forEach(cb => diseases.push(cb.value));
-
-    const otherConditions = document.querySelector('textarea[placeholder*="kondisi lain"]')?.value || '';
-
-    const data = {
-        diseases: diseases,
-        otherConditions: otherConditions,
-        timestamp: Date.now()
-    };
-
-    // Save to localStorage
-    localStorage.setItem('nutriscan_health_data', JSON.stringify(data));
-    healthData = data;
-
-    return data;
+    // Simply return the health data loaded from localStorage
+    // No need to query DOM since form is now on dashboard
+    return healthData;
 }
 
 // ===================================
@@ -307,6 +276,113 @@ function updateScanButton() {
 }
 
 // ===================================
+// HEALTH WARNING DIALOG
+// ===================================
+
+function showHealthWarningDialog() {
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'healthWarningOverlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        padding: 1rem;
+    `;
+
+    // Create modal
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        background: white;
+        border-radius: 20px;
+        max-width: 500px;
+        width: 100%;
+        padding: 2rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    `;
+
+    modal.innerHTML = `
+        <h2 style="color: #F59E0B; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 2rem;">⚠️</span> Profil Kesehatan Belum Diatur
+        </h2>
+        <p style="color: #666; margin-bottom: 1.5rem; line-height: 1.6;">
+            Untuk rekomendasi yang lebih personal, silakan atur profil kesehatan Anda di Dashboard terlebih dahulu.
+        </p>
+        <div style="background: #f8fffe; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" id="dontRemindCheckbox" style="width: 18px; height: 18px; cursor: pointer;">
+                <span style="color: #333; font-size: 0.95rem;">Jangan ingatkan lagi</span>
+            </label>
+        </div>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <button id="btnContinueWithout" style="padding: 0.75rem 1.5rem; background: #e0e0e0; color: #333; border: none; border-radius: 10px; font-weight: 600; cursor: pointer;">
+                Lanjutkan Tanpa Profil
+            </button>
+            <button id="btnGoToDashboard" style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #00e676, #00c853); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer;">
+                Atur Profil
+            </button>
+        </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Add event listeners
+    document.getElementById('btnContinueWithout').addEventListener('click', () => {
+        const dontRemind = document.getElementById('dontRemindCheckbox').checked;
+        if (dontRemind) {
+            localStorage.setItem('nutriscan_skip_health_warning', 'true');
+        }
+        overlay.remove();
+        // Continue with scan without health data
+        continueWithoutHealthData();
+    });
+
+    document.getElementById('btnGoToDashboard').addEventListener('click', () => {
+        overlay.remove();
+        window.location.href = 'Index.html';
+    });
+}
+
+function continueWithoutHealthData() {
+    // Proceed with scan without health data
+    performScanWithoutWarning();
+}
+
+async function performScanWithoutWarning() {
+    if (!capturedImage) {
+        alert('Silakan upload atau ambil foto label nutrisi terlebih dahulu.');
+        return;
+    }
+
+    // Use null health data
+    const health = null;
+
+    // Show loading state
+    showLoadingState();
+
+    try {
+        // Prepare request
+        const result = await analyzeWithGemini(capturedImage, health);
+
+        // Display results
+        displayResults(result);
+
+        // Save to localStorage
+        saveResult(result);
+
+    } catch (error) {
+        console.error('Analysis error:', error);
+        hideLoadingState();
+        alert('Terjadi kesalahan saat menganalisis. Silakan coba lagi.\\n\\nError: ' + error.message);
+    }
+}
+
+// ===================================
 // AI ANALYSIS
 // ===================================
 
@@ -314,6 +390,20 @@ async function performScan() {
     if (!capturedImage) {
         alert('Silakan upload atau ambil foto label nutrisi terlebih dahulu.');
         return;
+    }
+
+    // Check if user wants to skip health warning
+    const skipWarning = localStorage.getItem('nutriscan_skip_health_warning');
+
+    // Check if health data exists
+    if (!healthData || !healthData.diseases || healthData.diseases.length === 0) {
+        // If user hasn't chosen to skip warning, show it
+        if (skipWarning !== 'true') {
+            showHealthWarningDialog();
+            return;
+        }
+        // Otherwise, proceed without health data
+        console.log('⚠️ Proceeding without health data (user chose to skip warning)');
     }
 
     // Collect health data
@@ -451,10 +541,9 @@ Analisis DETAIL dan PERSONAL berdasarkan kondisi kesehatan pengguna!`;
     } catch (apiError) {
         console.error('❌ Scanner: API call failed:', apiError);
         console.error('Error message:', apiError.message);
-        console.warn('⚠️ Using fallback mock analysis...');
 
-        // FALLBACK: Return mock analysis when API fails
-        return generateMockAnalysis();
+        // Throw error instead of showing mock data
+        throw new Error(`Gagal menghubungi AI: ${apiError.message}. Pastikan server backend berjalan dan API key valid.`);
     }
 
     // Extract response text
@@ -472,6 +561,13 @@ Analisis DETAIL dan PERSONAL berdasarkan kondisi kesehatan pengguna!`;
         } else if (jsonText.includes('```')) {
             jsonText = jsonText.split('```')[1].split('```')[0].trim();
         }
+
+        // Clean up control characters that might cause JSON parsing errors
+        // Replace problematic characters while preserving valid JSON structure
+        jsonText = jsonText
+            .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
+            .replace(/\r\n/g, '\n') // Normalize line endings
+            .replace(/\r/g, '\n'); // Normalize line endings
 
         const result = JSON.parse(jsonText);
         console.log('✅ Scanner: JSON parsed successfully');
@@ -536,83 +632,55 @@ function formatHealthDataForPrompt(healthData) {
 }
 
 // ===================================
-// FALLBACK MOCK ANALYSIS (when API fails)
+// MOCK ANALYSIS (when API fails)
 // ===================================
 
 function generateMockAnalysis() {
-    console.log('🎭 Generating mock analysis for demo purposes...');
+    console.log('🎭 Generating mock analysis (Failure state)...');
 
     return {
-        productName: "Sample Product Analysis",
+        productName: "Gagal Menganalisis",
         nutritionFacts: {
-            servingSize: "1 pack (100g)",
-            calories: 350,
-            totalFat: 12,
-            saturatedFat: 3,
+            servingSize: "-",
+            calories: 0,
+            totalFat: 0,
+            saturatedFat: 0,
             transFat: 0,
-            cholesterol: 25,
-            sodium: 450,
-            totalCarbohydrate: 48,
-            dietaryFiber: 3,
-            sugars: 8,
-            protein: 10
+            cholesterol: 0,
+            sodium: 0,
+            totalCarbohydrate: 0,
+            dietaryFiber: 0,
+            sugars: 0,
+            protein: 0
         },
-        ingredients: ["Wheat flour", "Sugar", "Vegetable oil", "Salt", "Yeast", "Water"],
+        ingredients: ["-"],
         riskAssessment: {
-            level: "medium",
-            factors: ["Moderate sodium content", "Contains refined carbohydrates"],
-            score: 45
+            level: "high",
+            factors: ["Gambar tidak jelas", "Label nutrisi tidak terdeteksi"],
+            score: 0
         },
-        recommendations: [
-            {
-                category: "limit",
-                message: "Batasi portion karena kandungan gula",
-                reason: "Gula 8g per serving sudah mencapai 16% dari daily limit WHO untuk gula bebas"
-            },
-            {
-                category: "safe",
-                message: "Protein cukup untuk snack",
-                reason: "10g protein per serving cocok sebagai makanan selingan"
-            },
-            {
-                category: "avoid",
-                message: "Perhatikan sodium intake",
-                reason: "450mg sodium per serving termasuk medium, pertimbangkan intake lain dalam sehari"
-            }
-        ],
+        recommendations: [],
         bpomCompliance: {
-            compliant: true,
+            compliant: false,
             violations: [],
-            warnings: ["Perhatikan total sodium dari semua makanan dalam sehari"]
+            warnings: []
         },
         whoCompliance: {
-            compliant: true,
+            compliant: false,
             violations: [],
-            warnings: ["Gula bebas 8g, pastikan total <50g per hari"]
+            warnings: []
         },
         analysisText: `
-⚠️ ANALISIS DEMO (API sedang tidak tersedia)
+ AI GAGAL ANALISIS LABEL!
 
-Produk ini merupakan contoh analisis untuk demonstrasi fitur scanner.
+Mohon maaf, AI kami tidak dapat membaca informasi nutrisi dari gambar yang Anda berikan.
 
-KANDUNGAN NUTRISI:
-- Energi: 350 kcal
-- Lemak total: 12g (dalam batas wajar)
-- Karbohidrat: 48g (cukup tinggi)
-- Gula: 8g (moderate)
-- Protein: 10g (baik untuk snack)
+COBA SCAN ULANG DENGAN CARA:
+1. Pastikan Tabel Nilai Gizi terlihat jelas dan tidak buram.
+2. Pastikan pencahayaan cukup terang.
+3. Hindari pantulan cahaya pada kemasan.
 
-COMPLIANCE:
-✅ Sesuai dengan regulasi BPOM
-✅ Sesuai dengan rekomendasi WHO
-
-REKOMENDASI:
-1. Cocok dikonsumsi sebagai snack sesekali
-2. Batasi konsumsi jika Anda memperhatikan asupan gula
-3. Kombinasikan dengan minuman air putih
-
-CATATAN: Ini adalah analisis demo karena API sedang tidak tersedia. 
-Silakan buat API key baru di Google Cloud Console untuk analisis real-time.
+Silakan coba lagi dengan gambar yang lebih jelas!
         `
     };
 }
@@ -758,19 +826,27 @@ function displayResults(result) {
         </div>
     `;
 
-    // Insert results after questioner section
-    const questionerSection = document.querySelector('.questioner-section');
+    // Insert results after scan section (questioner section was removed)
+    const scanSectionElement = document.querySelector('.scan-section');
     const existingResults = document.querySelector('.results-container');
 
     if (existingResults) {
         existingResults.remove();
     }
 
-    questionerSection.insertAdjacentHTML('afterend', resultsHTML);
+    if (scanSectionElement) {
+        scanSectionElement.insertAdjacentHTML('afterend', resultsHTML);
+    } else {
+        // Fallback: append to main container
+        document.querySelector('.main-container').insertAdjacentHTML('beforeend', resultsHTML);
+    }
 
     // Scroll to results
     setTimeout(() => {
-        document.querySelector('.results-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const resultsContainer = document.querySelector('.results-container');
+        if (resultsContainer) {
+            resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }, 100);
 }
 
