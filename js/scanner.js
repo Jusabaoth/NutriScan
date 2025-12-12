@@ -578,6 +578,9 @@ Analisis DETAIL dan PERSONAL berdasarkan kondisi kesehatan pengguna!`;
         result.healthData = healthData;
         result.timestamp = Date.now();
 
+        // Store globally for saving
+        currentAnalysisResult = result;
+
         return result;
     } catch (parseError) {
         console.error('❌ Scanner: Failed to parse response:', parseError);
@@ -818,8 +821,14 @@ function displayResults(result) {
             </div>
             
             <!-- Actions -->
-            <div style="margin-top: 2rem; text-align: center;">
-                <button onclick="resetScanner()" style="padding: 1rem 3rem; background: linear-gradient(135deg, #00e676, #00c853); color: white; border: none; border-radius: 30px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 8px 25px rgba(0, 230, 118, 0.4);">
+            <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 1rem; align-items: center;">
+                ${result.productName !== "Gagal Menganalisis" ? `
+                    <button onclick="saveToHistory()" id="btnSaveHistory" style="width: 100%; max-width: 300px; padding: 1rem; background: white; color: #00c853; border: 2px solid #00c853; border-radius: 30px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <span>💾</span> Simpan ke History
+                    </button>
+                ` : ''}
+                
+                <button onclick="resetScanner()" style="width: 100%; max-width: 300px; padding: 1rem; background: linear-gradient(135deg, #00e676, #00c853); color: white; border: none; border-radius: 30px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 8px 25px rgba(0, 230, 118, 0.4);">
                     🔄 Scan Produk Lain
                 </button>
             </div>
@@ -848,6 +857,75 @@ function displayResults(result) {
             resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }, 100);
+}
+
+// Global variable to store current result for saving
+let currentAnalysisResult = null;
+
+function saveToHistory() {
+    if (!currentAnalysisResult) return;
+
+    const STORAGE_KEY_HISTORY = 'nutriscan_scan_history';
+    const MAX_STORAGE_SIZE = 5 * 1024 * 1024; // 5MB Limit
+    const WARNING_THRESHOLD = 4 * 1024 * 1024; // 4MB Warning
+    const MAX_ITEMS = 50; // Hard limit items
+    const WARNING_ITEMS = 20; // Warning threshold items
+
+    let history = [];
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY_HISTORY);
+        if (raw) history = JSON.parse(raw);
+    } catch (e) {
+        console.error('Failed to parse history:', e);
+        history = [];
+    }
+
+    // Prepare new item (WITHOUT IMAGE to save space)
+    const newItem = {
+        ...currentAnalysisResult,
+        imageUrl: null, // Explicitly remove image
+        savedAt: Date.now()
+    };
+
+    // Calculate sizes
+    const currentHistoryJson = JSON.stringify(history);
+    const newItemJson = JSON.stringify(newItem);
+    const totalSize = currentHistoryJson.length + newItemJson.length;
+
+    // Check for warning
+    if (totalSize > WARNING_THRESHOLD || history.length >= WARNING_ITEMS) {
+        // Check if we already warned for this session? Maybe just show confirm
+        if (!confirm('⚠️ Penyimpanan History Hampir Penuh!\n\nMenyimpan data ini mungkin akan memakan ruang penyimpanan browser Anda. Sebaiknya hapus beberapa riwayat lama agar performa tetap optimal.\n\nLanjutkan menyimpan?')) {
+            return;
+        }
+    }
+
+    // Auto-cleanup if full
+    while ((totalSize > MAX_STORAGE_SIZE || history.length >= MAX_ITEMS) && history.length > 0) {
+        history.pop(); // Remove oldest
+        // Recalculate size (approximation)
+    }
+
+    // Add new item to top
+    history.unshift(newItem);
+
+    // Save
+    try {
+        localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(history));
+
+        // Update UI
+        const btn = document.getElementById('btnSaveHistory');
+        if (btn) {
+            btn.innerHTML = '<span>✅</span> Tersimpan!';
+            btn.disabled = true;
+            btn.style.background = '#e8f5e9';
+            btn.style.borderColor = '#e8f5e9';
+            btn.style.color = '#2e7d32';
+        }
+
+    } catch (e) {
+        alert('Gagal menyimpan: Penyimpanan penuh. Harap hapus history lama.');
+    }
 }
 
 function formatNutritionFact(label, value, unit) {

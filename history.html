@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riwayat Scan - NutriScan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fffe;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            background: #ffffff;
+            padding: 1.2rem 5%;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #10B981, #00c853);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            cursor: pointer;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-menu a {
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-menu a:hover:not(.disabled) {
+            color: #00c853;
+        }
+
+        /* USER PROFILE */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00e676, #00c853);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .btn-logout {
+            padding: 0.5rem 1rem;
+            background: #ff5252;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: #ff1744;
+            transform: translateY(-2px);
+        }
+
+        /* MOBILE MENU */
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .menu-toggle span {
+            width: 25px;
+            height: 3px;
+            background: #00c853;
+            border-radius: 3px;
+            transition: all 0.3s;
+        }
+
+        .mobile-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            flex-direction: column;
+            padding: 1rem;
+            gap: 0.5rem;
+            z-index: 999;
+        }
+
+        .mobile-menu.active {
+            display: flex;
+        }
+
+        .mobile-menu a {
+            padding: 1rem;
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .mobile-menu a:hover {
+            background: #e8f5e9;
+            color: #00c853;
+        }
+
+        /* MAIN CONTAINER */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 5%;
+            flex: 1;
+            width: 100%;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            color: #1b5e20;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        /* SEARCH SECTION */
+        .search-container {
+            margin-bottom: 2rem;
+            position: relative;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            padding-left: 3rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 30px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: #00c853;
+            box-shadow: 0 4px 15px rgba(0, 200, 83, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 1.2rem;
+        }
+
+        /* HISTORY LIST */
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .history-item {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            border: 1px solid #f0f0f0;
+            transition: all 0.3s;
+        }
+
+        .history-item:hover {
+            box-shadow: 0 8px 25px rgba(0, 230, 118, 0.15);
+            border-color: #e0e0e0;
+        }
+
+        .history-header {
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            background: linear-gradient(to right, #ffffff, #f9fffa);
+        }
+
+        .product-info h3 {
+            color: #1b5e20;
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+
+        .scan-date {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .risk-badge.low {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .risk-badge.medium {
+            background: #fff7ed;
+            color: #f57f17;
+        }
+
+        .risk-badge.high {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .compliance-status {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-dot.green {
+            background: #00c853;
+        }
+
+        .status-dot.red {
+            background: #ff5252;
+        }
+
+        .history-content {
+            padding: 0 1.5rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+            background: #fff;
+        }
+
+        .history-content.expanded {
+            max-height: 2000px;
+            /* Arbitrary large number for expansion */
+            padding-bottom: 1.5rem;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .nutrition-item {
+            background: #f8fffe;
+            padding: 0.8rem;
+            border-radius: 10px;
+        }
+
+        .nutrition-label {
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .nutrition-value {
+            color: #1b5e20;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .analysis-text {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #e8f5e9;
+            border-radius: 10px;
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-line;
+        }
+
+        .expand-btn {
+            background: none;
+            border: none;
+            color: #00c853;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 1rem 1.5rem;
+            width: 100%;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            border-top: 1px solid transparent;
+        }
+
+        .expand-btn:hover {
+            background: #f9f9f9;
+        }
+
+        /* DELETE ALL BUTTON */
+        .delete-section {
+            margin-top: 3rem;
+            text-align: center;
+            padding-bottom: 2rem;
+        }
+
+        .btn-delete-all {
+            background: transparent;
+            color: #ff5252;
+            border: 2px solid #ff5252;
+            padding: 0.8rem 2rem;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-delete-all:hover {
+            background: #ff5252;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 82, 82, 0.2);
+        }
+
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #888;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .empty-text {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn-scan-now {
+            padding: 0.8rem 2rem;
+            background: linear-gradient(135deg, #00e676, #00c853);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0, 230, 118, 0.3);
+            transition: all 0.3s;
+            display: inline-block;
+        }
+
+        .btn-scan-now:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 230, 118, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .menu-toggle {
+                display: flex;
+            }
+
+            .user-profile .user-name {
+                display: none;
+            }
+
+            .history-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="logo-section" onclick="window.location.href='index.html'">
+            <div class="logo">NutriScan</div>
+        </div>
+        <div class="nav-menu">
+            <a href="index.html">Dashboard</a>
+            <a href="scanner.html">Scanner</a>
+            <a href="mealplanner.html">Meal Planner</a>
+            <a href="history.html" class="active">History</a>
+        </div>
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="index.html">Dashboard</a>
+            <a href="scanner.html">Scanner</a>
+            <a href="mealplanner.html">Meal Planner</a>
+            <a href="history.html" class="active">History</a>
+        </div>
+        <div class="user-profile" id="userProfile">
+            <div class="user-avatar" id="userAvatar">U</div>
+            <span class="user-name" id="userName">User</span>
+            <button class="btn-logout" onclick="logout()">Logout</button>
+        </div>
+        <button class="menu-toggle" id="menuToggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </nav>
+
+    <!-- CONTENT -->
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">📚 Riwayat Scan</h1>
+            <p class="page-subtitle">Lihat kembali hasil analisis nutrisi Anda</p>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="searchInput" placeholder="Cari produk berdasarkan nama..."
+                onkeyup="filterHistory()">
+        </div>
+
+        <!-- History List -->
+        <div class="history-list" id="historyList">
+            <!-- Items injected via JS -->
+        </div>
+
+        <!-- Delete All Button -->
+        <div class="delete-section" id="deleteSection">
+            <button class="btn-delete-all" onclick="confirmDeleteAll()">
+                🗑️ Hapus Semua History
+            </button>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="js/config.js"></script>
+    <script>
+        // Use same key as scanner.js
+        const STORAGE_KEY_HISTORY = 'nutriscan_scan_history';
+        const STORAGE_KEY_CURRENT_USER = 'nutriscan_current_user';
+        const STORAGE_KEY_USER_DATA = 'nutriscan_user_data_';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            loadHistory();
+        });
+
+        function checkAuth() {
+            const currentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+            if (!currentUser) {
+                window.location.href = 'index.html';
+                return;
+            }
+            // Load user profile
+            const userData = JSON.parse(localStorage.getItem(STORAGE_KEY_USER_DATA + currentUser) || '{}');
+            if (userData.name) {
+                document.getElementById('userName').textContent = userData.name;
+                document.getElementById('userAvatar').textContent = userData.name.charAt(0).toUpperCase();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem(STORAGE_KEY_CURRENT_USER);
+            window.location.href = 'index.html';
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('mobileMenu').classList.toggle('active');
+        }
+
+        function loadHistory() {
+            const rawHistory = localStorage.getItem(STORAGE_KEY_HISTORY);
+            const history = rawHistory ? JSON.parse(rawHistory) : [];
+            const container = document.getElementById('historyList');
+            const deleteSection = document.getElementById('deleteSection');
+
+            container.innerHTML = '';
+
+            if (history.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📂</div>
+                        <p class="empty-text">Belum ada riwayat scan tersimpan.</p>
+                        <a href="scanner.html" class="btn-scan-now">Mulai Scan Sekarang</a>
+                    </div>
+                `;
+                deleteSection.style.display = 'none';
+                return;
+            }
+
+            deleteSection.style.display = 'block';
+
+            history.forEach((item, index) => {
+                const date = new Date(item.timestamp).toLocaleString('id-ID', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                });
+
+                const riskClass = item.riskAssessment.level; // low, medium, high
+                const riskLabel = getRiskLabel(riskClass);
+
+                const element = document.createElement('div');
+                element.className = 'history-item';
+                element.dataset.name = item.productName.toLowerCase();
+
+                element.innerHTML = `
+                    <div class="history-header">
+                        <div class="product-info">
+                            <span class="scan-date">${date}</span>
+                            <h3>${item.productName}</h3>
+                            <div class="compliance-status">
+                                <span title="BPOM Compliance" class="status-dot ${item.bpomCompliance.compliant ? 'green' : 'red'}"></span>
+                                <span title="WHO Compliance" class="status-dot ${item.whoCompliance.compliant ? 'green' : 'red'}"></span>
+                                <span style="font-size: 0.8rem; color: #666; margin-left: 5px;">Compliance Status</span>
+                            </div>
+                        </div>
+                        <span class="risk-badge ${riskClass}">${riskLabel}</span>
+                    </div>
+                    
+                    <button class="expand-btn" onclick="toggleExpand(this)">
+                        Tampilkan lebih lanjut... ⬇️
+                    </button>
+
+                    <div class="history-content">
+                        <div class="detail-grid">
+                            ${formatMiniInfo('Kalori', item.nutritionFacts.calories, 'kcal')}
+                            ${formatMiniInfo('Gula', item.nutritionFacts.sugars, 'g')}
+                            ${formatMiniInfo('Lemak Total', item.nutritionFacts.totalFat, 'g')}
+                            ${formatMiniInfo('Protein', item.nutritionFacts.protein, 'g')}
+                        </div>
+
+                        <div class="analysis-text">
+                            <strong>📝 Analisis Lengkap:</strong><br>
+                            ${item.analysisText || 'Tidak ada teks analisis tersedia.'}
+                        </div>
+                        
+                        <div style="margin-top: 1.5rem;">
+                            <strong>🧪 Komposisi:</strong> ${item.ingredients.join(', ')}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(element);
+            });
+        }
+
+        function formatMiniInfo(label, value, unit) {
+            return `
+                <div class="nutrition-item">
+                    <div class="nutrition-label">${label}</div>
+                    <div class="nutrition-value">${value}${unit}</div>
+                </div>
+            `;
+        }
+
+        function getRiskLabel(level) {
+            const labels = {
+                'low': 'Risiko Rendah',
+                'medium': 'Risiko Sedang',
+                'high': 'Risiko Tinggi'
+            };
+            return labels[level] || 'Unknown';
+        }
+
+        function toggleExpand(btn) {
+            const content = btn.nextElementSibling;
+            const isExpanded = content.classList.contains('expanded');
+
+            if (isExpanded) {
+                content.classList.remove('expanded');
+                btn.innerHTML = 'Tampilkan lebih lanjut... ⬇️';
+            } else {
+                content.classList.add('expanded');
+                btn.innerHTML = 'Tampilkan lebih sedikit ⬆️';
+            }
+        }
+
+        function filterHistory() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const items = document.querySelectorAll('.history-item');
+            let visibleCount = 0;
+
+            items.forEach(item => {
+                const name = item.dataset.name;
+                if (name.includes(query)) {
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Handle no results
+            const container = document.getElementById('historyList');
+            let noResultMsg = document.getElementById('no-result-msg');
+
+            if (visibleCount === 0 && items.length > 0) {
+                if (!noResultMsg) {
+                    noResultMsg = document.createElement('div');
+                    noResultMsg.id = 'no-result-msg';
+                    noResultMsg.className = 'empty-state';
+                    noResultMsg.innerHTML = '<p>Tidak ditemukan produk dengan nama tersebut.</p>';
+                    container.appendChild(noResultMsg);
+                }
+            } else if (noResultMsg) {
+                noResultMsg.remove();
+            }
+        }
+
+        function confirmDeleteAll() {
+            if (confirm('⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus SEMUA riwayat scan? Tindakan ini tidak dapat dibatalkan.')) {
+                localStorage.removeItem(STORAGE_KEY_HISTORY);
+                loadHistory();
+                alert('Riwayat berhasil dihapus.');
+            }
+        }
+    </script>
+</body>
+
+</html>

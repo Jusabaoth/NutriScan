@@ -1233,7 +1233,7 @@
             .health-profile-button {
                 padding: 1rem 2rem;
                 font-size: 1rem;
-                width: 100%;
+                width: 71%;
             }
 
             .health-modal {
@@ -1264,14 +1264,16 @@
             <div class="logo">NutriScan</div>
         </div>
         <div class="nav-menu">
-            <a href="#dashboard" id="dashboardLink">Dashboard</a>
-            <a href="#scanner" cslass="disabled" id="scannerLink">Scanner</a>
-            <a href="#mealplanner" class="disabled" id="mealplannerLink">Meal Planner</a>
+            <a href="index.html" id="dashboardLink">Dashboard</a>
+            <a href="scanner.html" class="disabled" id="scannerLink">Scanner</a>
+            <a href="mealplanner.html" class="disabled" id="mealplannerLink">Meal Planner</a>
+            <a href="history.html" class="disabled" id="historyLink">History</a>
         </div>
         <div class="mobile-menu" id="mobileMenu">
-            <a href="#dashboard" id="mobileDashboardLink">Dashboard</a>
-            <a href="#scanner" class="disabled" id="mobileScannerLink">Scanner</a>
-            <a href="#mealplanner" class="disabled" id="mobileMealplannerLink">Meal Planner</a>
+            <a href="index.html" id="mobileDashboardLink">Dashboard</a>
+            <a href="scanner.html" class="disabled" id="mobileScannerLink">Scanner</a>
+            <a href="mealplanner.html" class="disabled" id="mobileMealplannerLink">Meal Planner</a>
+            <a href="history.html" class="disabled" id="mobileHistoryLink">History</a>
         </div>
         <div class="user-profile" id="userProfile">
             <div class="user-avatar" id="userAvatar">U</div>
@@ -1418,14 +1420,14 @@
             <h2 class="section-title">Mulai dari Sini</h2>
             <div class="action-grid">
                 <div class="action-card">
-                    <div class="icon">📸</div>
-                    <h3>Scan Pertamamu</h3>
-                    <p>Ambil foto label produk dan dapatkan analisis nutrisi instan</p>
-                </div>
-                <div class="action-card">
                     <div class="icon">👤</div>
                     <h3>Lengkapi Profil</h3>
                     <p>Atur kondisi kesehatan untuk rekomendasi yang lebih personal</p>
+                </div>
+                <div class="action-card">
+                    <div class="icon">📸</div>
+                    <h3>Scan Pertamamu</h3>
+                    <p>Ambil foto label produk dan dapatkan analisis nutrisi instan</p>
                 </div>
                 <div class="action-card"">
                     <div class=" icon">📚</div>
@@ -1913,6 +1915,7 @@
             // Enable navigation links
             document.getElementById('scannerLink').classList.remove('disabled');
             document.getElementById('mealplannerLink').classList.remove('disabled');
+            document.getElementById('historyLink').classList.remove('disabled');
 
             // Sync mobile menu
             syncMobileMenuState();
@@ -2150,6 +2153,8 @@
             const mealplannerLink = document.getElementById('mealplannerLink');
             const mobileScannerLink = document.getElementById('mobileScannerLink');
             const mobileMealplannerLink = document.getElementById('mobileMealplannerLink');
+            const mobileHistoryLink = document.getElementById('mobileHistoryLink');
+            const historyLink = document.getElementById('historyLink');
 
             if (scannerLink && mobileScannerLink) {
                 if (scannerLink.classList.contains('disabled')) {
@@ -2158,12 +2163,26 @@
                     mobileScannerLink.classList.remove('disabled');
                 }
             }
-
+            if (historyLink && mobileHistoryLink) {
+                if (historyLink.classList.contains('disabled')) {
+                    mobileHistoryLink.classList.add('disabled');
+                } else {
+                    mobileHistoryLink.classList.remove('disabled');
+                }
+            }
             if (mealplannerLink && mobileMealplannerLink) {
                 if (mealplannerLink.classList.contains('disabled')) {
                     mobileMealplannerLink.classList.add('disabled');
                 } else {
                     mobileMealplannerLink.classList.remove('disabled');
+                }
+            }
+
+            if (historyLink && mobileHistoryLink) {
+                if (historyLink.classList.contains('disabled')) {
+                    mobileHistoryLink.classList.add('disabled');
+                } else {
+                    mobileHistoryLink.classList.remove('disabled');
                 }
             }
         }
