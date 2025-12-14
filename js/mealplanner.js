@@ -58,24 +58,20 @@ function loadUserProfile() {
     }
 }
 
-// ===================================
+
 // EVENT LISTENERS
-// ===================================
+
 
 function setupEventListeners() {
-    // CTA Button
+
     const ctaButton = document.getElementById('ctaButton');
     if (ctaButton) {
         ctaButton.addEventListener('click', scrollToForm);
     }
-
-    // Edit button in afterState
     const editBtn = document.getElementById('editBtn');
     if (editBtn) {
         editBtn.addEventListener('click', resetMealPlan);
     }
-
-    // Form submission (we'll handle this with button click)
     setupFormValidation();
 }
 
@@ -86,41 +82,15 @@ function scrollToForm() {
     }
 }
 
-// ===================================
 // FORM HANDLING
-// ===================================
 
 function setupFormValidation() {
-    // ===== WEIGHT SYNC =====
-    const weightInput = document.getElementById('weightInput');
-    const weightRange = document.getElementById('weightRange');
-    
-    if (weightInput && weightRange) {
-        weightInput.addEventListener('input', (e) => {
-            weightRange.value = e.target.value;
-        });
-        weightRange.addEventListener('input', (e) => {
-            weightInput.value = e.target.value;
-        });
-    }
+    // ===== WEIGHT SYNC & HEIGHT SYNC removed =====
+    // Inputs are now handled in Dashboard/Index.html
 
-    // ===== HEIGHT SYNC =====
-    const heightInput = document.getElementById('heightInput');
-    const heightRange = document.getElementById('heightRange');
-    
-    if (heightInput && heightRange) {
-        heightInput.addEventListener('input', (e) => {
-            heightRange.value = e.target.value;
-        });
-        heightRange.addEventListener('input', (e) => {
-            heightInput.value = e.target.value;
-        });
-    }
-
-    // ===== CUSTOM GOAL TOGGLE =====
     const goalRadios = document.querySelectorAll('input[name="goal"]');
     const customGoalBox = document.getElementById('customGoalBox');
-    
+
     if (goalRadios && customGoalBox) {
         goalRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
@@ -142,10 +112,10 @@ function setupFormValidation() {
         });
     });
 
-    // ===== BUDGET SLIDER =====
+    // ===== BUDGET =====
     const budgetRange = document.getElementById('budgetRange');
     const budgetValue = document.getElementById('budgetValue');
-    
+
     if (budgetRange && budgetValue) {
         budgetRange.addEventListener('input', (e) => {
             const value = parseInt(e.target.value);
@@ -154,10 +124,9 @@ function setupFormValidation() {
         });
     }
 
-    // ===== OTHER HEALTH CONDITION TOGGLE =====
     const otherConditionTile = document.getElementById('otherConditionTile');
     const otherConditionBox = document.getElementById('otherConditionBox');
-    
+
     if (otherConditionTile && otherConditionBox) {
         const otherCheckbox = otherConditionTile.querySelector('input[type="checkbox"]');
         if (otherCheckbox) {
@@ -171,11 +140,11 @@ function setupFormValidation() {
         }
     }
 
-    // ===== ALLERGIES / TAGS =====
+    // ===== ALLERGIES =====
     const tagInput = document.getElementById('tagInput');
     const tagContainer = document.getElementById('tagContainer');
     let allergies = [];
-    
+
     if (tagInput && tagContainer) {
         tagInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -214,7 +183,7 @@ function collectFormData() {
         throw new Error('Pilih tujuan diet Anda');
     }
     let dietGoal = goalRadio.value;
-    
+
     // Handle custom goal
     if (dietGoal === 'Custom') {
         const customGoal = document.getElementById('customGoal')?.value;
@@ -224,16 +193,40 @@ function collectFormData() {
         dietGoal = customGoal;
     }
 
-    // Physical Profile
-    const age = parseInt(document.getElementById('ageInput')?.value || '25');
-    const gender = document.querySelector('input[name="gender"]:checked')?.value || 'Pria';
-    const weight = parseFloat(document.getElementById('weightInput')?.value || '70');
-    const height = parseFloat(document.getElementById('heightInput')?.value || '170');
-    const activityLevel = document.getElementById('activity')?.value || 'Moderate';
-
-    if (!age || !weight || !height) {
-        throw new Error('Lengkapi profil fisik Anda (umur, berat, tinggi)');
+    // Retrieve Health Profile from LocalStorage
+    const healthDataStr = localStorage.getItem('nutriscan_health_data');
+    if (!healthDataStr) {
+        throw new Error('Profil kesehatan belum diatur. Silakan atur di Dashboard terlebih dahulu.');
     }
+
+    let healthData;
+    try {
+        healthData = JSON.parse(healthDataStr);
+    } catch (e) {
+        throw new Error('Data profil kesehatan rusak. Silakan atur ulang di Dashboard.');
+    }
+
+    const { physical, healthConditions, allergies: allergiesStr } = healthData;
+
+    if (!physical || !physical.age || !physical.weight || !physical.height) {
+        throw new Error('Profil fisik tidak lengkap. Silakan perbarui di Dashboard.');
+    }
+
+    // Physical Profile
+    const age = parseInt(physical.age);
+    const gender = physical.gender === 'male' ? 'Pria' : 'Wanita';
+    const weight = parseFloat(physical.weight);
+    const height = parseFloat(physical.height);
+    const activityLevel = physical.activity;
+
+    // Normalize Activity Level
+    const activityMap = {
+        'sedentary': 'Sedentary',
+        'light': 'Light',
+        'moderate': 'Moderate',
+        'active': 'Active'
+    };
+    const normalizedActivity = activityMap[activityLevel] || 'Moderate';
 
     // Duration
     const durationCard = document.querySelector('.duration-card.active');
@@ -241,7 +234,7 @@ function collectFormData() {
         throw new Error('Pilih durasi meal plan');
     }
     const durationText = durationCard.dataset.duration;
-    
+
     // Convert duration text to weeks
     let duration = 1;
     if (durationText === 'Seminggu') duration = 1;
@@ -254,27 +247,31 @@ function collectFormData() {
     const budgetValues = { 1: 25000, 2: 50000, 3: 100000 };
     const budget = budgetValues[parseInt(budgetRange)] || 50000;
 
-    // Health Conditions
-    const conditionCheckboxes = document.querySelectorAll('#healthGroup input[type="checkbox"]:checked');
-    const conditions = Array.from(conditionCheckboxes)
-        .filter(cb => cb.value !== 'Lainnya')
-        .map(cb => cb.value);
-    
-    // Other condition
-    const otherConditionCheckbox = document.querySelector('input[value="Lainnya"]:checked');
-    if (otherConditionCheckbox) {
-        const otherConditionInput = document.getElementById('otherConditionInput')?.value || '';
-        if (otherConditionInput.trim()) {
-            conditions.push(otherConditionInput);
-        }
+    // Conditions
+    let conditions = [];
+    if (healthData.conditions && Array.isArray(healthData.conditions)) {
+        // New array format
+        conditions = [...healthData.conditions];
+    } else if (healthData.healthConditions) {
+        // Legacy or string format
+        conditions = healthData.healthConditions.split(',').map(c => c.trim()).filter(c => c);
+    }
+
+    if (healthData.otherConditions) {
+        const others = healthData.otherConditions.split(',').map(c => c.trim()).filter(c => c);
+        conditions.push(...others);
     }
 
     // Allergies
-    const tagContainer = document.getElementById('tagContainer');
-    const allergies = Array.from(tagContainer?.querySelectorAll('.chip') || [])
-        .map(chip => chip.textContent.replace('×', '').trim());
+    let allergies = [];
+    if (healthData.allergies) {
+        if (Array.isArray(healthData.allergies)) {
+            allergies = [...healthData.allergies];
+        } else {
+            allergies = healthData.allergies.split(',').map(a => a.trim()).filter(a => a);
+        }
+    }
 
-    // Other notes
     const otherNotes = '';
 
     return {
@@ -284,7 +281,7 @@ function collectFormData() {
             gender,
             weight,
             height,
-            activityLevel
+            activityLevel: normalizedActivity
         },
         duration,
         budget,
@@ -294,9 +291,7 @@ function collectFormData() {
     };
 }
 
-// ===================================
 // MEAL PLAN GENERATION
-// ===================================
 
 async function generateMealPlan() {
     if (isCreating) return;
@@ -314,12 +309,12 @@ async function generateMealPlan() {
         const targets = calculateNutritionTargets(preferences);
         console.log('🎯 Nutrition targets calculated:', targets);
 
-        // STEP 1: Generate meal recommendations (LOW TOKEN)
+        // Generate meal recommendations (LOW TOKEN)
         console.log('🤖 Calling Gemini API for meal recommendations...');
         const mealRecommendations = await generateMealRecommendations(preferences, targets);
         console.log('✅ Meal recommendations generated:', mealRecommendations);
 
-        // STEP 2: Create initial meal plan structure with recommendations
+        // Create initial meal plan structure with recommendations
         const mealPlan = createMealPlanFromRecommendations(preferences, targets, mealRecommendations);
         console.log('✅ Meal plan structure created:', mealPlan);
 
@@ -488,7 +483,7 @@ RULES: Sesuai alergi & kondisi. Minimal 2 pilihan per meal time. HANYA JSON, TAN
 
     try {
         const data = await callGeminiAPI(requestBody, 'meal-plan');
-        
+
         responseText = data.candidates[0].content.parts[0].text;
         console.log('📝 Recommendations response length:', responseText.length);
 
@@ -504,25 +499,25 @@ RULES: Sesuai alergi & kondisi. Minimal 2 pilihan per meal time. HANYA JSON, TAN
     } catch (error) {
         console.error('❌ Error generating recommendations:', error);
         console.error('Response:', responseText ? responseText.substring(0, 300) : 'N/A');
-        
+
         // FALLBACK: Return hardcoded recommendations
         console.log('⚠️ Using fallback recommendations');
         return {
             breakfasts: [
-                {"name":"Nasi Goreng","calories":350,"protein":10,"carbs":50,"fat":12,"time":"07:00"},
-                {"name":"Roti Bakar Telur","calories":300,"protein":12,"carbs":35,"fat":10,"time":"07:00"}
+                { "name": "Nasi Goreng", "calories": 350, "protein": 10, "carbs": 50, "fat": 12, "time": "07:00" },
+                { "name": "Roti Bakar Telur", "calories": 300, "protein": 12, "carbs": 35, "fat": 10, "time": "07:00" }
             ],
             snacks: [
-                {"name":"Banana","calories":89,"protein":1,"carbs":23,"fat":0.3,"time":"10:00"},
-                {"name":"Yogurt","calories":100,"protein":3,"carbs":7,"fat":5,"time":"10:00"}
+                { "name": "Banana", "calories": 89, "protein": 1, "carbs": 23, "fat": 0.3, "time": "10:00" },
+                { "name": "Yogurt", "calories": 100, "protein": 3, "carbs": 7, "fat": 5, "time": "10:00" }
             ],
             lunches: [
-                {"name":"Soto Ayam","calories":350,"protein":25,"carbs":30,"fat":12,"time":"12:00"},
-                {"name":"Gado-Gado","calories":300,"protein":12,"carbs":35,"fat":10,"time":"12:00"}
+                { "name": "Soto Ayam", "calories": 350, "protein": 25, "carbs": 30, "fat": 12, "time": "12:00" },
+                { "name": "Gado-Gado", "calories": 300, "protein": 12, "carbs": 35, "fat": 10, "time": "12:00" }
             ],
             dinners: [
-                {"name":"Ikan Bakar","calories":300,"protein":35,"carbs":0,"fat":15,"time":"18:00"},
-                {"name":"Pepes Ayam","calories":280,"protein":30,"carbs":5,"fat":12,"time":"18:00"}
+                { "name": "Ikan Bakar", "calories": 300, "protein": 35, "carbs": 0, "fat": 15, "time": "18:00" },
+                { "name": "Pepes Ayam", "calories": 280, "protein": 30, "carbs": 5, "fat": 12, "time": "18:00" }
             ]
         };
     }
@@ -531,13 +526,13 @@ RULES: Sesuai alergi & kondisi. Minimal 2 pilihan per meal time. HANYA JSON, TAN
 function createMealPlanFromRecommendations(preferences, targets, recommendations) {
     const { duration } = preferences;
     const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-    
+
     const weeks = [];
-    
+
     // Create weeks structure
     for (let w = 1; w <= duration; w++) {
         const days = [];
-        
+
         // Create days
         for (let d = 1; d <= 7; d++) {
             // Randomly select from recommendations
@@ -547,9 +542,9 @@ function createMealPlanFromRecommendations(preferences, targets, recommendations
                 randomFromArray(recommendations.lunches || []),
                 randomFromArray(recommendations.dinners || [])
             ].filter(m => m);
-            
+
             const mealTypes = ['Sarapan', 'Snack', 'Makan Siang', 'Makan Malam'];
-            
+
             days.push({
                 day: d,
                 dayName: dayNames[d % 7],
@@ -570,13 +565,13 @@ function createMealPlanFromRecommendations(preferences, targets, recommendations
                 totalFat: Math.round(meals.reduce((sum, m) => sum + (parseFloat(m.fat) || 0), 0))
             });
         }
-        
+
         weeks.push({
             week: w,
             days: days
         });
     }
-    
+
     console.log('✅ Meal plan created with', weeks.length, 'weeks');
     return { weeks };
 }
@@ -592,12 +587,12 @@ function randomFromArray(arr) {
 function showBeforeView() {
     const beforeState = document.getElementById('beforeState');
     const afterState = document.getElementById('afterState');
-    
+
     if (!beforeState || !afterState) {
         console.error('❌ DOM elements not found: beforeState or afterState');
         return;
     }
-    
+
     beforeState.style.display = 'block';
     afterState.style.display = 'none';
 }
@@ -605,13 +600,13 @@ function showBeforeView() {
 function showMealPlanView() {
     const beforeState = document.getElementById('beforeState');
     const afterState = document.getElementById('afterState');
-    
+
     if (!beforeState || !afterState) {
         console.error('❌ DOM elements not found: beforeState or afterState');
         alert('Halaman tidak siap. Silahkan refresh.');
         return;
     }
-    
+
     beforeState.style.display = 'none';
     afterState.style.display = 'block';
 
@@ -905,13 +900,13 @@ function removeTag(tag) {
     const tagContainer = document.getElementById('tagContainer');
     const chips = Array.from(tagContainer?.querySelectorAll('.chip') || []);
     const allergies = chips.map(chip => chip.textContent.replace('×', '').trim());
-    
+
     // Remove the tag
     const index = allergies.indexOf(tag);
     if (index > -1) {
         allergies.splice(index, 1);
     }
-    
+
     // Re-render
     tagContainer.innerHTML = allergies.map(allergy => `
         <div class="chip">

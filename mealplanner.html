@@ -814,53 +814,6 @@
                 </div>
 
                 <div class="card">
-                    <label class="field-label">Profil Fisik</label>
-                    <div class="input-row">
-                        <div class="input-control">
-                            <span class="badge">Berat Badan (kg)</span>
-                            <div class="slider-row">
-                                <input type="number" id="weightInput" min="5" max="635" value="65">
-                                <input type="range" id="weightRange" min="5" max="635" value="65">
-                            </div>
-                        </div>
-                        <div class="input-control">
-                            <span class="badge">Tinggi Badan (cm)</span>
-                            <div class="slider-row">
-                                <input type="number" id="heightInput" min="54" max="272" value="170">
-                                <input type="range" id="heightRange" min="54" max="272" value="170">
-                            </div>
-                        </div>
-                        <div class="input-control">
-                            <span class="badge">Usia (tahun)</span>
-                            <div class="slider-row">
-                                <input type="number" id="ageInput" min="10" max="100" value="25">
-                            </div>
-                        </div>
-                        <div class="input-control">
-                            <span class="badge">Jenis Kelamin</span>
-                            <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
-                                <label class="radio-tile" style="padding:0.6rem 0.9rem;">
-                                    <input type="radio" name="gender" value="Pria" checked>Pria
-                                </label>
-                                <label class="radio-tile" style="padding:0.6rem 0.9rem;">
-                                    <input type="radio" name="gender" value="Wanita">Wanita
-                                </label>
-                            </div>
-                        </div>
-                        <div class="input-control">
-                            <span class="badge">Aktivitas Harian</span>
-                            <select id="activity">
-                                <option value="Sedentary">Sedentary</option>
-                                <option value="Light">Light</option>
-                                <option value="Moderate" selected>Moderate</option>
-                                <option value="Active">Active</option>
-                                <option value="Very Active">Very Active</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
                     <label class="field-label">Berapa lama kamu ingin konsisten?</label>
                     <div class="duration-grid" id="durationGrid">
                         <div class="duration-card active" data-duration="Seminggu">🗓️ Seminggu</div>
@@ -882,37 +835,6 @@
                         <small style="color:var(--muted);">AI akan menyesuaikan rekomendasi dengan budgetmu</small>
                         <strong id="budgetValue">Standar</strong>
                     </div>
-                </div>
-
-                <div class="card">
-                    <label class="field-label">Kondisi kesehatan khusus:</label>
-                    <div class="checkbox-group" id="healthGroup">
-                        <label class="checkbox-tile"><input type="checkbox" value="Diabetes / Prediabetes">Diabetes /
-                            Prediabetes</label>
-                        <label class="checkbox-tile"><input type="checkbox" value="Hipertensi">Hipertensi</label>
-                        <label class="checkbox-tile"><input type="checkbox" value="Kolesterol tinggi">Kolesterol
-                            tinggi</label>
-                        <label class="checkbox-tile"><input type="checkbox" value="Asam urat">Asam urat</label>
-                        <label class="checkbox-tile"><input type="checkbox" value="Maag / GERD">Maag / GERD</label>
-                        <label class="checkbox-tile"><input type="checkbox" value="Gangguan pencernaan">Gangguan
-                            pencernaan</label>
-                        <label class="checkbox-tile"><input type="checkbox" value="Sedang hamil / Menyusui">Sedang hamil
-                            / Menyusui</label>
-                        <label class="checkbox-tile" id="otherConditionTile">
-                            <input type="checkbox" value="Lainnya">Lainnya
-                        </label>
-                    </div>
-                    <div class="input-control" id="otherConditionBox" style="display:none; margin-top:0.7rem;">
-                        <textarea id="otherConditionInput" rows="2"
-                            placeholder="Tuliskan kondisi kesehatan lain..."></textarea>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <label class="field-label">Alergi atau pantangan makanan:</label>
-                    <input type="text" id="tagInput"
-                        placeholder="Ketik lalu tekan Enter (contoh: Kacang, Seafood, Laktosa)" />
-                    <div class="chips" id="tagContainer"></div>
                 </div>
 
                 <div style="text-align:center; margin-top:1.5rem;">

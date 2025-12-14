@@ -303,45 +303,26 @@ function showHealthWarningDialog() {
         width: 100%;
         padding: 2rem;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        text-align: center;
     `;
 
     modal.innerHTML = `
-        <h2 style="color: #F59E0B; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-            <span style="font-size: 2rem;">⚠️</span> Profil Kesehatan Belum Diatur
+        <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+        <h2 style="color: #F59E0B; margin-bottom: 1rem;">
+            Profil Kesehatan Belum Diatur
         </h2>
-        <p style="color: #666; margin-bottom: 1.5rem; line-height: 1.6;">
-            Untuk rekomendasi yang lebih personal, silakan atur profil kesehatan Anda di Dashboard terlebih dahulu.
+        <p style="color: #666; margin-bottom: 2rem; line-height: 1.6;">
+            Mohon atur profil fisik Anda dalam profil kesehatan di dashboard terlebih dahulu untuk melanjutkan penggunaan Scanner.
         </p>
-        <div style="background: #f8fffe; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem;">
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                <input type="checkbox" id="dontRemindCheckbox" style="width: 18px; height: 18px; cursor: pointer;">
-                <span style="color: #333; font-size: 0.95rem;">Jangan ingatkan lagi</span>
-            </label>
-        </div>
-        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-            <button id="btnContinueWithout" style="padding: 0.75rem 1.5rem; background: #e0e0e0; color: #333; border: none; border-radius: 10px; font-weight: 600; cursor: pointer;">
-                Lanjutkan Tanpa Profil
-            </button>
-            <button id="btnGoToDashboard" style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #00e676, #00c853); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer;">
-                Atur Profil
-            </button>
-        </div>
+        <button id="btnGoToDashboard" style="padding: 1rem 3rem; background: linear-gradient(135deg, #00e676, #00c853); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(0, 230, 118, 0.3);">
+            Atur Profil Sekaran
+        </button>
     `;
 
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
-    // Add event listeners
-    document.getElementById('btnContinueWithout').addEventListener('click', () => {
-        const dontRemind = document.getElementById('dontRemindCheckbox').checked;
-        if (dontRemind) {
-            localStorage.setItem('nutriscan_skip_health_warning', 'true');
-        }
-        overlay.remove();
-        // Continue with scan without health data
-        continueWithoutHealthData();
-    });
-
+    // Add event listener
     document.getElementById('btnGoToDashboard').addEventListener('click', () => {
         overlay.remove();
         window.location.href = 'Index.html';
@@ -392,18 +373,10 @@ async function performScan() {
         return;
     }
 
-    // Check if user wants to skip health warning
-    const skipWarning = localStorage.getItem('nutriscan_skip_health_warning');
-
-    // Check if health data exists
-    if (!healthData || !healthData.diseases || healthData.diseases.length === 0) {
-        // If user hasn't chosen to skip warning, show it
-        if (skipWarning !== 'true') {
-            showHealthWarningDialog();
-            return;
-        }
-        // Otherwise, proceed without health data
-        console.log('⚠️ Proceeding without health data (user chose to skip warning)');
+    // Check if health data exists (Physical Profile is Mandatory)
+    if (!healthData || !healthData.physical || !healthData.physical.weight) {
+        showHealthWarningDialog();
+        return;
     }
 
     // Collect health data
@@ -590,45 +563,88 @@ Analisis DETAIL dan PERSONAL berdasarkan kondisi kesehatan pengguna!`;
 }
 
 function formatHealthDataForPrompt(healthData) {
-    if (!healthData || healthData.diseases.length === 0) {
+    // Collect all conditions and allergies
+    let allConditions = [];
+
+    // 1. Allergies
+    if (healthData.allergies) {
+        if (Array.isArray(healthData.allergies)) {
+            allConditions.push(...healthData.allergies);
+        } else if (typeof healthData.allergies === 'string') {
+            allConditions.push(...healthData.allergies.split(',').map(a => a.trim()).filter(a => a));
+        }
+    }
+
+    // 2. Conditions
+    if (healthData.conditions && Array.isArray(healthData.conditions)) {
+        allConditions.push(...healthData.conditions);
+    } else if (healthData.healthConditions && typeof healthData.healthConditions === 'string') {
+        allConditions.push(...healthData.healthConditions.split(',').map(c => c.trim()).filter(c => c));
+    } else if (healthData.diseases && Array.isArray(healthData.diseases)) {
+        allConditions.push(...healthData.diseases);
+    }
+
+    if (allConditions.length === 0 && !healthData.otherConditions) {
         return 'Tidak ada kondisi kesehatan khusus yang dilaporkan.';
     }
 
     const diseaseMap = {
-        'susu': 'Alergi Susu',
+        // Allergies
+        'susu': 'Alergi Susu/Laktosa',
         'kacang_tanah': 'Alergi Kacang Tanah',
         'kacang_pohon': 'Alergi Kacang Pohon',
         'seafood': 'Alergi Seafood',
         'gluten': 'Alergi Gluten',
         'kedelai': 'Alergi Kedelai',
         'telur': 'Alergi Telur',
+        // Metabolic
         'diabetes': 'Diabetes Mellitus',
         'obesitas': 'Obesitas',
-        'dislipidemia': 'Dislipidemia',
+        'dislipidemia': 'Dislipidemia/Kolesterol Tinggi',
         'hipertensi': 'Hipertensi',
         'sindrom_metabolik': 'Sindrom Metabolik',
+        // Cardiovascular
         'jantung_koroner': 'Penyakit Jantung Koroner',
         'gagal_jantung': 'Gagal Jantung',
         'stroke_iskemik': 'Stroke Iskemik',
         'aritmia': 'Aritmia',
+        // Respiratory
         'ppok': 'PPOK',
-        'asma_kronis': 'Asma Kronis',
-        'bronkitis_kronis': 'Bronkitis Kronis',
+        'asma': 'Asma Kronis',
+        'bronkitis': 'Bronkitis Kronis',
+        // Cancer
         'kanker_payudara': 'Kanker Payudara',
         'kanker_serviks': 'Kanker Serviks',
-        'kanker_kolorektal': 'Kanker Kolorektal',
         'kanker_paru': 'Kanker Paru',
-        'kanker_prostat': 'Kanker Prostat',
-        'gagal_ginjal_kronis': 'Gagal Ginjal Kronis',
-        'batu_ginjal': 'Batu Ginjal',
-        'nefritis': 'Nefritis'
+        'kanker_usus': 'Kanker Usus Besar',
+        'kanker_hati': 'Kanker Hati',
+        // Digestive
+        'gerd': 'GERD',
+        'ibs': 'IBS',
+        'intoleransi_laktosa': 'Intoleransi Laktosa'
     };
 
-    const conditions = healthData.diseases.map(d => diseaseMap[d] || d);
-    let text = `Kondisi Kesehatan:\n- ` + conditions.join('\n- ');
+    const formattedConditions = allConditions.map(d => diseaseMap[d] || d);
+
+    // Remove duplicates
+    const uniqueConditions = [...new Set(formattedConditions)];
+
+    let text = `Kondisi Kesehatan & Pantangan:\n- ` + uniqueConditions.join('\n- ');
 
     if (healthData.otherConditions) {
         text += `\n\nKondisi Lain: ${healthData.otherConditions}`;
+    }
+
+    // Add Physical Context
+    if (healthData.physical) {
+        text += `\n\nData Fisik:
+- Usia: ${healthData.physical.age} tahun
+- Gender: ${healthData.physical.gender}
+- BMI/Status: (Berat ${healthData.physical.weight}kg / Tinggi ${healthData.physical.height}cm)`;
+    }
+
+    if (healthData.calculated) {
+        text += `\n- TDEE (Kebutuhan Kalori): ${healthData.calculated.tdee} kkal`;
     }
 
     return text;

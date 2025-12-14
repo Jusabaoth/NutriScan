@@ -23,7 +23,7 @@ if (!GEMINI_API_KEY) {
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Serve static files (frontend)
 app.use(express.static(path.join(__dirname)));
@@ -91,7 +91,6 @@ app.post('/api/analyze', async (req, res) => {
 
 /**
  * Meal Plan Analysis Endpoint
- * Simple and proven working endpoint
  */
 app.post('/api/analyze-meal-plan', async (req, res) => {
     try {

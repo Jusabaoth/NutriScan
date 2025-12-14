@@ -465,16 +465,21 @@
             font-weight: 600;
         }
 
-        .form-group input {
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
             width: 100%;
             padding: 1rem;
             border: 2px solid #e0e0e0;
             border-radius: 10px;
             font-size: 1rem;
             transition: all 0.3s;
+            font-family: inherit;
         }
 
-        .form-group input:focus {
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
             outline: none;
             border-color: #00c853;
         }
@@ -1474,186 +1479,163 @@
         <div class="health-modal" onclick="event.stopPropagation()">
             <button class="health-modal-close" onclick="closeHealthProfileModal()">&times;</button>
 
-            <h2 class="health-modal-title">🏥 Profil Kesehatan</h2>
-            <p class="health-modal-subtitle">Pilih kondisi kesehatan yang Anda miliki untuk mendapatkan rekomendasi
-                nutrisi yang lebih personal</p>
+            <h2 class="health-modal-title">🏥 Setup Profil Kesehatan</h2>
+            <p class="health-modal-subtitle">Lengkapi data fisik untuk perhitungan kalori harian yang akurat dan
+                personalisasi AI</p>
 
-            <!-- Alergi Makanan -->
-            <div class="disease-group">
-                <div class="disease-title">Alergi Makanan</div>
-                <div class="disease-options">
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_allergy1" name="disease" value="susu">
-                        <label for="modal_allergy1">Susu dan produk olahannya, termasuk alergi protein susu atau
-                            intoleransi laktosa</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_allergy2" name="disease" value="kacang_tanah">
-                        <label for="modal_allergy2">Kacang tanah, dapat memicu gatal, bengkak, atau sesak napas</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_allergy3" name="disease" value="kacang_pohon">
-                        <label for="modal_allergy3">Kacang pohon, seperti almond, mete, dan walnut, yang dapat memicu
-                            reaksi alergi</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_allergy4" name="disease" value="seafood">
-                        <label for="modal_allergy4">Seafood, seperti udang, kepiting, ikan, dan kerang, yang dapat
-                            memicu reaksi alergi</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_allergy5" name="disease" value="gluten">
-                        <label for="modal_allergy5">Gluten atau gandum, termasuk sensitivitas atau intoleransi terhadap
-                            produk berbahan tepung</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_allergy6" name="disease" value="kedelai">
-                        <label for="modal_allergy6">Kedelai, reaksi terhadap produk berbasis kedelai seperti tahu,
-                            tempe, atau susu kedelai</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_allergy7" name="disease" value="telur">
-                        <label for="modal_allergy7">Telur, terutama alergi terhadap bagian putih telur</label>
+            <form id="healthProfileForm" onsubmit="saveHealthProfile(event)">
+                <!-- Profil Fisik -->
+                <div class="form-group">
+                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.2rem;">Profil Fisik</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label>Berat Badan (kg)</label>
+                            <input type="number" id="weight" min="1" max="300" placeholder="70" required>
+                        </div>
+                        <div>
+                            <label>Tinggi Badan (cm)</label>
+                            <input type="number" id="height" min="1" max="300" placeholder="170" required>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Penyakit Metabolik -->
-            <div class="disease-group">
-                <div class="disease-title">Penyakit Metabolik</div>
-                <div class="disease-description">Penyakit/kelainan yang terkait metabolisme tubuh</div>
-                <div class="disease-options">
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_metabolic1" name="disease" value="diabetes">
-                        <label for="modal_metabolic1">Diabetes Mellitus, gula darah (glukosa) dalam tubuh terlalu
-                            tinggi</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_metabolic2" name="disease" value="obesitas">
-                        <label for="modal_metabolic2">Obesitas, lemak tubuh menumpuk secara berlebihan</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_metabolic3" name="disease" value="dislipidemia">
-                        <label for="modal_metabolic3">Dislipidemia, kadar kolesterol/lemak darah tidak normal</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_metabolic4" name="disease" value="hipertensi">
-                        <label for="modal_metabolic4">Hipertensi, tekanan darah tinggi</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_metabolic5" name="disease" value="sindrom_metabolik">
-                        <label for="modal_metabolic5">Sindrom Metabolik, kombinasi obesitas, hipertensi, gula darah
-                            tinggi, dan trigliserida tinggi</label>
+                <div class="form-group">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label>Umur (tahun)</label>
+                            <input type="number" id="age" min="1" max="150" placeholder="25" required>
+                        </div>
+                        <div>
+                            <label>Jenis Kelamin</label>
+                            <div class="checkbox-group" style="gap: 1.5rem; margin-top: 0.5rem;">
+                                <label
+                                    style="display: flex; align-items: center; font-weight: normal; cursor: pointer;">
+                                    <input type="checkbox" name="gender" value="male" onclick="selectGender(this)"
+                                        required> Pria
+                                </label>
+                                <label
+                                    style="display: flex; align-items: center; font-weight: normal; cursor: pointer;">
+                                    <input type="checkbox" name="gender" value="female" onclick="selectGender(this)">
+                                    Wanita
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Penyakit Kardiovaskular -->
-            <div class="disease-group">
-                <div class="disease-title">Penyakit Kardiovaskular</div>
-                <div class="disease-description">Gangguan pada jantung dan pembuluh darah</div>
-                <div class="disease-options">
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_cardio1" name="disease" value="jantung_koroner">
-                        <label for="modal_cardio1">Penyakit Jantung Koroner, penyempitan pembuluh darah jantung</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_cardio2" name="disease" value="gagal_jantung">
-                        <label for="modal_cardio2">Gagal Jantung, jantung tidak mampu memompa darah dengan baik</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_cardio3" name="disease" value="stroke_iskemik">
-                        <label for="modal_cardio3">Stroke Iskemik, aliran darah ke otak tersumbat</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_cardio4" name="disease" value="aritmia">
-                        <label for="modal_cardio4">Aritmia, irama detak jantung tidak normal</label>
+                <div class="form-group">
+                    <label>Aktivitas Harian</label>
+                    <select id="activity" required>
+                        <option value="" disabled selected>Pilih tingkat aktivitas</option>
+                        <option value="sedentary">Jarang olahraga (Sedentari)</option>
+                        <option value="light">Olahraga 1-2x/minggu (Ringan)</option>
+                        <option value="moderate">Olahraga 3-5x/minggu (Sedang)</option>
+                        <option value="active">Olahraga 6-7x/minggu (Berat)</option>
+                    </select>
+                </div>
+
+                <!-- 1. Alergi Makanan -->
+                <div class="form-group">
+                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.1rem; margin-top: 1.5rem;">1. Alergi
+                        Makanan</h3>
+                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">Reaksi abnormal sistem kekebalan
+                        tubuh terhadap makanan tertentu</p>
+                    <div class="checkbox-group" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
+                        <label><input type="checkbox" name="allergies" value="susu"> Susu dan produk olahannya
+                            (intoleransi laktosa/protein susu)</label>
+                        <label><input type="checkbox" name="allergies" value="kacang_tanah"> Kacang tanah</label>
+                        <label><input type="checkbox" name="allergies" value="kacang_pohon"> Kacang pohon (almond, mete,
+                            dan walnut)</label>
+                        <label><input type="checkbox" name="allergies" value="seafood"> Seafood (udang, kepiting, ikan,
+                            kerang)</label>
+                        <label><input type="checkbox" name="allergies" value="gluten"> Gluten/gandum (produk berbahan
+                            tepung)</label>
+                        <label><input type="checkbox" name="allergies" value="kedelai"> Kedelai (tahu, tempe, susu
+                            kedelai)</label>
+                        <label><input type="checkbox" name="allergies" value="telur"> Telur</label>
                     </div>
                 </div>
-            </div>
 
-            <!-- Penyakit Paru Kronis -->
-            <div class="disease-group">
-                <div class="disease-title">Penyakit Paru Kronis</div>
-                <div class="disease-description">Gangguan pernapasan jangka panjang</div>
-                <div class="disease-options">
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_lung1" name="disease" value="ppok">
-                        <label for="modal_lung1">PPOK, kerusakan paru akibat iritasi jangka panjang seperti
-                            rokok</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_lung2" name="disease" value="asma_kronis">
-                        <label for="modal_lung2">Asma Kronis, penyempitan saluran napas berulang</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_lung3" name="disease" value="bronkitis_kronis">
-                        <label for="modal_lung3">Bronkitis Kronis, peradangan selaput bronkus dalam waktu lama</label>
+                <!-- 2. Penyakit Metabolik -->
+                <div class="form-group">
+                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.1rem; margin-top: 1.5rem;">2. Penyakit
+                        Metabolik</h3>
+                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">Penyakit/kelainan metabolisme
+                        tubuh</p>
+                    <div class="checkbox-group" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
+                        <label><input type="checkbox" name="conditions" value="diabetes"> Diabetes Mellitus</label>
+                        <label><input type="checkbox" name="conditions" value="obesitas"> Obesitas</label>
+                        <label><input type="checkbox" name="conditions" value="dislipidemia"> Dislipidemia (Kolesterol
+                            tinggi)</label>
+                        <label><input type="checkbox" name="conditions" value="hipertensi"> Hipertensi</label>
+                        <label><input type="checkbox" name="conditions" value="sindrom_metabolik"> Sindrom
+                            Metabolik</label>
                     </div>
                 </div>
-            </div>
 
-            <!-- Kanker -->
-            <div class="disease-group">
-                <div class="disease-title">Kanker</div>
-                <div class="disease-description">Pertumbuhan sel abnormal yang menyerang jaringan tubuh</div>
-                <div class="disease-options">
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_cancer1" name="disease" value="kanker_payudara">
-                        <label for="modal_cancer1">Kanker Payudara, pertumbuhan sel abnormal pada jaringan
-                            payudara</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_cancer2" name="disease" value="kanker_serviks">
-                        <label for="modal_cancer2">Kanker Serviks, kanker pada leher rahim</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_cancer3" name="disease" value="kanker_paru">
-                        <label for="modal_cancer3">Kanker Paru, pertumbuhan sel ganas pada jaringan paru</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_cancer4" name="disease" value="kanker_usus_besar">
-                        <label for="modal_cancer4">Kanker Usus Besar, pertumbuhan sel abnormal di kolon</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_cancer5" name="disease" value="kanker_hati">
-                        <label for="modal_cancer5">Kanker Hati, sel kanker pada organ hati</label>
+                <!-- 3. Penyakit Kardiovaskular -->
+                <div class="form-group">
+                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.1rem; margin-top: 1.5rem;">3. Penyakit
+                        Kardiovaskular</h3>
+                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">Gangguan jantung dan pembuluh
+                        darah</p>
+                    <div class="checkbox-group" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
+                        <label><input type="checkbox" name="conditions" value="jantung_koroner"> Penyakit Jantung
+                            Koroner</label>
+                        <label><input type="checkbox" name="conditions" value="gagal_jantung"> Gagal Jantung</label>
+                        <label><input type="checkbox" name="conditions" value="stroke_iskemik"> Stroke Iskemik</label>
+                        <label><input type="checkbox" name="conditions" value="aritmia"> Aritmia</label>
                     </div>
                 </div>
-            </div>
 
-            <!-- Gangguan Pencernaan Kronis -->
-            <div class="disease-group">
-                <div class="disease-title">Gangguan Pencernaan Kronis</div>
-                <div class="disease-description">Penyakit jangka panjang pada sistem pencernaan</div>
-                <div class="disease-options">
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_digestive1" name="disease" value="gerd">
-                        <label for="modal_digestive1">GERD, asam lambung naik ke kerongkongan secara kronis</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_digestive2" name="disease" value="ibs">
-                        <label for="modal_digestive2">IBS, gangguan fungsi usus besar tanpa sebab jelas</label>
-                    </div>
-                    <div class="disease-option">
-                        <input type="checkbox" id="modal_digestive3" name="disease" value="intoleransi_laktosa">
-                        <label for="modal_digestive3">Intoleransi Laktosa, tubuh tidak dapat mencerna laktosa</label>
+                <!-- 4. Gangguan Pernapasan -->
+                <div class="form-group">
+                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.1rem; margin-top: 1.5rem;">4. Gangguan
+                        Pernapasan</h3>
+                    <div class="checkbox-group" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
+                        <label><input type="checkbox" name="conditions" value="ppok"> PPOK</label>
+                        <label><input type="checkbox" name="conditions" value="asma"> Asma Kronis</label>
+                        <label><input type="checkbox" name="conditions" value="bronkitis"> Bronkitis Kronis</label>
                     </div>
                 </div>
-            </div>
 
-            <!-- Other Diseases -->
-            <div class="other-disease">
-                <label for="modal_otherDisease">Penyakit Lainnya (opsional)</label>
-                <textarea id="modal_otherDisease"
-                    placeholder="Masukkan penyakit atau kondisi kesehatan lain yang tidak terdaftar di atas..."></textarea>
-            </div>
+                <!-- 5. Kanker -->
+                <div class="form-group">
+                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.1rem; margin-top: 1.5rem;">5. Kanker
+                    </h3>
+                    <div class="checkbox-group" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
+                        <label><input type="checkbox" name="conditions" value="kanker_payudara"> Kanker Payudara</label>
+                        <label><input type="checkbox" name="conditions" value="kanker_serviks"> Kanker Serviks</label>
+                        <label><input type="checkbox" name="conditions" value="kanker_paru"> Kanker Paru</label>
+                        <label><input type="checkbox" name="conditions" value="kanker_usus"> Kanker Usus Besar</label>
+                        <label><input type="checkbox" name="conditions" value="kanker_hati"> Kanker Hati</label>
+                    </div>
+                </div>
 
-            <!-- Actions -->
-            <div class="health-modal-actions">
-                <button class="btn-cancel-health" onclick="closeHealthProfileModal()">Batal</button>
-                <button class="btn-save-health" onclick="saveHealthProfile()">💾 Simpan Profil</button>
-            </div>
+                <!-- 6. Gangguan Pencernaan -->
+                <div class="form-group">
+                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.1rem; margin-top: 1.5rem;">6. Gangguan
+                        Pencernaan</h3>
+                    <div class="checkbox-group" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
+                        <label><input type="checkbox" name="conditions" value="gerd"> GERD</label>
+                        <label><input type="checkbox" name="conditions" value="ibs"> IBS</label>
+                        <label><input type="checkbox" name="conditions" value="intoleransi_laktosa"> Intoleransi
+                            Laktosa</label>
+                    </div>
+                </div>
+
+                <!-- Lainnya -->
+                <div class="form-group">
+                    <label>Lainnya</label>
+                    <input type="text" id="otherConditions" placeholder="Tuliskan kondisi lain (pisahkan koma)">
+                </div>
+
+                <!-- Actions -->
+                <div class="health-modal-actions">
+                    <button type="button" class="btn-cancel-health" onclick="closeHealthProfileModal()">Batal</button>
+                    <button type="submit" class="btn-save-health">💾 Simpan Profil</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1665,7 +1647,9 @@
 
         // Initialize: Check if user is logged in
         document.addEventListener('DOMContentLoaded', function () {
+            console.log('✅ NutriScan Application Initialized');
             checkAuthStatus();
+            initNavigation();
         });
 
         // Check authentication status on page load
@@ -1714,7 +1698,8 @@
         }
 
         // Toggle between signup and login forms
-        function toggleAuth(type) {
+        // Toggle between signup and login forms
+        window.toggleAuth = function (type) {
             const signupForm = document.getElementById('signupForm');
             const loginForm = document.getElementById('loginForm');
             const signupToggle = document.getElementById('signupToggle');
@@ -1727,17 +1712,17 @@
             if (loginError) loginError.style.display = 'none';
 
             if (type === 'signup') {
-                signupForm.style.display = 'block';
-                loginForm.style.display = 'none';
-                signupToggle.classList.add('active');
-                loginToggle.classList.remove('active');
+                if (signupForm) signupForm.style.display = 'block';
+                if (loginForm) loginForm.style.display = 'none';
+                if (signupToggle) signupToggle.classList.add('active');
+                if (loginToggle) loginToggle.classList.remove('active');
             } else {
-                signupForm.style.display = 'none';
-                loginForm.style.display = 'block';
-                signupToggle.classList.remove('active');
-                loginToggle.classList.add('active');
+                if (signupForm) signupForm.style.display = 'none';
+                if (loginForm) loginForm.style.display = 'block';
+                if (signupToggle) signupToggle.classList.remove('active');
+                if (loginToggle) loginToggle.classList.add('active');
             }
-        }
+        };
 
         // Handle Signup
         function handleSignup(event) {
@@ -1895,6 +1880,7 @@
             // Disable navigation links
             document.getElementById('scannerLink').classList.add('disabled');
             document.getElementById('mealplannerLink').classList.add('disabled');
+            document.getElementById('historyLink').classList.add('disabled');
 
             // Sync mobile menu
             syncMobileMenuState();
@@ -1928,83 +1914,75 @@
         }
 
         // ===================================
-        // HEALTH PROFILE MODAL FUNCTIONS
-        // ===================================
 
-        // Open health profile modal
-        function openHealthProfileModal() {
-            const overlay = document.getElementById('healthModalOverlay');
-            overlay.classList.add('active');
 
-            // Load existing health data if any
-            loadHealthProfileData();
-
-            // Prevent body scroll
-            document.body.style.overflow = 'hidden';
-        }
-
-        // Close health profile modal
-        function closeHealthProfileModal(event) {
-            // If event exists and target is not the overlay, don't close
-            if (event && event.target !== event.currentTarget) {
-                return;
-            }
-
-            const overlay = document.getElementById('healthModalOverlay');
-            overlay.classList.remove('active');
-
-            // Restore body scroll
-            document.body.style.overflow = '';
-        }
-
-        // Load health profile data from localStorage
-        function loadHealthProfileData() {
-            const healthData = localStorage.getItem('nutriscan_health_data');
-
-            if (!healthData) {
-                // Clear all checkboxes if no data
-                const checkboxes = document.querySelectorAll('#healthModalOverlay input[type="checkbox"]');
-                checkboxes.forEach(cb => cb.checked = false);
-                document.getElementById('modal_otherDisease').value = '';
-                return;
-            }
-
-            try {
-                const data = JSON.parse(healthData);
-
-                // Check the appropriate checkboxes
-                if (data.diseases && Array.isArray(data.diseases)) {
-                    data.diseases.forEach(disease => {
-                        const checkbox = document.querySelector(`#healthModalOverlay input[value="${disease}"]`);
-                        if (checkbox) {
-                            checkbox.checked = true;
-                        }
-                    });
-                }
-
-                // Fill in other conditions
-                if (data.otherConditions) {
-                    document.getElementById('modal_otherDisease').value = data.otherConditions;
-                }
-            } catch (error) {
-                console.error('Error loading health data:', error);
-            }
+        // Helper to ensure single selection for gender
+        function selectGender(checkbox) {
+            const checkboxes = document.getElementsByName('gender');
+            checkboxes.forEach((item) => {
+                if (item !== checkbox) item.checked = false;
+            });
         }
 
         // Save health profile data to localStorage
-        function saveHealthProfile() {
-            // Collect selected diseases
-            const diseases = [];
-            const checkboxes = document.querySelectorAll('#healthModalOverlay input[name="disease"]:checked');
-            checkboxes.forEach(cb => diseases.push(cb.value));
+        function saveHealthProfile(event) {
+            if (event) event.preventDefault();
 
-            // Get other conditions
-            const otherConditions = document.getElementById('modal_otherDisease').value.trim();
+            // Get form values
+            const weight = parseFloat(document.getElementById('weight').value);
+            const height = parseFloat(document.getElementById('height').value);
+            const age = parseInt(document.getElementById('age').value);
+            const genderNode = document.querySelector('input[name="gender"]:checked');
+            const activity = document.getElementById('activity').value;
+
+            // New checkboxes collection
+            const selectedConditions = Array.from(document.querySelectorAll('input[name="conditions"]:checked')).map(cb => cb.value);
+            const selectedAllergies = Array.from(document.querySelectorAll('input[name="allergies"]:checked')).map(cb => cb.value);
+
+            // Collect "Other" input if present
+            const otherConditions = document.getElementById('otherConditions') ? document.getElementById('otherConditions').value.trim() : '';
+
+            // Validation
+            if (!weight || !height || !age || !genderNode || !activity) {
+                alert('Mohon lengkapi semua data fisik dan aktivitas.');
+                return;
+            }
+
+            const gender = genderNode.value;
+
+            // Calculate BMR (Mifflin-St Jeor)
+            let bmr = 0;
+            if (gender === 'male') {
+                bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5;
+            } else {
+                bmr = (10 * weight) + (6.25 * height) - (5 * age) - 161;
+            }
+
+            // Calculate TDEE
+            let multiplier = 1.2; // Sedentary default
+            if (activity === 'light') multiplier = 1.375;
+            else if (activity === 'moderate') multiplier = 1.55;
+            else if (activity === 'active') multiplier = 1.725;
+
+            const tdee = Math.round(bmr * multiplier);
+            bmr = Math.round(bmr);
 
             // Create health data object
             const healthData = {
-                diseases: diseases,
+                physical: {
+                    weight,
+                    height,
+                    age,
+                    gender,
+                    activity
+                },
+                conditions: selectedConditions, // Store array of values (e.g., ['diabetes', 'asthma'])
+                allergies: selectedAllergies,   // Store array of values (e.g., ['peanuts', 'gluten'])
                 otherConditions: otherConditions,
+                calculated: {
+                    bmr,
+                    tdee
+                },
                 timestamp: Date.now()
             };
 
@@ -2018,7 +1996,7 @@
             closeHealthProfileModal();
 
             // Show success message
-            showSuccessMessage('✅ Profil kesehatan berhasil disimpan!');
+            showSuccessMessage(`✅ Profil disimpan! Kebutuhan kalori harian Anda: ${tdee} kkal`);
         }
 
         // Update health profile button text based on data existence
@@ -2117,6 +2095,11 @@
             window.location.href = 'mealplanner.html';
         }
 
+        // Navigate to history page
+        function navigateToHistory() {
+            window.location.href = 'history.html';
+        }
+
         // Scroll to education
         function scrollToEducation() {
             document.getElementById('educationalSection').scrollIntoView({ behavior: 'smooth' });
@@ -2177,14 +2160,6 @@
                     mobileMealplannerLink.classList.remove('disabled');
                 }
             }
-
-            if (historyLink && mobileHistoryLink) {
-                if (historyLink.classList.contains('disabled')) {
-                    mobileHistoryLink.classList.add('disabled');
-                } else {
-                    mobileHistoryLink.classList.remove('disabled');
-                }
-            }
         }
 
         // Navigation handler function
@@ -2196,7 +2171,7 @@
         }
 
         // Navigation handlers
-        document.addEventListener('DOMContentLoaded', function () {
+        function initNavigation() {
             // Dashboard navigation
             const dashboardHandler = function (e) {
                 e.preventDefault();
@@ -2223,6 +2198,27 @@
             setupNavigationLink('dashboardLink', dashboardHandler);
             setupNavigationLink('mobileDashboardLink', dashboardHandler);
 
+            // History navigation
+            const historyHandler = function (e) {
+                e.preventDefault();
+                const currentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+                if (!currentUser) {
+                    alert('Silakan login terlebih dahulu untuk menggunakan fitur Riwayat');
+                    scrollToAuth('login');
+                    return;
+                }
+                navigateToHistory();
+                const mobileMenu = document.getElementById('mobileMenu');
+                const menuToggle = document.getElementById('menuToggle');
+                if (mobileMenu && mobileMenu.classList.contains('active')) {
+                    mobileMenu.classList.remove('active');
+                    menuToggle.classList.remove('active');
+                }
+            };
+
+            setupNavigationLink('historyLink', historyHandler);
+            setupNavigationLink('mobileHistoryLink', historyHandler);
+
             // Scanner navigation
             const scannerHandler = function (e) {
                 e.preventDefault();
@@ -2234,7 +2230,6 @@
                 }
                 // Navigate to scanner (remove disabled check and alert)
                 navigateToScanner();
-                // Close mobile menu if open
                 const mobileMenu = document.getElementById('mobileMenu');
                 const menuToggle = document.getElementById('menuToggle');
                 if (mobileMenu && mobileMenu.classList.contains('active')) {
@@ -2266,7 +2261,76 @@
 
             setupNavigationLink('mealplannerLink', mealplannerHandler);
             setupNavigationLink('mobileMealplannerLink', mealplannerHandler);
-        });
+        }
+        // Open health profile modal
+        function openHealthProfileModal() {
+            const modalOverlay = document.getElementById('healthModalOverlay');
+            if (modalOverlay) {
+                modalOverlay.classList.add('active');
+
+                // Clear all previous inputs
+                const allInputs = modalOverlay.querySelectorAll('input:not([type="radio"]), select');
+                allInputs.forEach(input => {
+                    if (input.type === 'checkbox') input.checked = false;
+                    else input.value = '';
+                });
+
+                // Populate data if exists
+                try {
+                    const healthDataStr = localStorage.getItem('nutriscan_health_data');
+                    if (healthDataStr) {
+                        const healthData = JSON.parse(healthDataStr);
+
+                        if (healthData.physical) {
+                            if (document.getElementById('weight')) document.getElementById('weight').value = healthData.physical.weight || '';
+                            if (document.getElementById('height')) document.getElementById('height').value = healthData.physical.height || '';
+                            if (document.getElementById('age')) document.getElementById('age').value = healthData.physical.age || '';
+
+                            if (healthData.physical.gender) {
+                                const genderCheckbox = document.querySelector(`input[name="gender"][value="${healthData.physical.gender}"]`);
+                                if (genderCheckbox) genderCheckbox.checked = true;
+                            }
+
+                            if (document.getElementById('activity')) document.getElementById('activity').value = healthData.physical.activity || '';
+                        }
+
+                        // Populate Checkboxes (Conditions & Allergies)
+                        const savedConditions = healthData.conditions || [];
+                        const savedAllergies = healthData.allergies || [];
+
+                        // If stored as array (new format)
+                        if (Array.isArray(savedConditions)) {
+                            savedConditions.forEach(val => {
+                                const cb = modalOverlay.querySelector(`input[name="conditions"][value="${val}"]`);
+                                if (cb) cb.checked = true;
+                            });
+                        }
+
+                        if (Array.isArray(savedAllergies)) {
+                            savedAllergies.forEach(val => {
+                                const cb = modalOverlay.querySelector(`input[name="allergies"][value="${val}"]`);
+                                if (cb) cb.checked = true;
+                            });
+                        }
+
+                        // Handle legacy or other properties if necessary (optional fallback)
+                        if (healthData.otherConditions && document.getElementById('otherConditions')) {
+                            document.getElementById('otherConditions').value = healthData.otherConditions;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error populating health form", e);
+                }
+            }
+        }
+
+        // Close health profile modal
+        function closeHealthProfileModal() {
+            const modalOverlay = document.getElementById('healthModalOverlay');
+            if (modalOverlay) {
+                modalOverlay.classList.remove('active');
+            }
+        }
     </script>
 </body>
 
