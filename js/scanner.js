@@ -761,7 +761,7 @@ function displayResults(result) {
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
                 <!-- BPOM -->
                 <div style="padding: 1.5rem; background: ${result.bpomCompliance.compliant ? '#e8f5e9' : '#ffebee'}; border-radius: 15px; border-left: 5px solid ${result.bpomCompliance.compliant ? '#00c853' : '#ff5252'};">
-                    <h4 style="margin-bottom: 0.5rem;">🇮🇩 BPOM Compliance</h4>
+                    <h4 style="margin-bottom: 0.5rem;">🇮🇩 BPOM Rekomendasi Kesehatan Nasional</h4>
                     <p style="font-weight: 600; color: ${result.bpomCompliance.compliant ? '#2e7d32' : '#c62828'};">
                         ${result.bpomCompliance.compliant ? '✅ Sesuai' : '❌ Tidak Sesuai'}
                     </p>
@@ -785,7 +785,7 @@ function displayResults(result) {
                 
                 <!-- WHO -->
                 <div style="padding: 1.5rem; background: ${result.whoCompliance.compliant ? '#e8f5e9' : '#ffebee'}; border-radius: 15px; border-left: 5px solid ${result.whoCompliance.compliant ? '#00c853' : '#ff5252'};">
-                    <h4 style="margin-bottom: 0.5rem;">🌍 WHO Compliance</h4>
+                    <h4 style="margin-bottom: 0.5rem;">🌍 WHO Rekomendasi Kesehatan Internasional</h4>
                     <p style="font-weight: 600; color: ${result.whoCompliance.compliant ? '#2e7d32' : '#c62828'};">
                         ${result.whoCompliance.compliant ? '✅ Sesuai' : '❌ Tidak Sesuai'}
                     </p>
