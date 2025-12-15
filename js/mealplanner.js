@@ -436,34 +436,54 @@ function calculateNutritionTargets(preferences) {
 async function generateMealRecommendations(preferences, targets) {
     const { dietGoal, physicalProfile, budget, conditions, allergies } = preferences;
 
-    // MINIMAL prompt - hanya recommendations, NOT full plan
-    const prompt = `Sarankan meal recommendations (makanan & minuman lokal Indonesia) dengan format JSON:
+    // Expanded prompt for 3+3+1 pattern and detailed nutrients
+    const prompt = `Anda adalah ahli gizi profesional. Buatlah rencana makan mingguan yang PERSONAL dan VARIATIF untuk pengguna berikut.
+
+PROFIL PENGGUNA:
+- Gender/Usia: ${physicalProfile.gender}, ${physicalProfile.age} tahun
+- Berat/Tinggi: ${physicalProfile.weight}kg, ${physicalProfile.height}cm
+- Aktivitas: ${physicalProfile.activityLevel}
+- Tujuan Diet: ${dietGoal}
+- Budget: Rp${budget}/hari
+
+TARGET HARIAN (WAJIB DIPENUHI):
+- Kalori: ${targets.targetDailyCalories} kcal (Toleransi +/- 50kcal)
+- Protein: ${targets.targetProtein}g
+- Karbohidrat: ${targets.targetCarbs}g
+- Lemak: ${targets.targetFat}g
+
+KONDISI KESEHATAN:
+- Alergi: ${allergies.length ? allergies.join(', ') : 'Tidak ada'}
+- Kondisi Medis: ${conditions.length ? conditions.join(', ') : 'Sehat'}
+- Catatan: HARUS aman untuk kondisi di atas. Sertakan vitamin/mineral yang mendukung kondisi tersebut.
+
+STRUKTUR RENCANA (PENTING):
+Saya butuh 4 variasi menu harian yang berbeda (Plan A, Plan B, Plan C, Plan D) untuk disebar dalam seminggu:
+1. Plan A (Senin, Kamis)
+2. Plan B (Selasa, Jumat)
+3. Plan C (Rabu, Sabtu)
+4. Plan D (Minggu - Menu Spesial/Cheat Day sehat)
+
+Setiap waktu makan (Pagi, Siang, Malam, Snack) BISA terdiri dari beberapa item (misal: Nasi + Ayam + Sayur). Total kalori harian HARUS mendekati ${targets.targetDailyCalories} kcal.
+
+FORMAT OUTPUT (JSON SAJA):
 {
-  "breakfasts": [
-    {"name":"Nasi Goreng","calories":350,"protein":10,"carbs":50,"fat":12,"time":"07:00"},
-    {"name":"Roti Bakar Telur","calories":300,"protein":12,"carbs":35,"fat":10,"time":"07:00"}
-  ],
-  "snacks": [
-    {"name":"Banana","calories":89,"protein":1,"carbs":23,"fat":0.3,"time":"10:00"},
-    {"name":"Yogurt","calories":100,"protein":3,"carbs":7,"fat":5,"time":"10:00"}
-  ],
-  "lunches": [
-    {"name":"Soto Ayam","calories":350,"protein":25,"carbs":30,"fat":12,"time":"12:00"},
-    {"name":"Gado-Gado","calories":300,"protein":12,"carbs":35,"fat":10,"time":"12:00"}
-  ],
-  "dinners": [
-    {"name":"Ikan Bakar","calories":300,"protein":35,"carbs":0,"fat":15,"time":"18:00"},
-    {"name":"Pepes Ayam","calories":280,"protein":30,"carbs":5,"fat":12,"time":"18:00"}
-  ]
+  "plans": {
+    "A": {
+      "breakfast": [ {"name":"...", "portion":"...", "calories":100, "protein":5, "carbs":10, "fat":2, "vitamins":["A","C"]} ],
+      "snack1": [ ... ],
+      "lunch": [ ... ],
+      "snack2": [ ... ],
+      "dinner": [ ... ]
+    },
+    "B": { ... },
+    "C": { ... },
+    "D": { ... }
+  },
+  "micronutrientsFocus": ["Vitamin C untuk imun", "Calcium untuk tulang", ... ]
 }
 
-PENGGUNA: ${physicalProfile.gender}, ${physicalProfile.age}yo, ${physicalProfile.weight}kg
-DIET: ${dietGoal} | BUDGET: Rp${budget}/hari
-ALERGI: ${allergies.length ? allergies.join(', ') : 'Tidak'}
-KONDISI: ${conditions.length ? conditions.join(', ') : 'Sehat'}
-TARGET HARIAN: ${targets.targetDailyCalories}kcal, Protein ${targets.targetProtein}g
-
-RULES: Sesuai alergi & kondisi. Minimal 2 pilihan per meal time. HANYA JSON, TANPA TEKS!`;
+Pastikan masakan lokal Indonesia yang mudah didapat, variatif, dan sesuai budget.`;
 
     console.log('📤 Meal Recommendations Prompt Length:', prompt.length, 'chars');
 
@@ -472,9 +492,9 @@ RULES: Sesuai alergi & kondisi. Minimal 2 pilihan per meal time. HANYA JSON, TAN
             parts: [{ text: prompt }]
         }],
         generationConfig: {
-            temperature: 0.5,
-            maxOutputTokens: 2000,  // JAUH lebih kecil
-            topP: 0.8,
+            temperature: 0.7, // Sedikit lebih kreatif
+            maxOutputTokens: 5000, // Increased for larger JSON
+            topP: 0.9,
             topK: 40
         }
     };
@@ -500,32 +520,69 @@ RULES: Sesuai alergi & kondisi. Minimal 2 pilihan per meal time. HANYA JSON, TAN
         console.error('❌ Error generating recommendations:', error);
         console.error('Response:', responseText ? responseText.substring(0, 300) : 'N/A');
 
-        // FALLBACK: Return hardcoded recommendations
+        // FALLBACK: Basic structure if AI fails
         console.log('⚠️ Using fallback recommendations');
-        return {
-            breakfasts: [
-                { "name": "Nasi Goreng", "calories": 350, "protein": 10, "carbs": 50, "fat": 12, "time": "07:00" },
-                { "name": "Roti Bakar Telur", "calories": 300, "protein": 12, "carbs": 35, "fat": 10, "time": "07:00" }
-            ],
-            snacks: [
-                { "name": "Banana", "calories": 89, "protein": 1, "carbs": 23, "fat": 0.3, "time": "10:00" },
-                { "name": "Yogurt", "calories": 100, "protein": 3, "carbs": 7, "fat": 5, "time": "10:00" }
-            ],
-            lunches: [
-                { "name": "Soto Ayam", "calories": 350, "protein": 25, "carbs": 30, "fat": 12, "time": "12:00" },
-                { "name": "Gado-Gado", "calories": 300, "protein": 12, "carbs": 35, "fat": 10, "time": "12:00" }
-            ],
-            dinners: [
-                { "name": "Ikan Bakar", "calories": 300, "protein": 35, "carbs": 0, "fat": 15, "time": "18:00" },
-                { "name": "Pepes Ayam", "calories": 280, "protein": 30, "carbs": 5, "fat": 12, "time": "18:00" }
-            ]
-        };
+        return getFallbackRecommendations(targets);
     }
+}
+
+function getFallbackRecommendations(targets) {
+    // Helper to create a basic item
+    const createItem = (name, cal) => [{
+        name,
+        portion: "1 porsi",
+        calories: cal,
+        protein: Math.round(cal * 0.15 / 4),
+        carbs: Math.round(cal * 0.55 / 4),
+        fat: Math.round(cal * 0.30 / 9),
+        vitamins: ["B1", "C"]
+    }];
+
+    const target = targets.targetDailyCalories;
+    const b = Math.round(target * 0.25);
+    const l = Math.round(target * 0.35);
+    const d = Math.round(target * 0.25);
+    const s = Math.round(target * 0.15 / 2);
+
+    return {
+        plans: {
+            "A": {
+                breakfast: createItem("Bubur Ayam (Fallback)", b),
+                snack1: createItem("Buah Potong", s),
+                lunch: createItem("Nasi Campur", l),
+                snack2: createItem("Yogurt", s),
+                dinner: createItem("Capcay Kuah", d)
+            },
+            "B": {
+                breakfast: createItem("Roti Gandum Telur", b),
+                snack1: createItem("Kacang Rebus", s),
+                lunch: createItem("Gado-gado", l),
+                snack2: createItem("Puding Buah", s),
+                dinner: createItem("Ikan Bakar", d)
+            },
+            "C": {
+                breakfast: createItem("Nasi Uduk", b),
+                snack1: createItem("Pisang", s),
+                lunch: createItem("Soto Ayam", l),
+                snack2: createItem("Jus Alpukat", s),
+                dinner: createItem("Pepes Tahu", d)
+            },
+            "D": {
+                breakfast: createItem("Pancake Oatmeal", b),
+                snack1: createItem("Smoothie", s),
+                lunch: createItem("Steak Tempe", l),
+                snack2: createItem("Salad Buah", s),
+                dinner: createItem("Sup Ayam Kampung", d)
+            }
+        },
+        micronutrientsFocus: ["Vitamin C", "Serat"]
+    };
 }
 
 function createMealPlanFromRecommendations(preferences, targets, recommendations) {
     const { duration } = preferences;
     const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const planMapping = ['D', 'A', 'B', 'C', 'A', 'B', 'C']; // Index 0=Minggu, 1=Senin...
 
     const weeks = [];
 
@@ -534,35 +591,59 @@ function createMealPlanFromRecommendations(preferences, targets, recommendations
         const days = [];
 
         // Create days
-        for (let d = 1; d <= 7; d++) {
-            // Randomly select from recommendations
-            const meals = [
-                randomFromArray(recommendations.breakfasts || []),
-                randomFromArray(recommendations.snacks || []),
-                randomFromArray(recommendations.lunches || []),
-                randomFromArray(recommendations.dinners || [])
-            ].filter(m => m);
+        for (let d = 1; d <= 7; d++) { // 1=Senin, ..., 7=Minggu logic in original code was: day 1..7
+            // Correction: Original code used d=1 as day index. Let's assume standard ISO or just simple visual index.
+            // If d=1..7, and dayNames[d%7]. 1%7=1(Senin), 2%7=2(Selasa)... 7%7=0(Minggu).
+            // Matches array index planMapping[d%7].
 
-            const mealTypes = ['Sarapan', 'Snack', 'Makan Siang', 'Makan Malam'];
+            const dayIndex = d % 7; // 1=Senin... 0=Minggu
+            const planType = planMapping[dayIndex];
+            const dailyPlan = recommendations.plans[planType] || recommendations.plans['A']; // Fallback
+
+            const mealSlots = [
+                { type: 'Sarapan', items: dailyPlan.breakfast, time: '07:00' },
+                { type: 'Snack Pagi', items: dailyPlan.snack1, time: '10:00' },
+                { type: 'Makan Siang', items: dailyPlan.lunch, time: '13:00' },
+                { type: 'Snack Sore', items: dailyPlan.snack2, time: '16:00' },
+                { type: 'Makan Malam', items: dailyPlan.dinner, time: '19:00' }
+            ];
+
+            const processedMeals = mealSlots.map((slot, idx) => {
+                // Aggregates for the slot
+                const items = Array.isArray(slot.items) ? slot.items : [slot.items];
+
+                const totalCal = items.reduce((sum, i) => sum + (parseFloat(i.calories) || 0), 0);
+                const totalProt = items.reduce((sum, i) => sum + (parseFloat(i.protein) || 0), 0);
+                const totalCarbs = items.reduce((sum, i) => sum + (parseFloat(i.carbs) || 0), 0);
+                const totalFat = items.reduce((sum, i) => sum + (parseFloat(i.fat) || 0), 0);
+                const allVitamins = [...new Set(items.flatMap(i => i.vitamins || []))];
+
+                return {
+                    id: `meal_${w}_${d}_${idx}`,
+                    type: slot.type,
+                    time: slot.time,
+                    name: items.map(i => i.name).join(' + '), // Composite name
+                    items: items, // Keep individual items detail
+                    calories: Math.round(totalCal),
+                    protein: Math.round(totalProt),
+                    carbs: Math.round(totalCarbs),
+                    fat: Math.round(totalFat),
+                    vitamins: allVitamins,
+                    description: items.map(i => `${i.name} (${i.portion})`).join(', ')
+                };
+            });
+
+            // Filter empty slots if any
+            const validMeals = processedMeals.filter(m => m.calories > 0);
 
             days.push({
                 day: d,
-                dayName: dayNames[d % 7],
-                meals: meals.map((m, idx) => ({
-                    id: `meal_${w}_${d}_${idx}`,
-                    name: m.name || 'Meal',
-                    time: m.time || '09:00',
-                    type: mealTypes[idx] || 'Meal',
-                    calories: Math.round(parseFloat(m.calories) || 0),
-                    protein: Math.round(parseFloat(m.protein) || 0),
-                    carbs: Math.round(parseFloat(m.carbs) || 0),
-                    fat: Math.round(parseFloat(m.fat) || 0),
-                    description: m.description || ''
-                })),
-                totalCalories: Math.round(meals.reduce((sum, m) => sum + (parseFloat(m.calories) || 0), 0)),
-                totalProtein: Math.round(meals.reduce((sum, m) => sum + (parseFloat(m.protein) || 0), 0)),
-                totalCarbs: Math.round(meals.reduce((sum, m) => sum + (parseFloat(m.carbs) || 0), 0)),
-                totalFat: Math.round(meals.reduce((sum, m) => sum + (parseFloat(m.fat) || 0), 0))
+                dayName: dayNames[dayIndex], // Correct name mapping
+                meals: validMeals,
+                totalCalories: Math.round(validMeals.reduce((sum, m) => sum + m.calories, 0)),
+                totalProtein: Math.round(validMeals.reduce((sum, m) => sum + m.protein, 0)),
+                totalCarbs: Math.round(validMeals.reduce((sum, m) => sum + m.carbs, 0)),
+                totalFat: Math.round(validMeals.reduce((sum, m) => sum + m.fat, 0))
             });
         }
 
@@ -573,7 +654,7 @@ function createMealPlanFromRecommendations(preferences, targets, recommendations
     }
 
     console.log('✅ Meal plan created with', weeks.length, 'weeks');
-    return { weeks };
+    return { weeks, micronutrientsFocus: recommendations.micronutrientsFocus };
 }
 
 function randomFromArray(arr) {
@@ -602,8 +683,8 @@ function showMealPlanView() {
     const afterState = document.getElementById('afterState');
 
     if (!beforeState || !afterState) {
+        // Just log, don't alert to avoid annoyance if elements missing during dev
         console.error('❌ DOM elements not found: beforeState or afterState');
-        alert('Halaman tidak siap. Silahkan refresh.');
         return;
     }
 
@@ -648,13 +729,15 @@ function renderDayTabs() {
     const week = currentMealPlan.weeks.find(w => w.week === currentWeek);
     if (!week) return;
 
-    const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    // Fixed day names mapping visually
+    // In created structure: day 1 (Senin) ... day 7 (Minggu) if using d=1..7 loop
+    // BUT d%7 mapping: 1%7=1(Senin), ... 7%7=0(Minggu).
 
-    dayTabs.innerHTML = week.days.map((day, index) => `
+    dayTabs.innerHTML = week.days.map((day) => `
         <div class="tab ${day.day === currentDay ? 'active' : ''}" 
              onclick="switchDay(${day.day})"
              style="cursor:pointer;">
-            ${dayNames[index % 7]}
+            ${day.dayName}
         </div>
     `).join('');
 }
@@ -669,16 +752,21 @@ function renderMeals() {
     const day = week.days.find(d => d.day === currentDay);
     if (!day || !day.meals || !Array.isArray(day.meals)) return;
 
-    timeline.innerHTML = day.meals.map((meal, idx) => {
-        const mealId = meal.id || `meal_${currentWeek}_${currentDay}_${idx}`;
+    timeline.innerHTML = day.meals.map((meal) => {
+        // Handle vitamins display in badge
+        const vitString = (meal.vitamins && meal.vitamins.length > 0)
+            ? `<span class="badge" style="background:#e0f2f1; color:#00695c; margin-right: 0.5rem;">Vit ${meal.vitamins.join(',')}</span>`
+            : '';
+
         return `
-        <div class="meal-card">
+        <div class="meal-card" onclick="showMealDetails('${meal.id}')" style="cursor: pointer;">
             <div class="meal-time">${meal.time || '-'}</div>
             <div class="meal-info">
                 <h4>${meal.name || 'Meal'}</h4>
                 <p class="meta">${meal.type || 'Meal'} • ${Math.round(meal.calories || 0)} kcal</p>
                 <p style="color: #666; margin-top: 0.5rem; font-size: 0.9rem;">${meal.description || ''}</p>
                 <div style="margin-top: 0.5rem;">
+                    ${vitString}
                     <span class="badge" style="margin-right: 0.5rem;">P: ${Math.round(meal.protein || 0)}g</span>
                     <span class="badge" style="margin-right: 0.5rem;">C: ${Math.round(meal.carbs || 0)}g</span>
                     <span class="badge">F: ${Math.round(meal.fat || 0)}g</span>
@@ -755,6 +843,24 @@ function showMealDetails(mealId) {
     const meal = day.meals.find(m => m.id === mealId);
     if (!meal) return;
 
+    // Generate detailed visualization for complex items
+    const itemsHtml = meal.items && meal.items.length > 1
+        ? `<div style="margin-bottom: 1.5rem; background: #f5f5f5; padding: 1rem; border-radius: 10px;">
+             <strong>Komposisi:</strong>
+             <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                ${meal.items.map(i => `<li>${i.name} (${i.portion}): ${i.calories} kcal</li>`).join('')}
+             </ul>
+           </div>`
+        : '';
+
+    // Vitamins detail
+    const vitaminsHtml = meal.vitamins && meal.vitamins.length > 0
+        ? `<div style="margin-top: 1rem;">
+             <strong>Nutrisi Mikro:</strong><br>
+             <span style="color: #00695c;">${meal.vitamins.join(', ')}</span>
+           </div>`
+        : '';
+
     // Create modal
     const modal = document.createElement('div');
     modal.style.cssText = `
@@ -775,7 +881,7 @@ function showMealDetails(mealId) {
         <div style="background: white; border-radius: 20px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 2rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                 <h2 style="color: #00c853;">${meal.name}</h2>
-                <button onclick="this.closest('div').parentElement.remove()" style="background: #ff5252; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; font-size: 1.2rem;">×</button>
+                <button id="closeModalBtn" style="background: #ff5252; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; font-size: 1.2rem;">×</button>
             </div>
             
             <div style="margin-bottom: 1.5rem;">
@@ -785,6 +891,8 @@ function showMealDetails(mealId) {
             
             <p style="color: #666; margin-bottom: 1.5rem; line-height: 1.6;">${meal.description}</p>
             
+            ${itemsHtml}
+
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
                 <div style="padding: 1rem; background: #f8fffe; border-radius: 10px; text-align: center;">
                     <div style="color: #666; font-size: 0.9rem;">Kalori</div>
@@ -804,14 +912,6 @@ function showMealDetails(mealId) {
                 </div>
             </div>
             
-            <div style="margin-bottom: 1.5rem;">
-                <h3 style="color: #1b5e20; margin-bottom: 0.75rem;">Bahan-bahan:</h3>
-                <ul style="padding-left: 1.5rem; color: #666; line-height: 1.8;">
-                    ${meal.ingredients.map(ing => `<li>${ing}</li>`).join('')}
-                </ul>
-            </div>
-            
-            <div>
                 <h3 style="color: #1b5e20; margin-bottom: 0.75rem;">Cara Memasak:</h3>
                 <p style="color: #666; line-height: 1.8; white-space: pre-line;">${meal.recipe || 'Resep tidak tersedia'}</p>
             </div>
