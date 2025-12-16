@@ -13,11 +13,89 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-if (!GEMINI_API_KEY) {
-    console.error('❌ ERROR: GEMINI_API_KEY tidak ditemukan di .env file');
+// Load all available API keys
+const API_KEYS = [
+    process.env.GEMINI_API_KEY,
+    process.env.GEMINI_API_KEY2,
+    process.env.GEMINI_API_KEY3,
+    process.env.GEMINI_API_KEY4,
+    process.env.GEMINI_API_KEY5,
+    process.env.GEMINI_API_KEY6,
+    process.env.GEMINI_API_KEY7,
+    process.env.GEMINI_API_KEY8,
+    process.env.GEMINI_API_KEY9,
+    process.env.GEMINI_API_KEY10,
+].filter(key => key); // Remove undefined keys
+
+if (API_KEYS.length === 0) {
+    console.error('❌ ERROR: No GEMINI_API_KEY found in .env file');
     process.exit(1);
+}
+
+console.log(`✅ Loaded ${API_KEYS.length} API keys for rotation`);
+
+// API key rotation helper with retry delays
+async function callGeminiWithRotation(endpoint, requestBody) {
+    // First pass: try all keys quickly
+    for (let i = 0; i < API_KEYS.length; i++) {
+        const apiKey = API_KEYS[i];
+        console.log(`🔑 Trying API key ${i + 1}/${API_KEYS.length}...`);
+
+        try {
+            const response = await fetch(`${endpoint}?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+
+            // If rate limited, try next key immediately
+            if (response.status === 429) {
+                console.log(`⚠️ Key ${i + 1} rate limited (429), trying next...`);
+                continue;
+            }
+
+            // If server overloaded, wait 2 seconds then try next
+            if (response.status === 503 || response.status === 500) {
+                console.log(`⚠️ Key ${i + 1} server overload (${response.status}), waiting 2s...`);
+                await new Promise(r => setTimeout(r, 2000));
+                continue;
+            }
+
+            return { response, keyIndex: i + 1 };
+        } catch (error) {
+            console.log(`⚠️ Key ${i + 1} error: ${error.message}, trying next...`);
+            continue;
+        }
+    }
+
+    // Second pass: retry with longer delays
+    console.log('🔄 All keys failed, retrying with 5s delay...');
+    await new Promise(r => setTimeout(r, 5000));
+
+    for (let i = 0; i < Math.min(3, API_KEYS.length); i++) {
+        const apiKey = API_KEYS[i];
+        console.log(`🔁 Retry ${i + 1}/3 with key ${i + 1}...`);
+
+        try {
+            const response = await fetch(`${endpoint}?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (response.status !== 429 && response.status !== 503 && response.status !== 500) {
+                return { response, keyIndex: i + 1 };
+            }
+
+            console.log(`⚠️ Retry ${i + 1} failed (${response.status})`);
+            await new Promise(r => setTimeout(r, 3000));
+        } catch (error) {
+            console.log(`⚠️ Retry ${i + 1} error: ${error.message}`);
+        }
+    }
+
+    throw new Error('All API keys exhausted or rate limited');
 }
 
 // Middleware
@@ -45,28 +123,18 @@ app.post('/api/analyze', async (req, res) => {
         }
 
         const geminiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+        console.log('🔵 Server: Calling Gemini API with key rotation...');
 
-        console.log('🔵 Server: Calling Gemini API...');
-        console.log('🔵 Endpoint:', geminiEndpoint);
-        console.log('🔵 API Key exists:', !!GEMINI_API_KEY);
-        console.log('🔵 API Key length:', GEMINI_API_KEY ? GEMINI_API_KEY.length : 0);
+        const requestBody = {
+            contents,
+            generationConfig: generationConfig || {
+                temperature: 0.7,
+                maxOutputTokens: 8000
+            }
+        };
 
-        const response = await fetch(`${geminiEndpoint}?key=${GEMINI_API_KEY}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                contents,
-                generationConfig: generationConfig || {
-                    temperature: 0.7,
-                    maxOutputTokens: 8000
-                }
-            })
-        });
-
-        console.log('🔵 Gemini Response Status:', response.status);
-        console.log('🔵 Gemini Response OK:', response.ok);
+        const { response, keyIndex } = await callGeminiWithRotation(geminiEndpoint, requestBody);
+        console.log(`✅ Success with key ${keyIndex}, status: ${response.status}`);
 
         if (!response.ok) {
             const errorData = await response.json();
@@ -103,20 +171,18 @@ app.post('/api/analyze-meal-plan', async (req, res) => {
         }
 
         const geminiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+        console.log('🔵 Meal Plan: Calling Gemini API with key rotation...');
 
-        const response = await fetch(`${geminiEndpoint}?key=${GEMINI_API_KEY}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                contents,
-                generationConfig: generationConfig || {
-                    temperature: 0.3,
-                    maxOutputTokens: 2000
-                }
-            })
-        });
+        const requestBody = {
+            contents,
+            generationConfig: generationConfig || {
+                temperature: 0.7,
+                maxOutputTokens: 4096
+            }
+        };
+
+        const { response, keyIndex } = await callGeminiWithRotation(geminiEndpoint, requestBody);
+        console.log(`✅ Meal Plan success with key ${keyIndex}, status: ${response.status}`);
 
         if (!response.ok) {
             const errorData = await response.json();

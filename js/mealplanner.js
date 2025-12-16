@@ -2,6 +2,7 @@ let currentMealPlan = null;
 let currentWeek = 1;
 let currentDay = 1;
 let isCreating = false;
+let isCancelled = false; // Flag to prevent fallback after cancel
 
 const STORAGE_KEY_CURRENT_USER = 'nutriscan_current_user';
 const STORAGE_KEY_USER_DATA = 'nutriscan_user_data_';
@@ -303,7 +304,15 @@ async function generateMealPlan() {
 
         // Show loading
         isCreating = true;
+        isCancelled = false; // Reset cancel flag for new generation
         showLoadingState();
+
+        // Set 1-minute timeout warning
+        window._loadingTimeoutId = setTimeout(() => {
+            if (isCreating) {
+                showLoadingTimeoutWarning();
+            }
+        }, 60000); // 60 seconds = 1 minute
 
         // Calculate nutritional targets
         const targets = calculateNutritionTargets(preferences);
@@ -336,18 +345,34 @@ async function generateMealPlan() {
 
         localStorage.setItem('nutriscan_current_meal_plan', JSON.stringify(currentMealPlan));
 
-        // Hide loading
+        // Hide loading and clear timeout
+        clearTimeout(window._loadingTimeoutId);
         hideLoadingState();
         isCreating = false;
 
         // Show meal plan view
         showMealPlanView();
 
+        // Display diet tips from AI
+        if (mealPlan.dietTips && mealPlan.dietTips.length > 0) {
+            displayDietTips(mealPlan.dietTips);
+        }
+
     } catch (error) {
         console.error('❌ Error generating meal plan:', error);
+        clearTimeout(window._loadingTimeoutId);
         hideLoadingState();
         isCreating = false;
-        alert('Gagal membuat meal plan: ' + error.message);
+
+        // Check if it's a server overload error
+        const errorMessage = error.message?.toLowerCase() || '';
+        if (errorMessage.includes('server') || errorMessage.includes('overload') ||
+            errorMessage.includes('503') || errorMessage.includes('429') ||
+            errorMessage.includes('exhausted') || errorMessage.includes('rate')) {
+            showServerOverloadModal();
+        } else {
+            alert('Gagal membuat meal plan: ' + error.message);
+        }
     }
 }
 
@@ -436,96 +461,410 @@ function calculateNutritionTargets(preferences) {
 async function generateMealRecommendations(preferences, targets) {
     const { dietGoal, physicalProfile, budget, conditions, allergies } = preferences;
 
-    // Expanded prompt for 3+3+1 pattern and detailed nutrients
-    const prompt = `Anda adalah ahli gizi profesional. Buatlah rencana makan mingguan yang PERSONAL dan VARIATIF untuk pengguna berikut.
+    // 2-Template Strategy: Generate only 2 unique plans (A & B)
+    // Then map A->C and B->D to create variety without extra API calls
+    const templateLabels = ['A', 'B'];
+    const templateContexts = [
+        'Regular/Active Day (Mon-Wed-Fri)',
+        'Light/Variety Day (Tue-Thu-Sat-Sun)'
+    ];
 
-PROFIL PENGGUNA:
-- Gender/Usia: ${physicalProfile.gender}, ${physicalProfile.age} tahun
-- Berat/Tinggi: ${physicalProfile.weight}kg, ${physicalProfile.height}cm
-- Aktivitas: ${physicalProfile.activityLevel}
-- Tujuan Diet: ${dietGoal}
-- Budget: Rp${budget}/hari
+    const templates = {};
 
-TARGET HARIAN (WAJIB DIPENUHI):
-- Kalori: ${targets.targetDailyCalories} kcal (Toleransi +/- 50kcal)
-- Protein: ${targets.targetProtein}g
-- Karbohidrat: ${targets.targetCarbs}g
-- Lemak: ${targets.targetFat}g
+    for (let i = 0; i < 2; i++) {
+        const label = templateLabels[i];
+        const context = templateContexts[i];
 
-KONDISI KESEHATAN:
-- Alergi: ${allergies.length ? allergies.join(', ') : 'Tidak ada'}
-- Kondisi Medis: ${conditions.length ? conditions.join(', ') : 'Sehat'}
-- Catatan: HARUS aman untuk kondisi di atas. Sertakan vitamin/mineral yang mendukung kondisi tersebut.
+        try {
+            updateLoadingProgress(i + 1, 2, `Generating Plan ${label}...`);
 
-STRUKTUR RENCANA (PENTING):
-Saya butuh 4 variasi menu harian yang berbeda (Plan A, Plan B, Plan C, Plan D) untuk disebar dalam seminggu:
-1. Plan A (Senin, Kamis)
-2. Plan B (Selasa, Jumat)
-3. Plan C (Rabu, Sabtu)
-4. Plan D (Minggu - Menu Spesial/Cheat Day sehat)
+            const dayPlan = await generateSingleDayPlan(
+                label,
+                context,
+                preferences,
+                targets
+            );
 
-Setiap waktu makan (Pagi, Siang, Malam, Snack) BISA terdiri dari beberapa item (misal: Nasi + Ayam + Sayur). Total kalori harian HARUS mendekati ${targets.targetDailyCalories} kcal.
+            templates[label] = dayPlan;
+            console.log(`✅ Plan ${label} generated successfully`);
 
-FORMAT OUTPUT (JSON SAJA):
-{
-  "plans": {
-    "A": {
-      "breakfast": [ {"name":"...", "portion":"...", "calories":100, "protein":5, "carbs":10, "fat":2, "vitamins":["A","C"]} ],
-      "snack1": [ ... ],
-      "lunch": [ ... ],
-      "snack2": [ ... ],
-      "dinner": [ ... ]
-    },
-    "B": { ... },
-    "C": { ... },
-    "D": { ... }
-  },
-  "micronutrientsFocus": ["Vitamin C untuk imun", "Calcium untuk tulang", ... ]
+            // Short delay between calls
+            if (i < 1) await new Promise(resolve => setTimeout(resolve, 1500));
+
+        } catch (error) {
+            console.error(`❌ Failed to generate Plan ${label}:`, error);
+
+            // Retry once
+            try {
+                console.log(`🔄 Retrying Plan ${label}...`);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                const retryPlan = await generateSingleDayPlan(label, context, preferences, targets);
+                templates[label] = retryPlan;
+                console.log(`✅ Plan ${label} retry successful`);
+            } catch (retryError) {
+                console.error(`❌ Retry failed for Plan ${label}:`, retryError);
+                // Only use fallback if not cancelled
+                if (isCancelled) {
+                    throw new Error('Dibatalkan oleh pengguna');
+                }
+                templates[label] = getBasicDayPlan(targets, label);
+            }
+        }
+    }
+
+    // If Plan B failed, use Plan A as backup
+    if (!templates['B'] && templates['A']) {
+        templates['B'] = JSON.parse(JSON.stringify(templates['A']));
+    }
+
+    // Map 2 templates to 4 days: A, B, C(=A copy), D(=B copy)
+    const plans = {
+        'A': templates['A'],
+        'B': templates['B'],
+        'C': JSON.parse(JSON.stringify(templates['A'] || getBasicDayPlan(targets, 'C'))),
+        'D': JSON.parse(JSON.stringify(templates['B'] || getBasicDayPlan(targets, 'D')))
+    };
+
+    return { plans };
 }
 
-Pastikan masakan lokal Indonesia yang mudah didapat, variatif, dan sesuai budget.`;
+// Generate a single day's meal plan
+async function generateSingleDayPlan(dayLabel, dayContext, preferences, targets) {
+    const { dietGoal, physicalProfile, budget, conditions, allergies } = preferences;
 
-    console.log('📤 Meal Recommendations Prompt Length:', prompt.length, 'chars');
+    // Get diet-specific rules
+    const dietRules = getDietRules(dietGoal, targets);
+
+    // Very compact prompt to prevent truncation
+    const prompt = `Meal plan ${dietGoal} (${targets.targetDailyCalories}kcal):
+${dietRules}
+
+JSON only:
+{"meals":[{"time":"12:00","type":"Siang","dish":"Nama Masakan Lengkap","items":[{"name":"Bahan","g":100,"cal":200,"p":10,"c":20,"f":5}]}],"tips":["tip1"]}
+
+dish = nama masakan deskriptif (contoh: "Nasi Goreng Ayam Telur", "Soto Ayam Lamongan")`;
+
+    console.log('📤 Prompt length:', prompt.length, 'chars');
 
     const requestBody = {
-        contents: [{
-            parts: [{ text: prompt }]
-        }],
+        contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-            temperature: 0.7, // Sedikit lebih kreatif
-            maxOutputTokens: 5000, // Increased for larger JSON
-            topP: 0.9,
+            temperature: 0.8,
+            maxOutputTokens: 8192,
+            topP: 0.95,
             topK: 40
         }
     };
 
-    let responseText = null;
+    const data = await callGeminiAPI(requestBody, 'meal-plan');
+    let responseText = data.candidates[0].content.parts[0].text;
+
+    // Extract JSON
+    let jsonStr = responseText;
+    if (jsonStr.includes('```json')) {
+        jsonStr = jsonStr.split('```json')[1].split('```')[0];
+    } else if (jsonStr.includes('```')) {
+        jsonStr = jsonStr.split('```')[1].split('```')[0];
+    } else {
+        const match = jsonStr.match(/\{[\s\S]*\}/);
+        if (match) jsonStr = match[0];
+    }
+
+    // Clean and repair JSON
+    jsonStr = jsonStr.trim()
+        .replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .replace(/,\s*}/g, '}')  // Remove trailing commas before }
+        .replace(/,\s*]/g, ']'); // Remove trailing commas before ]
+
+    // Try to repair truncated JSON
+    if (!jsonStr.endsWith('}')) {
+        // Try to close unclosed structures
+        const openBraces = (jsonStr.match(/{/g) || []).length;
+        const closeBraces = (jsonStr.match(/}/g) || []).length;
+        const openBrackets = (jsonStr.match(/\[/g) || []).length;
+        const closeBrackets = (jsonStr.match(/\]/g) || []).length;
+
+        // Add missing closing brackets/braces
+        for (let i = 0; i < openBrackets - closeBrackets; i++) jsonStr += ']';
+        for (let i = 0; i < openBraces - closeBraces; i++) jsonStr += '}';
+    }
 
     try {
-        const data = await callGeminiAPI(requestBody, 'meal-plan');
+        const dayPlan = JSON.parse(jsonStr);
 
-        responseText = data.candidates[0].content.parts[0].text;
-        console.log('📝 Recommendations response length:', responseText.length);
+        // Normalize to new format if old format detected
+        if (dayPlan.breakfast && !dayPlan.meals) {
+            dayPlan.meals = [
+                { time: '07:00', type: 'Sarapan', items: dayPlan.breakfast },
+                { time: '12:00', type: 'Makan Siang', items: dayPlan.lunch },
+                { time: '19:00', type: 'Makan Malam', items: dayPlan.dinner }
+            ];
+            dayPlan.diet_tips = dayPlan.diet_tips || [];
+        }
 
-        let jsonStr = responseText;
-        if (jsonStr.includes('```json')) jsonStr = jsonStr.split('```json')[1].split('```')[0];
-        else if (jsonStr.includes('```')) jsonStr = jsonStr.split('```')[1].split('```')[0];
-        jsonStr = jsonStr.trim();
+        // Normalize short field names to full names
+        // Check for tips field and transfer to diet_tips if diet_tips is empty/missing
+        if (dayPlan.tips && Array.isArray(dayPlan.tips) && dayPlan.tips.length > 0) {
+            dayPlan.diet_tips = dayPlan.tips;
+        }
+        // Ensure diet_tips exists
+        if (!dayPlan.diet_tips) {
+            dayPlan.diet_tips = [];
+        }
 
-        const recommendations = JSON.parse(jsonStr);
-        console.log('✅ Recommendations parsed successfully');
-        return recommendations;
+        // Normalize item fields
+        if (dayPlan.meals) {
+            dayPlan.meals.forEach(meal => {
+                // Normalize dish name - use dish field if available, else combine item names
+                if (!meal.dish && meal.items && Array.isArray(meal.items) && meal.items.length > 0) {
+                    meal.dish = meal.items.map(i => i.name).slice(0, 2).join(' + ');
+                }
 
-    } catch (error) {
-        console.error('❌ Error generating recommendations:', error);
-        console.error('Response:', responseText ? responseText.substring(0, 300) : 'N/A');
+                if (meal.items && Array.isArray(meal.items)) {
+                    meal.items = meal.items.map(item => ({
+                        name: item.name || 'Bahan',
+                        portion_grams: item.portion_grams || item.g || 100,
+                        calories: item.calories || item.cal || 200,
+                        protein: item.protein || item.p || 10,
+                        carbs: item.carbs || item.c || 30,
+                        fat: item.fat || item.f || 8,
+                        ingredients: item.ingredients || []
+                    }));
+                }
+            });
+        }
 
-        // FALLBACK: Basic structure if AI fails
-        console.log('⚠️ Using fallback recommendations');
-        return getFallbackRecommendations(targets);
+        console.log('✅ Parsed meal plan:', dayPlan.meals?.length, 'meals,', dayPlan.diet_tips?.length, 'tips');
+        return dayPlan;
+    } catch (parseError) {
+        console.error('❌ JSON parse failed, using fallback:', parseError.message);
+        // Fallback with realistic Indonesian dishes
+        return {
+            meals: [
+                {
+                    time: '07:00', type: 'Sarapan', items: [
+                        { name: 'Bubur Ayam', portion_grams: 300, calories: 280, protein: 15, carbs: 35, fat: 8, ingredients: ['Nasi 150g', 'Ayam suwir 50g', 'Kecap', 'Bawang goreng'] },
+                        { name: 'Telur Rebus', portion_grams: 60, calories: 80, protein: 7, carbs: 1, fat: 5, ingredients: ['Telur ayam 1 butir'] }
+                    ]
+                },
+                {
+                    time: '12:30', type: 'Makan Siang', items: [
+                        { name: 'Nasi + Ikan Bakar + Sayur', portion_grams: 400, calories: 550, protein: 35, carbs: 55, fat: 18, ingredients: ['Nasi putih 200g', 'Ikan kembung 150g', 'Kangkung tumis 100g', 'Sambal'] }
+                    ]
+                },
+                {
+                    time: '19:00', type: 'Makan Malam', items: [
+                        { name: 'Soto Ayam', portion_grams: 350, calories: 380, protein: 25, carbs: 40, fat: 12, ingredients: ['Kuah soto 250ml', 'Ayam 100g', 'Bihun 50g', 'Tauge', 'Seledri'] }
+                    ]
+                }
+            ],
+            diet_tips: [
+                'Minum air putih minimal 8 gelas (2 liter) per hari',
+                'Makan perlahan (20-30 menit) untuk pencernaan optimal',
+                'Hindari makan berat setelah jam 8 malam'
+            ]
+        };
     }
 }
 
+// Get diet-specific rules and instructions
+function getDietRules(dietGoal, targets) {
+    const rules = {
+        'Intermittent Fasting': `
+ATURAN DIET INTERMITTENT FASTING (WAJIB):
+- Hanya 2 waktu makan dalam 8 jam eating window (contoh: 12:00-20:00)
+- TIDAK ADA sarapan pagi - skip sarapan
+- Fokus makan siang dan makan malam saja
+- Target kalori: ${Math.round(targets.targetDailyCalories)} kcal
+- Tips: puasa 16 jam, makan 8 jam`,
+
+        'Keto': `
+ATURAN DIET KETO (WAJIB):
+- MAKSIMAL 50g karbohidrat per hari
+- Tinggi lemak (70% kalori dari lemak)
+- Protein sedang (25%)
+- DILARANG: nasi, roti, mie, buah manis, sayur bertepung
+- FOKUS: daging, ikan, telur, keju, alpukat, kacang, sayuran hijau`,
+
+        'Atkins': `
+ATURAN DIET ATKINS (WAJIB):
+- MAKSIMAL 20g karbohidrat per hari
+- TANPA biji-bijian, gula, buah di awal
+- FOKUS: daging, ikan, telur, keju, sayuran rendah karbo
+- Tinggi protein, tinggi lemak`,
+
+        'Mediterania': `
+ATURAN DIET MEDITERANIA (WAJIB):
+- Gunakan minyak zaitun sebagai lemak utama
+- Ikan 2-3x seminggu
+- Biji-bijian utuh, sayuran, buah-buahan
+- BATASI: daging merah (1-2x/bulan saja)
+- TANPA makanan olahan`,
+
+        'Mediterranean': `
+ATURAN DIET MEDITERANIA (WAJIB):
+- Gunakan minyak zaitun sebagai lemak utama
+- Ikan 2-3x seminggu
+- Biji-bijian utuh, sayuran, buah-buahan
+- BATASI: daging merah (1-2x/bulan saja)
+- TANPA makanan olahan`,
+
+        'Paleo': `
+ATURAN DIET PALEO (WAJIB):
+- TANPA biji-bijian (nasi, gandum, jagung)
+- TANPA produk susu
+- TANPA kacang-kacangan
+- TANPA gula olahan
+- FOKUS: daging, ikan, telur, sayuran, buah, kacang pohon`,
+
+        'Vegetarian/Vegan': `
+ATURAN DIET VEGAN (WAJIB):
+- TIDAK BOLEH ada produk hewani sama sekali (tanpa daging, susu, telur, madu)
+- FOKUS: tahu, tempe, kacang-kacangan, sayuran, biji-bijian
+- Pastikan protein cukup dari sumber nabati`,
+
+        'Vegetarian': `
+ATURAN DIET VEGETARIAN (WAJIB):
+- TANPA daging atau ikan
+- Boleh telur dan susu
+- FOKUS: tahu, tempe, telur, susu, kacang-kacangan, sayuran`,
+
+        'Vegan': `
+ATURAN DIET VEGAN (WAJIB):
+- TIDAK BOLEH ada produk hewani sama sekali
+- FOKUS: tahu, tempe, kacang-kacangan, sayuran, biji-bijian
+- Pastikan protein dan B12 cukup`,
+
+        'DASH': `
+ATURAN DIET DASH (WAJIB):
+- Rendah natrium (MAKS 2300mg/hari)
+- Tinggi kalium, kalsium, magnesium
+- FOKUS: buah, sayuran, biji-bijian utuh, protein rendah lemak
+- Batasi lemak jenuh dan makanan manis`,
+
+        'Mayo Diet': `
+ATURAN DIET MAYO (WAJIB):
+- Piramida makanan: dasar adalah buah/sayuran
+- Biji-bijian utuh lebih baik dari olahan
+- Sumber protein rendah lemak
+- Lemak sehat dalam jumlah sedang
+- Kontrol porsi penting`,
+
+        'Mayo Clinic Diet': `
+ATURAN DIET MAYO (WAJIB):
+- Piramida makanan: dasar adalah buah/sayuran
+- Biji-bijian utuh lebih baik dari olahan
+- Sumber protein rendah lemak
+- Lemak sehat dalam jumlah sedang
+- Kontrol porsi penting`,
+
+        'Custom': `
+ATURAN CUSTOM (WAJIB):
+- Target kalori: ${targets.targetDailyCalories} kcal
+- Protein: ${targets.targetProtein}g, Karbo: ${targets.targetCarbs}g, Lemak: ${targets.targetFat}g
+- Hormati semua alergi dan kondisi kesehatan
+- Makanan seimbang dan bergizi`
+    };
+
+    const result = rules[dietGoal] || rules['Custom'];
+    console.log(`🎯 Diet goal: "${dietGoal}" - Rules found: ${result ? 'YES' : 'NO (using Custom)'}`);
+    return result;
+}
+
+// Get basic fallback for a single day
+function getBasicDayPlan(targets, dayLabel) {
+    const cal = targets.targetDailyCalories;
+    const b = Math.round(cal * 0.35);
+    const l = Math.round(cal * 0.40);
+    const d = Math.round(cal * 0.25);
+
+    const meals = {
+        A: { breakfast: 'Nasi Merah + Telur', lunch: 'Ayam Bakar + Sayur', dinner: 'Ikan Panggang' },
+        B: { breakfast: 'Roti Gandum + Alpukat', lunch: 'Gado-gado', dinner: 'Tempe Bacem' },
+        C: { breakfast: 'Oatmeal + Pisang', lunch: 'Soto Ayam', dinner: 'Pepes Ikan' },
+        D: { breakfast: 'Nasi Uduk', lunch: 'Steak Tempe', dinner: 'Sup Ayam' }
+    };
+
+    const m = meals[dayLabel] || meals.A;
+
+    return {
+        breakfast: [{ name: m.breakfast, portion: '1 porsi', calories: b, protein: Math.round(b * 0.15 / 4), carbs: Math.round(b * 0.55 / 4), fat: Math.round(b * 0.30 / 9) }],
+        lunch: [{ name: m.lunch, portion: '1 porsi', calories: l, protein: Math.round(l * 0.15 / 4), carbs: Math.round(l * 0.55 / 4), fat: Math.round(l * 0.30 / 9) }],
+        dinner: [{ name: m.dinner, portion: '1 porsi', calories: d, protein: Math.round(d * 0.15 / 4), carbs: Math.round(d * 0.55 / 4), fat: Math.round(d * 0.30 / 9) }]
+    };
+}
+
+// Update loading overlay with progress
+function updateLoadingProgress(current, total, message) {
+    const overlay = document.getElementById('loadingOverlay');
+    if (!overlay) return;
+
+    const progressText = overlay.querySelector('.progress-message');
+    if (progressText) {
+        progressText.textContent = message;
+    }
+
+    const progressBar = overlay.querySelector('.progress-fill');
+    if (progressBar) {
+        const percent = (current / total) * 100;
+        progressBar.style.width = percent + '%';
+    }
+
+    const progressLabel = overlay.querySelector('.progress-label');
+    if (progressLabel) {
+        progressLabel.textContent = `${current}/${total} days`;
+    }
+}
+
+// Helper: Check if JSON string is complete
+function isCompleteJSON(str) {
+    if (!str || !str.trim()) return false;
+
+    const trimmed = str.trim();
+    if (!trimmed.startsWith('{')) return false;
+    if (!trimmed.endsWith('}')) return false;
+
+    // Count braces
+    let openBraces = 0;
+    let closeBraces = 0;
+    for (let char of trimmed) {
+        if (char === '{') openBraces++;
+        if (char === '}') closeBraces++;
+    }
+
+    return openBraces === closeBraces && openBraces > 0;
+}
+
+// Helper: Expand 2 plans to 4 plans with variations
+function expandPlansTo4(twoPlans) {
+    const planA = twoPlans.A || twoPlans.a;
+    const planB = twoPlans.B || twoPlans.b;
+
+    if (!planA || !planB) {
+        console.warn('⚠️ Missing plans in AI response, using fallback structure');
+        return twoPlans;
+    }
+
+    // Create variations by swapping meal times
+    return {
+        A: planA,                    // Mon, Thu
+        B: planB,                    // Tue, Fri  
+        C: {
+            breakfast: planB.breakfast,
+            lunch: planA.lunch,
+            dinner: planB.dinner
+        },                           // Wed, Sat (mix)
+        D: {
+            breakfast: planA.breakfast,
+            lunch: planB.lunch,
+            dinner: planA.dinner
+        }                            // Sun (special mix)
+    };
+}
+
+//safety if AI fails
 function getFallbackRecommendations(targets) {
     // Helper to create a basic item
     const createItem = (name, cal) => [{
@@ -600,17 +939,53 @@ function createMealPlanFromRecommendations(preferences, targets, recommendations
             const planType = planMapping[dayIndex];
             const dailyPlan = recommendations.plans[planType] || recommendations.plans['A']; // Fallback
 
-            const mealSlots = [
-                { type: 'Sarapan', items: dailyPlan.breakfast, time: '07:00' },
-                { type: 'Snack Pagi', items: dailyPlan.snack1, time: '10:00' },
-                { type: 'Makan Siang', items: dailyPlan.lunch, time: '13:00' },
-                { type: 'Snack Sore', items: dailyPlan.snack2, time: '16:00' },
-                { type: 'Makan Malam', items: dailyPlan.dinner, time: '19:00' }
-            ];
+            // Use new meals array format if available, else fallback to old format
+            let mealSlots;
+            if (dailyPlan.meals && Array.isArray(dailyPlan.meals)) {
+                // New format: use meals array directly
+                mealSlots = dailyPlan.meals.map(meal => ({
+                    type: meal.type || 'Makanan',
+                    items: meal.items || [],
+                    time: meal.time || '12:00'
+                }));
+            } else {
+                // Old format fallback
+                mealSlots = [
+                    { type: 'Sarapan', items: dailyPlan.breakfast || [], time: '07:00' },
+                    { type: 'Makan Siang', items: dailyPlan.lunch || [], time: '12:00' },
+                    { type: 'Makan Malam', items: dailyPlan.dinner || [], time: '19:00' }
+                ].filter(slot => slot.items && slot.items.length > 0);
+            }
 
             const processedMeals = mealSlots.map((slot, idx) => {
-                // Aggregates for the slot
-                const items = Array.isArray(slot.items) ? slot.items : [slot.items];
+                // Aggregates for the slot - filter out undefined/null items
+                const rawItems = Array.isArray(slot.items) ? slot.items : (slot.items ? [slot.items] : []);
+                const items = rawItems.filter(i => i && typeof i === 'object');
+
+                // If no valid items, show warning and return fallback
+                if (items.length === 0) {
+                    console.warn(`⚠️ Menu ${slot.type} tidak tersedia - coba generate ulang`);
+
+                    // Show alert only once per generation
+                    if (!window._mealPlanWarningShown) {
+                        window._mealPlanWarningShown = true;
+                        setTimeout(() => {
+                            alert('⚠️ Beberapa menu tidak berhasil di-generate. Silakan klik "Generate Ulang" untuk mencoba lagi.');
+                            window._mealPlanWarningShown = false;
+                        }, 500);
+                    }
+
+                    return {
+                        id: `meal_${w}_${d}_${idx}`,
+                        type: slot.type,
+                        time: slot.time,
+                        name: '⚠️ Gagal - Coba Ulang',
+                        items: [],
+                        calories: 0, protein: 0, carbs: 0, fat: 0,
+                        vitamins: [],
+                        description: 'Menu gagal di-generate. Silakan generate ulang.'
+                    };
+                }
 
                 const totalCal = items.reduce((sum, i) => sum + (parseFloat(i.calories) || 0), 0);
                 const totalProt = items.reduce((sum, i) => sum + (parseFloat(i.protein) || 0), 0);
@@ -622,14 +997,14 @@ function createMealPlanFromRecommendations(preferences, targets, recommendations
                     id: `meal_${w}_${d}_${idx}`,
                     type: slot.type,
                     time: slot.time,
-                    name: items.map(i => i.name).join(' + '), // Composite name
+                    name: slot.dish || (items.length > 0 ? items[0].name : 'Menu'), // Use dish name from AI
                     items: items, // Keep individual items detail
                     calories: Math.round(totalCal),
                     protein: Math.round(totalProt),
                     carbs: Math.round(totalCarbs),
                     fat: Math.round(totalFat),
                     vitamins: allVitamins,
-                    description: items.map(i => `${i.name} (${i.portion})`).join(', ')
+                    description: items.map(i => `${i.name} (${i.portion_grams || i.portion || '100'}g)`).join(', ')
                 };
             });
 
@@ -653,8 +1028,13 @@ function createMealPlanFromRecommendations(preferences, targets, recommendations
         });
     }
 
+    // Extract diet tips from first available plan
+    const firstPlan = recommendations.plans?.A || recommendations.plans?.B || {};
+    const dietTips = firstPlan.diet_tips || [];
+
     console.log('✅ Meal plan created with', weeks.length, 'weeks');
-    return { weeks, micronutrientsFocus: recommendations.micronutrientsFocus };
+    console.log('📝 Diet tips:', dietTips);
+    return { weeks, micronutrientsFocus: recommendations.micronutrientsFocus, dietTips };
 }
 
 function randomFromArray(arr) {
@@ -697,6 +1077,23 @@ function showMealPlanView() {
 
     // Render meal plan
     renderMealPlan();
+}
+
+// Display AI-generated diet tips
+function displayDietTips(tips) {
+    if (!tips || tips.length === 0) {
+        console.log('⚠️ No diet tips to display');
+        return;
+    }
+
+    // Update existing tips list in HTML
+    const tipsList = document.getElementById('dietTipsList');
+    if (tipsList) {
+        tipsList.innerHTML = tips.map(tip => `<li>${tip}</li>`).join('');
+        console.log('✅ Diet tips updated:', tips);
+    } else {
+        console.warn('⚠️ dietTipsList element not found');
+    }
 }
 
 function renderMealPlan() {
@@ -843,26 +1240,53 @@ function showMealDetails(mealId) {
     const meal = day.meals.find(m => m.id === mealId);
     if (!meal) return;
 
-    // Generate detailed visualization for complex items
-    const itemsHtml = meal.items && meal.items.length > 1
-        ? `<div style="margin-bottom: 1.5rem; background: #f5f5f5; padding: 1rem; border-radius: 10px;">
-             <strong>Komposisi:</strong>
-             <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
-                ${meal.items.map(i => `<li>${i.name} (${i.portion}): ${i.calories} kcal</li>`).join('')}
-             </ul>
-           </div>`
-        : '';
+    // Get first item name as main dish name
+    const mainDishName = meal.items && meal.items.length > 0
+        ? meal.items[0].name
+        : meal.name;
 
-    // Vitamins detail
-    const vitaminsHtml = meal.vitamins && meal.vitamins.length > 0
-        ? `<div style="margin-top: 1rem;">
-             <strong>Nutrisi Mikro:</strong><br>
-             <span style="color: #00695c;">${meal.vitamins.join(', ')}</span>
-           </div>`
-        : '';
+    // Generate single recipe link for main dish
+    const searchQuery = encodeURIComponent(`resep ${mainDishName} Indonesia`);
+    const recipeLink = `https://www.google.com/search?q=${searchQuery}`;
+    const recipeLinksHtml = `
+        <a href="${recipeLink}" target="_blank" 
+           style="display: inline-block; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #00c853, #00e676); color: white; 
+                  border-radius: 25px; text-decoration: none; font-size: 1rem; font-weight: 600; box-shadow: 0 4px 15px rgba(0,200,83,0.3);">
+            🔍 Cari Resep "${mainDishName}"
+        </a>
+    `;
+
+    // Generate ingredients table
+    const ingredientsTableHtml = meal.items && meal.items.length > 0
+        ? `<table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+            <thead>
+                <tr style="background: #f0f0f0;">
+                    <th style="padding: 0.75rem; text-align: left; border-bottom: 2px solid #ddd;">Bahan</th>
+                    <th style="padding: 0.75rem; text-align: center; border-bottom: 2px solid #ddd;">Gram</th>
+                    <th style="padding: 0.75rem; text-align: center; border-bottom: 2px solid #ddd;">Kal</th>
+                    <th style="padding: 0.75rem; text-align: center; border-bottom: 2px solid #ddd;">P</th>
+                    <th style="padding: 0.75rem; text-align: center; border-bottom: 2px solid #ddd;">C</th>
+                    <th style="padding: 0.75rem; text-align: center; border-bottom: 2px solid #ddd;">F</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${meal.items.map(item => `
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.75rem; color: #1b5e20; font-weight: 600;">${item.name || 'Item'}</td>
+                        <td style="padding: 0.75rem; text-align: center;">${item.portion_grams || 100}g</td>
+                        <td style="padding: 0.75rem; text-align: center;">${Math.round(item.calories || 0)}</td>
+                        <td style="padding: 0.75rem; text-align: center;">${Math.round(item.protein || 0)}g</td>
+                        <td style="padding: 0.75rem; text-align: center;">${Math.round(item.carbs || 0)}g</td>
+                        <td style="padding: 0.75rem; text-align: center;">${Math.round(item.fat || 0)}g</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>`
+        : '<p style="color: #666;">Tidak ada informasi bahan</p>';
 
     // Create modal
     const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
     modal.style.cssText = `
         position: fixed;
         top: 0;
@@ -878,45 +1302,64 @@ function showMealDetails(mealId) {
     `;
 
     modal.innerHTML = `
-        <div style="background: white; border-radius: 20px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 2rem;">
+        <div style="background: white; border-radius: 20px; max-width: 650px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 2rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                <h2 style="color: #00c853;">${meal.name}</h2>
-                <button id="closeModalBtn" style="background: #ff5252; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; font-size: 1.2rem;">×</button>
+                <h2 style="color: #00c853; margin: 0;">${mainDishName}</h2>
+                <button class="close-modal-btn" style="background: #ff5252; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; font-size: 1.2rem;">×</button>
             </div>
             
             <div style="margin-bottom: 1.5rem;">
                 <span class="badge">${meal.type}</span>
                 <span class="badge" style="margin-left: 0.5rem;">${meal.time}</span>
             </div>
-            
-            <p style="color: #666; margin-bottom: 1.5rem; line-height: 1.6;">${meal.description}</p>
-            
-            ${itemsHtml}
 
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
-                <div style="padding: 1rem; background: #f8fffe; border-radius: 10px; text-align: center;">
-                    <div style="color: #666; font-size: 0.9rem;">Kalori</div>
-                    <div style="color: #00c853; font-size: 1.3rem; font-weight: 700;">${meal.calories}</div>
+            <!-- Total Nutrition Summary -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.5rem;">
+                <div style="padding: 0.75rem; background: #e8f5e9; border-radius: 10px; text-align: center;">
+                    <div style="color: #666; font-size: 0.8rem;">Total Kalori</div>
+                    <div style="color: #00c853; font-size: 1.2rem; font-weight: 700;">${Math.round(meal.calories || 0)}</div>
                 </div>
-                <div style="padding: 1rem; background: #f8fffe; border-radius: 10px; text-align: center;">
-                    <div style="color: #666; font-size: 0.9rem;">Protein</div>
-                    <div style="color: #00c853; font-size: 1.3rem; font-weight: 700;">${meal.protein}g</div>
+                <div style="padding: 0.75rem; background: #e3f2fd; border-radius: 10px; text-align: center;">
+                    <div style="color: #666; font-size: 0.8rem;">Protein</div>
+                    <div style="color: #1976d2; font-size: 1.2rem; font-weight: 700;">${Math.round(meal.protein || 0)}g</div>
                 </div>
-                <div style="padding: 1rem; background: #f8fffe; border-radius: 10px; text-align: center;">
-                    <div style="color: #666; font-size: 0.9rem;">Karbo</div>
-                    <div style="color: #00c853; font-size: 1.3rem; font-weight: 700;">${meal.carbs}g</div>
+                <div style="padding: 0.75rem; background: #fff3e0; border-radius: 10px; text-align: center;">
+                    <div style="color: #666; font-size: 0.8rem;">Karbo</div>
+                    <div style="color: #f57c00; font-size: 1.2rem; font-weight: 700;">${Math.round(meal.carbs || 0)}g</div>
                 </div>
-                <div style="padding: 1rem; background: #f8fffe; border-radius: 10px; text-align: center;">
-                    <div style="color: #666; font-size: 0.9rem;">Lemak</div>
-                    <div style="color: #00c853; font-size: 1.3rem; font-weight: 700;">${meal.fat}g</div>
+                <div style="padding: 0.75rem; background: #fce4ec; border-radius: 10px; text-align: center;">
+                    <div style="color: #666; font-size: 0.8rem;">Lemak</div>
+                    <div style="color: #c2185b; font-size: 1.2rem; font-weight: 700;">${Math.round(meal.fat || 0)}g</div>
                 </div>
             </div>
             
-                <h3 style="color: #1b5e20; margin-bottom: 0.75rem;">Cara Memasak:</h3>
-                <p style="color: #666; line-height: 1.8; white-space: pre-line;">${meal.recipe || 'Resep tidak tersedia'}</p>
+            <!-- Recipe Links Section -->
+            <div style="margin-bottom: 1.5rem;">
+                <h3 style="color: #1b5e20; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                    📖 Cari Resep
+                </h3>
+                <div style="display: flex; flex-wrap: wrap;">
+                    ${recipeLinksHtml}
+                </div>
+            </div>
+            
+            <!-- Ingredients Table Section -->
+            <div>
+                <h3 style="color: #1b5e20; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                    🥗 Bahan Makanan
+                </h3>
+                ${ingredientsTableHtml}
             </div>
         </div>
     `;
+
+    // Add close button functionality
+    const closeBtn = modal.querySelector('.close-modal-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            modal.remove();
+        });
+    }
 
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
@@ -928,15 +1371,154 @@ function showMealDetails(mealId) {
 }
 
 // ===================================
+// SERVER OVERLOAD MODAL
+// ===================================
+
+function showServerOverloadModal() {
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.className = 'server-overload-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        padding: 2rem;
+    `;
+
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 20px; max-width: 450px; width: 100%; padding: 2.5rem; text-align: center;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
+            <h2 style="color: #f57c00; margin-bottom: 1rem;">Server AI Sedang Sibuk</h2>
+            <p style="color: #666; line-height: 1.6; margin-bottom: 1.5rem;">
+                Maaf! Server AI kami sedang mengalami <strong>overload</strong> karena banyaknya permintaan.
+            </p>
+            <div style="background: #fff3e0; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                <p style="color: #e65100; margin: 0; font-weight: 600;">
+                    ⏳ Tunggu 1-2 menit lalu coba lagi
+                </p>
+            </div>
+            <p style="color: #888; font-size: 0.9rem; margin-bottom: 1.5rem;">
+                Tips: Coba generate di waktu yang tidak sibuk (pagi/siang) untuk hasil lebih cepat.
+            </p>
+            <button onclick="this.closest('.server-overload-modal').remove()" 
+                    style="background: linear-gradient(135deg, #f57c00, #ff9800); color: white; border: none; 
+                           padding: 0.75rem 2rem; border-radius: 25px; font-size: 1rem; font-weight: 600; 
+                           cursor: pointer; box-shadow: 0 4px 15px rgba(245,124,0,0.3);">
+                OK, Saya Mengerti
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Auto close after 10 seconds
+    setTimeout(() => {
+        if (modal.parentNode) {
+            modal.remove();
+        }
+    }, 10000);
+}
+
+// ===================================
+// LOADING TIMEOUT WARNING
+// ===================================
+
+function showLoadingTimeoutWarning() {
+    // Remove existing warning if any
+    const existing = document.querySelector('.loading-timeout-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.className = 'loading-timeout-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+        padding: 2rem;
+    `;
+
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 20px; max-width: 450px; width: 100%; padding: 2.5rem; text-align: center;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">⏳</div>
+            <h2 style="color: #f57c00; margin-bottom: 1rem;">Proses Terlalu Lama</h2>
+            <p style="color: #666; line-height: 1.6; margin-bottom: 1.5rem;">
+                Analisis meal plan sudah berjalan lebih dari <strong>1 menit</strong>.
+                Server AI mungkin sedang mengalami <strong>overload</strong>.
+            </p>
+            <div style="background: #fff3e0; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                <p style="color: #e65100; margin: 0; font-size: 0.95rem;">
+                    Apakah Anda ingin <strong>batalkan</strong> dan coba lagi nanti,<br>
+                    atau <strong>lanjutkan</strong> menunggu?
+                </p>
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <button id="cancelLoadingBtn"
+                        style="background: #ff5252; color: white; border: none; 
+                               padding: 0.75rem 1.5rem; border-radius: 25px; font-size: 1rem; font-weight: 600; 
+                               cursor: pointer; box-shadow: 0 4px 15px rgba(255,82,82,0.3);">
+                    ❌ Batalkan
+                </button>
+                <button id="continueLoadingBtn"
+                        style="background: linear-gradient(135deg, #00c853, #00e676); color: white; border: none; 
+                               padding: 0.75rem 1.5rem; border-radius: 25px; font-size: 1rem; font-weight: 600; 
+                               cursor: pointer; box-shadow: 0 4px 15px rgba(0,200,83,0.3);">
+                    ✅ Lanjutkan Menunggu
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Cancel button - stop loading and return to form
+    document.getElementById('cancelLoadingBtn').addEventListener('click', () => {
+        modal.remove();
+        clearTimeout(window._loadingTimeoutId);
+        isCancelled = true; // Set flag to prevent fallback
+        hideLoadingState();
+        isCreating = false;
+        // Show overload modal
+        showServerOverloadModal();
+    });
+
+    // Continue button - just close this warning and keep loading
+    document.getElementById('continueLoadingBtn').addEventListener('click', () => {
+        modal.remove();
+        // Set another timeout for 1 more minute
+        window._loadingTimeoutId = setTimeout(() => {
+            if (isCreating) {
+                showLoadingTimeoutWarning();
+            }
+        }, 60000);
+    });
+}
+
+// ===================================
 // RESET MEAL PLAN
 // ===================================
 
 function resetMealPlan() {
+    // Show single confirmation dialog
     if (confirm('Yakin ingin membuat meal plan baru? Meal plan saat ini akan dihapus.')) {
         localStorage.removeItem('nutriscan_current_meal_plan');
         currentMealPlan = null;
         currentWeek = 1;
         currentDay = 1;
+        window._mealPlanWarningShown = false; // Reset flag inside
         showBeforeView();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
