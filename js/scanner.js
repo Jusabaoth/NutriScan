@@ -1,8 +1,8 @@
 let currentMode = 'camera'; // 'camera' or 'upload'
-let capturedImage = null;
+let capturedImages = []; // Array of base64 image data
+const MAX_IMAGES = 5;
 let videoStream = null;
 let healthData = null;
-
 
 const STORAGE_KEY_CURRENT_USER = 'nutriscan_current_user';
 const STORAGE_KEY_USER_DATA = 'nutriscan_user_data_';
@@ -18,6 +18,14 @@ function initializeApp() {
 }
 
 function checkAuthStatus() {
+    // If auth flow is disabled globally, skip auth check
+    if (typeof ENABLE_AUTH_FLOW !== 'undefined' && !ENABLE_AUTH_FLOW) {
+        // Explicitly hide profile
+        const profileEl = document.getElementById('userProfile');
+        if (profileEl) profileEl.style.display = 'none';
+        return;
+    }
+
     const currentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
     if (currentUser) {
         const userData = getUserData(currentUser);
@@ -37,12 +45,24 @@ function getUserData(email) {
 }
 
 function loadUserProfile() {
+    // Only show profile if auth flow is enabled
+    const authEnabled = typeof ENABLE_AUTH_FLOW === 'undefined' || ENABLE_AUTH_FLOW === true;
+
+    if (!authEnabled) {
+        // Hide profile when auth is disabled
+        const profileEl = document.getElementById('userProfile');
+        if (profileEl) profileEl.style.display = 'none';
+        return;
+    }
+
     const currentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
     if (currentUser) {
         const userData = getUserData(currentUser);
         if (userData && userData.name) {
             document.getElementById('userName').textContent = userData.name;
             document.getElementById('userAvatar').textContent = userData.name.charAt(0).toUpperCase();
+            // Show profile
+            document.getElementById('userProfile').style.display = 'flex';
         }
     }
 }
@@ -144,8 +164,8 @@ function capturePhoto() {
     // Convert to base64 (reduce quality slightly for smaller size)
     const imageData = canvas.toDataURL('image/jpeg', 0.8);
 
-    // Display preview
-    displayImagePreview(imageData);
+    // Add to images array
+    addImageToPreview(imageData);
 
     // Stop camera
     stopCamera();
@@ -184,66 +204,108 @@ function handleDrop(e) {
     e.stopPropagation();
     e.currentTarget.classList.remove('dragover');
 
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-        processFile(files[0]);
-    }
+    const files = Array.from(e.dataTransfer.files);
+    processFiles(files);
 }
 
 function handleFileSelect(e) {
-    const files = e.target.files;
-    if (files.length > 0) {
-        processFile(files[0]);
-    }
+    const files = Array.from(e.target.files);
+    processFiles(files);
 }
 
-function processFile(file) {
-    // Validate file type
+function processFiles(files) {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-    if (!allowedTypes.includes(file.type)) {
-        alert('Format file tidak didukung. Gunakan JPG atau PNG.');
-        return;
-    }
+    const maxSize = 5 * 1024 * 1024; // 5MB per file
 
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-        alert('Ukuran file terlalu besar. Maksimal 5MB.');
-        return;
-    }
+    for (const file of files) {
+        // Check limit
+        if (capturedImages.length >= MAX_IMAGES) {
+            alert(`Maksimal ${MAX_IMAGES} gambar. Hapus beberapa gambar untuk menambah yang baru.`);
+            break;
+        }
 
-    // Read file
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        displayImagePreview(e.target.result);
-    };
-    reader.readAsDataURL(file);
+        // Validate type
+        if (!allowedTypes.includes(file.type)) {
+            alert(`File "${file.name}" tidak didukung. Gunakan JPG atau PNG.`);
+            continue;
+        }
+
+        // Validate size
+        if (file.size > maxSize) {
+            alert(`File "${file.name}" terlalu besar. Maksimal 5MB per file.`);
+            continue;
+        }
+
+        // Read and add
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            addImageToPreview(e.target.result);
+        };
+        reader.readAsDataURL(file);
+    }
 }
 
-function displayImagePreview(imageData) {
-    capturedImage = imageData;
+function addImageToPreview(imageData) {
+    if (capturedImages.length >= MAX_IMAGES) {
+        alert(`Maksimal ${MAX_IMAGES} gambar.`);
+        return;
+    }
 
-    const preview = document.getElementById('imagePreview');
-    const previewImage = document.getElementById('previewImage');
-
-    previewImage.src = imageData;
-    preview.classList.add('active');
-
-    // Enable scan button
+    capturedImages.push(imageData);
+    renderImageGrid();
     updateScanButton();
 }
 
-function removeImage() {
-    capturedImage = null;
-    const preview = document.getElementById('imagePreview');
-    preview.classList.remove('active');
+function renderImageGrid() {
+    const section = document.getElementById('imagePreviewSection');
+    const grid = document.getElementById('imagePreviewGrid');
+    const counter = document.getElementById('imageCounter');
+    const clearBtn = document.getElementById('btnClearAll');
+
+    if (capturedImages.length === 0) {
+        section.classList.remove('active');
+        clearBtn.style.display = 'none';
+        return;
+    }
+
+    section.classList.add('active');
+    clearBtn.style.display = 'block';
+
+    // Update counter
+    counter.textContent = `${capturedImages.length} / ${MAX_IMAGES} gambar dipilih`;
+    if (capturedImages.length >= MAX_IMAGES) {
+        counter.classList.add('warning');
+    } else {
+        counter.classList.remove('warning');
+    }
+
+    // Render grid
+    grid.innerHTML = capturedImages.map((img, index) => `
+        <div class="image-preview-item">
+            <img src="${img}" alt="Gambar ${index + 1}">
+            <button class="btn-remove-image" onclick="removeImageAt(${index})" title="Hapus gambar">×</button>
+        </div>
+    `).join('');
+}
+
+function removeImageAt(index) {
+    capturedImages.splice(index, 1);
+    renderImageGrid();
+    updateScanButton();
 
     // Reset file input
     const fileInput = document.getElementById('fileInput');
     if (fileInput) fileInput.value = '';
+}
 
-    // Update scan button
+function clearAllImages() {
+    capturedImages = [];
+    renderImageGrid();
     updateScanButton();
+
+    // Reset file input
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput) fileInput.value = '';
 }
 
 // HEALTH QUESTIONNAIRE
@@ -252,9 +314,6 @@ function loadHealthData() {
     const saved = localStorage.getItem('nutriscan_health_data');
     if (saved) {
         healthData = JSON.parse(saved);
-        console.log('✅ Health data loaded from localStorage:', healthData);
-    } else {
-        console.log('ℹ️ No health data found in localStorage');
     }
 }
 
@@ -271,7 +330,7 @@ function collectHealthData() {
 function updateScanButton() {
     const scanBtn = document.querySelector('.btn-scan');
     if (scanBtn) {
-        scanBtn.disabled = !capturedImage;
+        scanBtn.disabled = capturedImages.length === 0;
     }
 }
 
@@ -335,7 +394,7 @@ function continueWithoutHealthData() {
 }
 
 async function performScanWithoutWarning() {
-    if (!capturedImage) {
+    if (capturedImages.length === 0) {
         alert('Silakan upload atau ambil foto label nutrisi terlebih dahulu.');
         return;
     }
@@ -347,8 +406,8 @@ async function performScanWithoutWarning() {
     showLoadingState();
 
     try {
-        // Prepare request
-        const result = await analyzeWithGemini(capturedImage, health);
+        // Prepare request with all images
+        const result = await analyzeWithGemini(capturedImages, health);
 
         // Display results
         displayResults(result);
@@ -368,7 +427,7 @@ async function performScanWithoutWarning() {
 // ===================================
 
 async function performScan() {
-    if (!capturedImage) {
+    if (capturedImages.length === 0) {
         alert('Silakan upload atau ambil foto label nutrisi terlebih dahulu.');
         return;
     }
@@ -385,9 +444,16 @@ async function performScan() {
     // Show loading state
     showLoadingState();
 
+    // Set 60-second timeout warning
+    window._scannerTimeoutId = setTimeout(() => {
+        showScannerTimeoutWarning();
+    }, 60000);
+
     try {
-        // Prepare request
-        const result = await analyzeWithGemini(capturedImage, health);
+        // Prepare request with all images
+        const result = await analyzeWithGemini(capturedImages, health);
+        // Clear timeout on success
+        clearTimeout(window._scannerTimeoutId);
 
         // Display results
         displayResults(result);
@@ -397,27 +463,30 @@ async function performScan() {
 
     } catch (error) {
         console.error('Analysis error:', error);
+        clearTimeout(window._scannerTimeoutId);
         hideLoadingState();
         alert('Terjadi kesalahan saat menganalisis. Silakan coba lagi.\n\nError: ' + error.message);
     }
 }
 
-async function analyzeWithGemini(imageData, healthData) {
+async function analyzeWithGemini(imagesArray, healthData) {
     // Prepare health data text
     const healthText = formatHealthDataForPrompt(healthData);
 
-    console.log('🔍 Scanner: Starting analysis...');
-    console.log('📸 Image data length:', imageData.length);
-    console.log('❤️ Health data:', healthData);
+    // Prepare prompt (updated for multi-image)
+    const imageCountText = imagesArray.length > 1
+        ? `Anda akan menerima ${imagesArray.length} gambar dari produk yang sama (mungkin sisi berbeda dari kemasan).`
+        : 'Anda akan menerima 1 gambar label nutrisi.';
 
-    // Prepare prompt
     const prompt = `Anda adalah ahli nutrisi yang menganalisis label nutrisi produk makanan.
+
+${imageCountText}
 
 INFORMASI KESEHATAN PENGGUNA:
 ${healthText}
 
 TUGAS ANDA:
-1. Ekstrak informasi nutrisi dari gambar label (per takaran saji)
+1. Ekstrak informasi nutrisi dari semua gambar label (per takaran saji)
 2. Identifikasi semua bahan/ingredients
 3. Analisis risiko berdasarkan kondisi kesehatan pengguna
 4. Berikan rekomendasi personal yang spesifik
@@ -483,56 +552,66 @@ Berikan output dalam format JSON berikut:
 
 Analisis DETAIL dan PERSONAL berdasarkan kondisi kesehatan pengguna!`;
 
-    // Extract base64 data (remove data:image/jpeg;base64, prefix)
-    const base64Image = imageData.split(',')[1];
+    // Build parts array: prompt text + all images
+    const parts = [
+        { text: prompt },
+        ...imagesArray.map(imageData => ({
+            inline_data: {
+                mime_type: "image/jpeg",
+                data: imageData.split(',')[1]
+            }
+        }))
+    ];
 
     // Prepare API request
     const requestBody = {
         contents: [{
-            parts: [
-                { text: prompt },
-                {
-                    inline_data: {
-                        mime_type: "image/jpeg",
-                        data: base64Image
-                    }
-                }
-            ]
+            parts: parts
         }]
     };
 
     // Call Gemini API through secure backend proxy
     // API Key tersembunyi di backend, frontend hanya kirim request
-    console.log('📤 Scanner: Calling backend API (/api/analyze)...');
-    console.log('📝 Prompt length:', prompt.length);
-
     let data;
     try {
         data = await callGeminiAPI(requestBody, 'default');
-        console.log('✅ Scanner: API response received');
-        console.log('📊 Response keys:', Object.keys(data));
     } catch (apiError) {
-        console.error('❌ Scanner: API call failed:', apiError);
-        console.error('Error message:', apiError.message);
-
-        // Throw error instead of showing mock data
+        console.error('❌ Scanner: API call failed:', apiError.message);
         throw new Error(`Gagal menghubungi AI: ${apiError.message}. Pastikan server backend berjalan dan API key valid.`);
     }
 
     // Extract response text
-    console.log('🔄 Scanner: Extracting response text...');
     let responseText;
     try {
+        // Safety check for API response structure
+        if (!data || !data.candidates || data.candidates.length === 0 ||
+            !data.candidates[0].content || !data.candidates[0].content.parts ||
+            data.candidates[0].content.parts.length === 0) {
+
+            console.error('❌ Scanner: Invalid API Response Structure:', data);
+            throw new Error('AI tidak memberikan respon yang valid. Silakan coba lagi.');
+        }
+
         responseText = data.candidates[0].content.parts[0].text;
         console.log('📝 Response text length:', responseText.length);
-        console.log('📝 First 300 chars:', responseText.substring(0, 300));
 
         // Parse JSON from response (remove markdown code blocks if present)
         let jsonText = responseText;
-        if (jsonText.includes('```json')) {
-            jsonText = jsonText.split('```json')[1].split('```')[0].trim();
-        } else if (jsonText.includes('```')) {
-            jsonText = jsonText.split('```')[1].split('```')[0].trim();
+
+        // Find JSON block more robustly
+        const jsonMatch = jsonText.match(/```json\s*([\s\S]*?)\s*```/) ||
+            jsonText.match(/```\s*([\s\S]*?)\s*```/) ||
+            [null, jsonText];
+
+        jsonText = jsonMatch[1] || jsonText;
+
+        // If it still looks like it has text before/after, try finding first { and last }
+        if (!jsonText.trim().startsWith('{')) {
+            const firstBrace = jsonText.indexOf('{');
+            const lastBrace = jsonText.lastIndexOf('}');
+            if (firstBrace !== -1 && lastBrace !== -1) {
+                jsonText = jsonText.substring(firstBrace, lastBrace + 1);
+            }
         }
 
         // Clean up control characters that might cause JSON parsing errors
@@ -547,7 +626,7 @@ Analisis DETAIL dan PERSONAL berdasarkan kondisi kesehatan pengguna!`;
 
         // Add metadata
         result.id = Date.now().toString();
-        result.imageUrl = imageData;
+        result.imageUrl = imagesArray[0]; // Store first image as preview
         result.healthData = healthData;
         result.timestamp = Date.now();
 
@@ -556,8 +635,7 @@ Analisis DETAIL dan PERSONAL berdasarkan kondisi kesehatan pengguna!`;
 
         return result;
     } catch (parseError) {
-        console.error('❌ Scanner: Failed to parse response:', parseError);
-        console.error('Response text:', responseText ? responseText.substring(0, 500) : 'N/A');
+        console.error('❌ Scanner: Failed to parse response:', parseError.message);
         throw new Error('Gagal mem-parse response dari AI: ' + parseError.message);
     }
 }
@@ -655,8 +733,6 @@ function formatHealthDataForPrompt(healthData) {
 // ===================================
 
 function generateMockAnalysis() {
-    console.log('🎭 Generating mock analysis (Failure state)...');
-
     return {
         productName: "Gagal Menganalisis",
         nutritionFacts: {
@@ -1045,6 +1121,133 @@ function hideLoadingState() {
     if (overlay) {
         overlay.remove();
     }
+    // Also remove timeout warning modal if present
+    const warningModal = document.querySelector('.loading-timeout-modal');
+    if (warningModal) {
+        warningModal.remove();
+    }
+    // Also remove server overload modal if present
+    const overloadModal = document.querySelector('.server-overload-modal');
+    if (overloadModal) {
+        overloadModal.remove();
+    }
+}
+
+function showScannerTimeoutWarning() {
+    // Remove existing warning if any
+    const existing = document.querySelector('.loading-timeout-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.className = 'loading-timeout-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+        padding: 2rem;
+    `;
+
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 20px; max-width: 450px; width: 100%; padding: 2.5rem; text-align: center;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">⏳</div>
+            <h2 style="color: #f57c00; margin-bottom: 1rem;">Proses Terlalu Lama</h2>
+            <p style="color: #666; line-height: 1.6; margin-bottom: 1.5rem;">
+                Analisis gambar sudah berjalan lebih dari <strong>1 menit</strong>.
+                Server AI mungkin sedang mengalami <strong>overload</strong>.
+            </p>
+            <div style="background: #fff3e0; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                <p style="color: #e65100; margin: 0; font-size: 0.95rem;">
+                    Apakah Anda ingin <strong>batalkan</strong> dan coba lagi nanti,<br>
+                    atau <strong>lanjutkan</strong> menunggu?
+                </p>
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <button id="cancelScanBtn"
+                        style="background: #ff5252; color: white; border: none; 
+                               padding: 0.75rem 1.5rem; border-radius: 25px; font-size: 1rem; font-weight: 600; 
+                               cursor: pointer; box-shadow: 0 4px 15px rgba(255,82,82,0.3);">
+                    ❌ Batalkan
+                </button>
+                <button id="continueScanBtn"
+                        style="background: linear-gradient(135deg, #00c853, #00e676); color: white; border: none; 
+                               padding: 0.75rem 1.5rem; border-radius: 25px; font-size: 1rem; font-weight: 600; 
+                               cursor: pointer; box-shadow: 0 4px 15px rgba(0,200,83,0.3);">
+                    ✅ Lanjutkan Menunggu
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Cancel button - stop loading and show overload modal
+    document.getElementById('cancelScanBtn').addEventListener('click', () => {
+        modal.remove();
+        clearTimeout(window._scannerTimeoutId);
+        hideLoadingState();
+        showServerOverloadModal();
+    });
+
+    // Continue button - just close this warning and set another timeout
+    document.getElementById('continueScanBtn').addEventListener('click', () => {
+        modal.remove();
+        // Set another timeout for 1 more minute
+        window._scannerTimeoutId = setTimeout(() => {
+            showScannerTimeoutWarning();
+        }, 60000);
+    });
+}
+
+// Server Overload Modal for Scanner
+function showServerOverloadModal() {
+    const existing = document.querySelector('.server-overload-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.className = 'server-overload-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+        padding: 2rem;
+    `;
+
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 20px; max-width: 450px; width: 100%; padding: 2.5rem; text-align: center;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🔥</div>
+            <h2 style="color: #ff5252; margin-bottom: 1rem;">Server Sedang Sibuk</h2>
+            <p style="color: #666; line-height: 1.6; margin-bottom: 1.5rem;">
+                Server AI sedang mengalami beban tinggi. Silakan coba lagi dalam beberapa menit.
+            </p>
+            <div style="background: #ffebee; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                <p style="color: #c62828; margin: 0; font-size: 0.95rem;">
+                    <strong>Tips:</strong> Coba lagi dalam 2-3 menit, atau gunakan gambar dengan ukuran lebih kecil.
+                </p>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" 
+                    style="background: linear-gradient(135deg, #00c853, #00e676); color: white; border: none; 
+                           padding: 0.75rem 2rem; border-radius: 25px; font-size: 1rem; font-weight: 600; 
+                           cursor: pointer; box-shadow: 0 4px 15px rgba(0,200,83,0.3);">
+                OK, Mengerti
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
 }
 
 // ===================================
@@ -1100,8 +1303,8 @@ function resetScanner() {
         scanSection.style.display = 'block';
     }
 
-    // Reset image
-    removeImage();
+    // Clear all images
+    clearAllImages();
 
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });

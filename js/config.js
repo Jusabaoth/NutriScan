@@ -5,6 +5,13 @@ const isLocalhost = window.location.hostname === 'localhost' || window.location.
 const SUPABASE_PROJECT_URL = window.SUPABASE_PROJECT_URL || 'https://zclpywientjorspzzybk.supabase.co';
 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjbHB5d2llbnRqb3JzcHp6eWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNjYwNTYsImV4cCI6MjA4MDk0MjA1Nn0.0AgBqMwm2lZjjiiLdyPqGWFmZrh5XVIx3pJ_hIuH8dE';
 
+// AUTH FLOW CONFIGURATION (shared across all pages)
+// Read from localStorage first (set by Index.html), fallback to window or default true
+const storedAuthFlow = localStorage.getItem('nutriscan_enable_auth_flow');
+const ENABLE_AUTH_FLOW = storedAuthFlow !== null
+    ? storedAuthFlow === 'true'
+    : (window.ENABLE_AUTH_FLOW !== undefined ? window.ENABLE_AUTH_FLOW : true);
+
 const API_ENDPOINTS = {
     // If localhost, use local Express server (server.js). If production, use Supabase Edge Functions.
     ANALYZE: isLocalhost
@@ -29,11 +36,6 @@ async function callGeminiAPI(requestBody, type = 'default') {
         ? API_ENDPOINTS.ANALYZE_MEAL_PLAN
         : API_ENDPOINTS.ANALYZE;
 
-    console.log('🔵 callGeminiAPI: Starting...');
-    console.log('🔵 Endpoint:', endpoint);
-    console.log('🔵 Type:', type);
-    console.log('🔵 Is Localhost:', isLocalhost);
-
     // Headers configuration
     const headers = {
         'Content-Type': 'application/json',
@@ -44,19 +46,12 @@ async function callGeminiAPI(requestBody, type = 'default') {
         headers['Authorization'] = `Bearer ${SUPABASE_ANON_KEY}`;
     }
 
-    console.log('🔵 Headers:', headers);
-    console.log('🔵 Request body size:', JSON.stringify(requestBody).length, 'bytes');
-
     try {
-        console.log('🔵 Sending fetch request...');
         const response = await fetch(endpoint, {
             method: 'POST',
             headers: headers,
             body: JSON.stringify(requestBody)
         });
-
-        console.log('🔵 Response status:', response.status);
-        console.log('🔵 Response ok:', response.ok);
 
         if (!response.ok) {
             const errorData = await response.json();
@@ -65,14 +60,10 @@ async function callGeminiAPI(requestBody, type = 'default') {
         }
 
         const data = await response.json();
-        console.log('✅ API Success! Response keys:', Object.keys(data));
         return data;
 
     } catch (error) {
-        console.error('❌ API Call Error:', error);
-        console.error('❌ Error name:', error.name);
-        console.error('❌ Error message:', error.message);
-        console.error('❌ Error stack:', error.stack);
+        console.error('❌ API Call Error:', error.message);
         throw error;
     }
 }

@@ -29,6 +29,15 @@ function initializeApp() {
 // AUTHENTICATION
 
 function checkAuthStatus() {
+    // If auth flow is disabled globally, skip auth check
+    if (typeof ENABLE_AUTH_FLOW !== 'undefined' && !ENABLE_AUTH_FLOW) {
+        // Hide profile
+        const profileEl = document.getElementById('userProfile');
+        if (profileEl) profileEl.style.display = 'none';
+        initializeApp();
+        return;
+    }
+
     const currentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
     if (currentUser) {
         const userData = getUserData(currentUser);
@@ -49,14 +58,30 @@ function getUserData(email) {
 }
 
 function loadUserProfile() {
+    // Only show profile if auth flow is enabled
+    const authEnabled = typeof ENABLE_AUTH_FLOW === 'undefined' || ENABLE_AUTH_FLOW === true;
+
+    if (!authEnabled) {
+        const profileEl = document.getElementById('userProfile');
+        if (profileEl) profileEl.style.display = 'none';
+        return;
+    }
+
     const currentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
     if (currentUser) {
         const userData = getUserData(currentUser);
         if (userData && userData.name) {
             document.getElementById('userName').textContent = userData.name;
             document.getElementById('userAvatar').textContent = userData.name.charAt(0).toUpperCase();
+            // Show profile
+            document.getElementById('userProfile').style.display = 'flex';
         }
     }
+}
+
+function logout() {
+    localStorage.removeItem(STORAGE_KEY_CURRENT_USER);
+    window.location.href = 'index.html';
 }
 
 
@@ -300,7 +325,6 @@ async function generateMealPlan() {
     try {
         // Collect form data
         const preferences = collectFormData();
-        console.log('📋 Preferences collected:', preferences);
 
         // Show loading
         isCreating = true;
@@ -316,16 +340,12 @@ async function generateMealPlan() {
 
         // Calculate nutritional targets
         const targets = calculateNutritionTargets(preferences);
-        console.log('🎯 Nutrition targets calculated:', targets);
 
         // Generate meal recommendations (LOW TOKEN)
-        console.log('🤖 Calling Gemini API for meal recommendations...');
         const mealRecommendations = await generateMealRecommendations(preferences, targets);
-        console.log('✅ Meal recommendations generated:', mealRecommendations);
 
         // Create initial meal plan structure with recommendations
         const mealPlan = createMealPlanFromRecommendations(preferences, targets, mealRecommendations);
-        console.log('✅ Meal plan structure created:', mealPlan);
 
         // Save meal plan
         currentMealPlan = {
@@ -382,7 +402,7 @@ function calculateNutritionTargets(preferences) {
 
     // Calculate BMR using Harris-Benedict equation
     let bmr;
-    if (gender === 'Laki-laki') {
+    if (gender === 'Laki-laki' || gender === 'Pria' || gender === 'male') {
         bmr = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
     } else {
         bmr = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
@@ -486,7 +506,6 @@ async function generateMealRecommendations(preferences, targets) {
             );
 
             templates[label] = dayPlan;
-            console.log(`✅ Plan ${label} generated successfully`);
 
             // Short delay between calls
             if (i < 1) await new Promise(resolve => setTimeout(resolve, 1500));
@@ -496,11 +515,9 @@ async function generateMealRecommendations(preferences, targets) {
 
             // Retry once
             try {
-                console.log(`🔄 Retrying Plan ${label}...`);
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 const retryPlan = await generateSingleDayPlan(label, context, preferences, targets);
                 templates[label] = retryPlan;
-                console.log(`✅ Plan ${label} retry successful`);
             } catch (retryError) {
                 console.error(`❌ Retry failed for Plan ${label}:`, retryError);
                 // Only use fallback if not cancelled
@@ -544,8 +561,6 @@ JSON only:
 
 dish = nama masakan deskriptif (contoh: "Nasi Goreng Ayam Telur", "Soto Ayam Lamongan")`;
 
-    console.log('📤 Prompt length:', prompt.length, 'chars');
-
     const requestBody = {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
@@ -557,17 +572,26 @@ dish = nama masakan deskriptif (contoh: "Nasi Goreng Ayam Telur", "Soto Ayam Lam
     };
 
     const data = await callGeminiAPI(requestBody, 'meal-plan');
+
+    // Safety check for API response structure
+    if (!data || !data.candidates || data.candidates.length === 0 ||
+        !data.candidates[0].content || !data.candidates[0].content.parts ||
+        data.candidates[0].content.parts.length === 0) {
+
+        console.error('❌ MealPlan: Invalid API Response Structure:', data);
+        throw new Error('AI tidak memberikan respon yang valid untuk meal plan. Silakan coba lagi.');
+    }
+
     let responseText = data.candidates[0].content.parts[0].text;
 
-    // Extract JSON
+    // Extract JSON more robustly
     let jsonStr = responseText;
-    if (jsonStr.includes('```json')) {
-        jsonStr = jsonStr.split('```json')[1].split('```')[0];
-    } else if (jsonStr.includes('```')) {
-        jsonStr = jsonStr.split('```')[1].split('```')[0];
-    } else {
-        const match = jsonStr.match(/\{[\s\S]*\}/);
-        if (match) jsonStr = match[0];
+    const jsonMatch = jsonStr.match(/```json\s*([\s\S]*?)\s*```/) ||
+        jsonStr.match(/```\s*([\s\S]*?)\s*```/) ||
+        jsonStr.match(/\{[\s\S]*\}/);
+
+    if (jsonMatch) {
+        jsonStr = jsonMatch[1] || jsonMatch[0];
     }
 
     // Clean and repair JSON
@@ -636,7 +660,6 @@ dish = nama masakan deskriptif (contoh: "Nasi Goreng Ayam Telur", "Soto Ayam Lam
             });
         }
 
-        console.log('✅ Parsed meal plan:', dayPlan.meals?.length, 'meals,', dayPlan.diet_tips?.length, 'tips');
         return dayPlan;
     } catch (parseError) {
         console.error('❌ JSON parse failed, using fallback:', parseError.message);
@@ -769,7 +792,6 @@ ATURAN CUSTOM (WAJIB):
     };
 
     const result = rules[dietGoal] || rules['Custom'];
-    console.log(`🎯 Diet goal: "${dietGoal}" - Rules found: ${result ? 'YES' : 'NO (using Custom)'}`);
     return result;
 }
 
@@ -1032,8 +1054,6 @@ function createMealPlanFromRecommendations(preferences, targets, recommendations
     const firstPlan = recommendations.plans?.A || recommendations.plans?.B || {};
     const dietTips = firstPlan.diet_tips || [];
 
-    console.log('✅ Meal plan created with', weeks.length, 'weeks');
-    console.log('📝 Diet tips:', dietTips);
     return { weeks, micronutrientsFocus: recommendations.micronutrientsFocus, dietTips };
 }
 
@@ -1081,19 +1101,17 @@ function showMealPlanView() {
 
 // Display AI-generated diet tips
 function displayDietTips(tips) {
-    if (!tips || tips.length === 0) {
-        console.log('⚠️ No diet tips to display');
+    const dietTipsList = document.getElementById('dietTipsList');
+    if (!dietTipsList) {
+        console.warn('⚠️ dietTipsList element not found');
         return;
     }
 
-    // Update existing tips list in HTML
-    const tipsList = document.getElementById('dietTipsList');
-    if (tipsList) {
-        tipsList.innerHTML = tips.map(tip => `<li>${tip}</li>`).join('');
-        console.log('✅ Diet tips updated:', tips);
-    } else {
-        console.warn('⚠️ dietTipsList element not found');
+    if (!tips || tips.length === 0) {
+        return;
     }
+
+    dietTipsList.innerHTML = tips.map(tip => `<li>${tip}</li>`).join('');
 }
 
 function renderMealPlan() {
@@ -1616,9 +1634,4 @@ function loadExistingMealPlan() {
 function toggleMobileMenu() {
     const mobileMenu = document.getElementById('mobileMenu');
     mobileMenu.classList.toggle('active');
-}
-
-function logout() {
-    localStorage.removeItem(STORAGE_KEY_CURRENT_USER);
-    window.location.href = 'Index.html';
 }

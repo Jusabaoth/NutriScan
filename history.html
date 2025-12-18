@@ -478,7 +478,7 @@
             <a href="mealplanner.html">Meal Planner</a>
             <a href="history.html" class="active">History</a>
         </div>
-        <div class="user-profile" id="userProfile">
+        <div class="user-profile" id="userProfile" style="display: none;">
             <div class="user-avatar" id="userAvatar">U</div>
             <span class="user-name" id="userName">User</span>
             <button class="btn-logout" onclick="logout()">Logout</button>
@@ -531,6 +531,14 @@
         });
 
         function checkAuth() {
+            // If auth flow is disabled globally, skip auth check
+            if (typeof ENABLE_AUTH_FLOW !== 'undefined' && !ENABLE_AUTH_FLOW) {
+                // Hide profile
+                const profileEl = document.getElementById('userProfile');
+                if (profileEl) profileEl.style.display = 'none';
+                return;
+            }
+
             const currentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
             if (!currentUser) {
                 window.location.href = 'index.html';
@@ -541,6 +549,8 @@
             if (userData.name) {
                 document.getElementById('userName').textContent = userData.name;
                 document.getElementById('userAvatar').textContent = userData.name.charAt(0).toUpperCase();
+                // Show profile when auth is enabled and user is logged in
+                document.getElementById('userProfile').style.display = 'flex';
             }
         }
 

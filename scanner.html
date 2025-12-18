@@ -70,7 +70,6 @@
         }
 
         .nav-menu a.active {
-            color: #00c853;
             font-weight: 600;
         }
 
@@ -360,48 +359,88 @@
             box-shadow: 0 8px 25px rgba(0, 230, 118, 0.4);
         }
 
-        /* IMAGE PREVIEW */
-        .image-preview {
+        /* IMAGE PREVIEW GRID */
+        .image-preview-section {
             display: none;
             margin-top: 2rem;
         }
 
-        .image-preview.active {
+        .image-preview-section.active {
             display: block;
         }
 
-        .preview-container {
-            position: relative;
-            max-width: 600px;
+        .image-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            max-width: 800px;
             margin: 0 auto;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
         }
 
-        .preview-image {
+        .image-preview-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            aspect-ratio: 1;
+        }
+
+        .image-preview-item img {
             width: 100%;
-            display: block;
+            height: 100%;
+            object-fit: cover;
         }
 
         .btn-remove-image {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 5px;
+            right: 5px;
             background: rgba(255, 82, 82, 0.9);
             color: white;
             border: none;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 28px;
+            height: 28px;
             cursor: pointer;
-            font-size: 1.2rem;
+            font-size: 1rem;
             transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .btn-remove-image:hover {
             background: #ff1744;
             transform: scale(1.1);
+        }
+
+        .image-counter {
+            text-align: center;
+            margin-top: 1rem;
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .image-counter.warning {
+            color: #F59E0B;
+            font-weight: 600;
+        }
+
+        .btn-clear-all {
+            display: block;
+            margin: 1rem auto 0;
+            padding: 0.5rem 1.5rem;
+            background: #ff5252;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .btn-clear-all:hover {
+            background: #ff1744;
         }
 
         /* QUESTIONER SECTION */
@@ -602,7 +641,7 @@
             <a href="mealplanner.html" id="mobileMealplannerLink">Meal Planner</a>
             <a href="history.html" id="mobileHistoryLink">History</a>
         </div>
-        <div class="user-profile" id="userProfile">
+        <div class="user-profile" id="userProfile" style="display: none;">
             <div class="user-avatar" id="userAvatar">U</div>
             <span class="user-name" id="userName">User</span>
             <button class="btn-logout" onclick="logout()">Logout</button>
@@ -656,16 +695,17 @@
                         onclick="event.stopPropagation(); document.getElementById('fileInput').click();">Pilih
                         File</button>
                 </div>
-                <input type="file" id="fileInput" class="file-input" accept="image/jpeg,image/png,image/jpg"
-                    onchange="handleFileSelect(event)">
+                <input type="file" id="fileInput" class="file-input" accept="image/jpeg,image/png,image/jpg" multiple>
             </div>
 
-            <!-- IMAGE PREVIEW -->
-            <div class="image-preview" id="imagePreview">
-                <div class="preview-container">
-                    <img id="previewImage" class="preview-image" alt="Preview">
-                    <button class="btn-remove-image" onclick="removeImage()">×</button>
+            <!-- MULTI-IMAGE PREVIEW -->
+            <div class="image-preview-section" id="imagePreviewSection">
+                <div class="image-preview-grid" id="imagePreviewGrid">
+                    <!-- Dynamically populated -->
                 </div>
+                <p class="image-counter" id="imageCounter">0 / 5 gambar dipilih(produk harus sama)</p>
+                <button class="btn-clear-all" id="btnClearAll" onclick="clearAllImages()" style="display: none;">🗑️
+                    Hapus Semua</button>
             </div>
         </div>
 

@@ -33,9 +33,11 @@ function getApiKeys(): string[] {
     return keys;
 }
 
-// Call Gemini API with key rotation
+// Call Gemini API with key rotation and retry delays
 async function callGeminiWithRotation(contents: any, generationConfig: any): Promise<{ data: any, status: number }> {
     const apiKeys = getApiKeys();
+
+    console.log(`📊 Total API keys detected: ${apiKeys.length}`);
 
     if (apiKeys.length === 0) {
         throw new Error('No GEMINI_API_KEY configured');
@@ -43,6 +45,10 @@ async function callGeminiWithRotation(contents: any, generationConfig: any): Pro
 
     const geminiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
+    // Helper function for delay
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+    // First pass: try all keys with delay for 503
     for (let i = 0; i < apiKeys.length; i++) {
         const apiKey = apiKeys[i];
         console.log(`🔑 Trying API key ${i + 1}/${apiKeys.length}`);
@@ -62,9 +68,16 @@ async function callGeminiWithRotation(contents: any, generationConfig: any): Pro
 
             const data = await response.json();
 
-            // If rate limited (429) or overloaded (503) or server error (500), try next key
-            if (response.status === 429 || response.status === 503 || response.status === 500) {
-                console.log(`⚠️ Key ${i + 1} failed (${response.status}), trying next key...`);
+            // If rate limited, try next key immediately
+            if (response.status === 429) {
+                console.log(`⚠️ Key ${i + 1} rate limited (429), trying next...`);
+                continue;
+            }
+
+            // If server overloaded, wait 2 seconds then try next
+            if (response.status === 503 || response.status === 500) {
+                console.log(`⚠️ Key ${i + 1} server overload (${response.status}), waiting 2s...`);
+                await delay(2000);
                 continue;
             }
 
@@ -74,6 +87,40 @@ async function callGeminiWithRotation(contents: any, generationConfig: any): Pro
         } catch (error) {
             console.error(`❌ Key ${i + 1} error:`, error);
             continue;
+        }
+    }
+
+    // Second pass: retry with longer delays
+    console.log('🔄 All keys failed, retrying with 5s delay...');
+    await delay(5000);
+
+    for (let i = 0; i < Math.min(3, apiKeys.length); i++) {
+        const apiKey = apiKeys[i];
+        console.log(`🔁 Retry ${i + 1}/3 with key ${i + 1}...`);
+
+        try {
+            const response = await fetch(`${geminiEndpoint}?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents,
+                    generationConfig: generationConfig || {
+                        temperature: 0.7,
+                        maxOutputTokens: 8000
+                    }
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.status !== 429 && response.status !== 503 && response.status !== 500) {
+                return { data, status: response.status };
+            }
+
+            console.log(`⚠️ Retry ${i + 1} failed (${response.status})`);
+            await delay(3000);
+        } catch (error) {
+            console.error(`❌ Retry ${i + 1} error:`, error);
         }
     }
 
