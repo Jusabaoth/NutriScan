@@ -909,7 +909,7 @@ function displayResults(result) {
             <!-- Analysis Text -->
             <div style="padding: 1.5rem; background: #e8f5e9; border-radius: 15px;">
                 <h3 style="color: #1b5e20; margin-bottom: 1rem;">📝 Analisis Lengkap</h3>
-                <p style="color: #333; line-height: 1.8; white-space: pre-line;">${result.analysisText}</p>
+                <div style="color: #333; line-height: 1.8;">${convertMarkdownToHTML(result.analysisText)}</div>
             </div>
             
             <!-- Actions -->
@@ -1074,6 +1074,69 @@ function getRecommendationIcon(category) {
         'beneficial': '⭐'
     };
     return icons[category] || '💡';
+}
+
+// ===================================
+// MARKDOWN CONVERTER
+// ===================================
+
+function convertMarkdownToHTML(markdown) {
+    if (!markdown) return '';
+
+    let html = markdown;
+
+    // Convert bold text (**text** atau __text__)
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+
+    // Convert italic text (*text* atau _text_) - must be after bold
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+
+    // Convert bullet points (lines starting with * or -)
+    // Split into lines first
+    const lines = html.split('\n');
+    const processedLines = [];
+    let inList = false;
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const trimmedLine = line.trim();
+
+        // Check if line is a bullet point
+        if (trimmedLine.match(/^[\*\-]\s+/)) {
+            // Remove the bullet marker and wrap in <li>
+            const content = trimmedLine.replace(/^[\*\-]\s+/, '');
+
+            if (!inList) {
+                processedLines.push('<ul style="margin: 0.5rem 0; padding-left: 1.5rem;">');
+                inList = true;
+            }
+            processedLines.push(`<li style="margin: 0.3rem 0;">${content}</li>`);
+        } else {
+            // Not a bullet point
+            if (inList) {
+                processedLines.push('</ul>');
+                inList = false;
+            }
+
+            // Add line break for non-empty lines
+            if (trimmedLine) {
+                processedLines.push(line);
+            } else {
+                processedLines.push('<br>');
+            }
+        }
+    }
+
+    // Close list if still open
+    if (inList) {
+        processedLines.push('</ul>');
+    }
+
+    html = processedLines.join('\n');
+
+    return html;
 }
 
 // ===================================
