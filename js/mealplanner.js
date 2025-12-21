@@ -596,11 +596,11 @@ async function generateSingleDayPlan(dayLabel, dayContext, preferences, targets)
     const allergyList = (allergies && allergies.length > 0) ? allergies.join(', ') : '';
     const conditionList = (conditions && conditions.length > 0) ? conditions.join(', ') : '';
     // Enhanced prompt with category enforcement + health safety
-    const prompt = `🎯 Plan ${dayLabel}/6: ${dayContext}
+    const prompt = `Plan ${dayLabel}/6: ${dayContext}
 CATEGORY: ${category} | PROTEIN: ${protein}
-${allergyList ? `⚠️ AVOID: ${allergyList}` : ''}
+${allergyList ? `AVOID: ${allergyList}` : ''}
 ${conditionList ? `Health: ${conditionList}` : ''}
-${otherNotes ? `📝 Additional Notes: ${otherNotes}` : ''}
+${otherNotes ? `Additional Notes: ${otherNotes}` : ''}
 
 JSON (Indonesian):
 {\"meals\":[{\"time\":\"07:00\",\"type\":\"Sarapan\",\"dish\":\"Telur Dadar\",\"items\":[{\"name\":\"Telur Dadar Bayam\",\"g\":150,\"cal\":280,\"p\":18,\"c\":8,\"f\":20,\"ingredients\":[\"Telur 2 butir\",\"Bayam 50g\"]}]},{\"time\":\"10:00\",\"type\":\"Snack Pagi\",\"dish\":\"Buah\",\"items\":[{\"name\":\"Apel Hijau\",\"g\":100,\"cal\":52,\"p\":0,\"c\":14,\"f\":0,\"ingredients\":[\"Apel 1 buah\"]}]},{\"time\":\"12:00\",\"type\":\"Siang\",\"dish\":\"Ayam Goreng\",\"items\":[{\"name\":\"Paha Ayam Goreng\",\"g\":180,\"cal\":420,\"p\":32,\"c\":15,\"f\":26,\"ingredients\":[\"Paha ayam 180g\",\"Tepung\"]}]},{\"time\":\"15:00\",\"type\":\"Snack Sore\",\"dish\":\"Kacang\",\"items\":[{\"name\":\"Kacang Almond\",\"g\":30,\"cal\":170,\"p\":6,\"c\":6,\"f\":15,\"ingredients\":[\"Almond 30g\"]}]},{\"time\":\"19:00\",\"type\":\"Malam\",\"dish\":\"Ikan Bakar\",\"items\":[{\"name\":\"Ikan Tongkol Bakar\",\"g\":160,\"cal\":240,\"p\":28,\"c\":5,\"f\":12,\"ingredients\":[\"Ikan tongkol 160g\"]}]}],\"tips\":[\"Tip\"]}
@@ -636,6 +636,7 @@ Rules:
 8. Realistic portions
 9. meals must based on user ${budgetGuide}
 10. everyday meal plan must be different - NO DUPLICATE meals across 6 plans (A-F)!
+11. Generate helpful "tips" array (2-3 tips) relevant to ${dietGoal} and ${conditionList ? 'health conditions' : 'user goals'}
 JSON only!`;
 
     const requestBody = {
