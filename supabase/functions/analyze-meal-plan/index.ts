@@ -42,7 +42,7 @@ async function callGeminiWithRotation(contents: any, generationConfig: any): Pro
         throw new Error('No GEMINI_API_KEY configured');
     }
 
-    const geminiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+    const geminiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
 
     // Helper function for delay
     const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -60,7 +60,7 @@ async function callGeminiWithRotation(contents: any, generationConfig: any): Pro
                     contents,
                     generationConfig: generationConfig || {
                         temperature: 0.3,
-                        maxOutputTokens: 2000
+                        maxOutputTokens: 8192
                     }
                 })
             });
@@ -105,7 +105,7 @@ async function callGeminiWithRotation(contents: any, generationConfig: any): Pro
                     contents,
                     generationConfig: generationConfig || {
                         temperature: 0.3,
-                        maxOutputTokens: 2000
+                        maxOutputTokens: 8192
                     }
                 })
             });

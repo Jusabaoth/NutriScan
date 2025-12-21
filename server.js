@@ -123,13 +123,13 @@ app.post('/api/analyze', async (req, res) => {
         }
 
         const geminiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-        console.log('🔵 Server: Calling Gemini API with key rotation...');
+        console.log('🔵 Server: Calling Gemini 2.5 Flash API...');
 
         const requestBody = {
             contents,
             generationConfig: generationConfig || {
                 temperature: 0.7,
-                maxOutputTokens: 8000
+                maxOutputTokens: 8192
             }
         };
 
@@ -170,14 +170,14 @@ app.post('/api/analyze-meal-plan', async (req, res) => {
             });
         }
 
-        const geminiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-        console.log('🔵 Meal Plan: Calling Gemini API with key rotation...');
+        const geminiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
+        console.log('🔵 Meal Plan: Calling Gemini 2.0 Flash API...');
 
         const requestBody = {
             contents,
             generationConfig: generationConfig || {
                 temperature: 0.7,
-                maxOutputTokens: 4096
+                maxOutputTokens: 8192
             }
         };
 

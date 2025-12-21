@@ -31,7 +31,15 @@ const API_ENDPOINTS = {
  * Fungsi untuk call Gemini API
  * Hybrid: Local Express OR Remote Supabase
  */
+
+let _apiCallCounter = 0;
+
 async function callGeminiAPI(requestBody, type = 'default') {
+    _apiCallCounter++;
+    const callId = _apiCallCounter;
+
+    console.log(`📡 API CALL #${callId} - Type: ${type}`);
+
     const endpoint = type === 'meal-plan'
         ? API_ENDPOINTS.ANALYZE_MEAL_PLAN
         : API_ENDPOINTS.ANALYZE;
@@ -55,15 +63,16 @@ async function callGeminiAPI(requestBody, type = 'default') {
 
         if (!response.ok) {
             const errorData = await response.json();
-            console.error('❌ API Error Response:', errorData);
+            console.error(`❌ API CALL #${callId} Error Response:`, errorData);
             throw new Error(errorData.error || `API request failed with status ${response.status}`);
         }
 
         const data = await response.json();
+        console.log(`✅ API CALL #${callId} successful`);
         return data;
 
     } catch (error) {
-        console.error('❌ API Call Error:', error.message);
+        console.error(`❌ API CALL #${callId} Error:`, error.message);
         throw error;
     }
 }

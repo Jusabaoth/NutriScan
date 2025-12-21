@@ -61,7 +61,7 @@ async function callGeminiWithRotation(contents: any, generationConfig: any): Pro
                     contents,
                     generationConfig: generationConfig || {
                         temperature: 0.7,
-                        maxOutputTokens: 8000
+                        maxOutputTokens: 8192
                     }
                 })
             });
@@ -106,7 +106,7 @@ async function callGeminiWithRotation(contents: any, generationConfig: any): Pro
                     contents,
                     generationConfig: generationConfig || {
                         temperature: 0.7,
-                        maxOutputTokens: 8000
+                        maxOutputTokens: 8192
                     }
                 })
             });

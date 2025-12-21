@@ -5,7 +5,7 @@
 export const API_CONFIG = {
   GEMINI_ENDPOINT: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
   MODEL_NAME: 'gemini-2.5-flash',
-  MAX_TOKENS: 2048,
+  MAX_TOKENS: 8192,
   TEMPERATURE: 0.7,
 };
 
