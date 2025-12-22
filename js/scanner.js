@@ -547,10 +547,24 @@ Berikan output dalam format JSON berikut:
     "violations": ["pelanggaran"],
     "warnings": ["peringatan"]
   },
-  "analysisText": "penjelasan lengkap dalam bahasa Indonesia"
+  "analysisText": "ANALISIS LENGKAP DAN DETAIL dalam bahasa Indonesia"
 }
 
-Analisis DETAIL dan PERSONAL berdasarkan kondisi kesehatan pengguna!`;
+CRITICAL INSTRUCTIONS:
+1. WAJIB isi field "analysisText" dengan analisis yang LENGKAP, DETAIL, dan KOMPREHENSIF (minimal 300-500 kata)
+2. Dalam "analysisText", jelaskan secara rinci:
+   - Ringkasan komposisi nutrisi produk ini
+   - Analisis DETAIL setiap nutrisi yang melebihi atau kurang dari standar BPOM/WHO
+   - Dampak spesifik terhadap kondisi kesehatan pengguna (jika ada)
+   - Perbandingan dengan kebutuhan harian pengguna
+   - Rekomendasi konsumsi yang aman dan spesifik
+   - Tips praktis untuk mengonsumsi produk ini dengan lebih sehat
+3. JANGAN PERNAH mengosongkan atau meringkas "analysisText"
+4. Berikan analisis yang PERSONAL berdasarkan kondisi kesehatan pengguna
+5. Gunakan bahasa yang mudah dipahami namun tetap ilmiah dan profesional
+6. Pastikan semua kurung kurawal dan kurung siku JSON ditutup dengan benar
+
+Berikan analisis yang DETAIL, LENGKAP, dan PERSONAL sesuai kondisi kesehatan pengguna!`;
 
     // Build parts array: prompt text + all images
     const parts = [
@@ -593,7 +607,7 @@ Analisis DETAIL dan PERSONAL berdasarkan kondisi kesehatan pengguna!`;
         }
 
         responseText = data.candidates[0].content.parts[0].text;
-        console.log('📝 Response text length:', responseText.length);
+
 
         // Parse JSON from response (remove markdown code blocks if present)
         let jsonText = responseText;
@@ -614,15 +628,57 @@ Analisis DETAIL dan PERSONAL berdasarkan kondisi kesehatan pengguna!`;
             }
         }
 
-        // Clean up control characters that might cause JSON parsing errors
-        // Replace problematic characters while preserving valid JSON structure
+        // Clean up the JSON text - only remove actual control characters
+        // Do NOT modify line endings inside the JSON as they might already be properly escaped
         jsonText = jsonText
-            .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
-            .replace(/\r\n/g, '\n') // Normalize line endings
-            .replace(/\r/g, '\n'); // Normalize line endings
+            .replace(/[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F]/g, ''); // Remove control chars except \n, \r, \t
 
-        const result = JSON.parse(jsonText);
-        console.log('✅ Scanner: JSON parsed successfully');
+        // Validate JSON structure - check for balanced braces and brackets
+        const openBraces = (jsonText.match(/{/g) || []).length;
+        const closeBraces = (jsonText.match(/}/g) || []).length;
+        const openBrackets = (jsonText.match(/\[/g) || []).length;
+        const closeBrackets = (jsonText.match(/\]/g) || []).length;
+
+
+
+        // If JSON is incomplete, try to complete it
+        if (openBraces > closeBraces || openBrackets > closeBrackets) {
+
+            const missingBrackets = openBrackets - closeBrackets;
+            const missingBraces = openBraces - closeBraces;
+
+            // Add missing closing brackets first, then braces
+            for (let i = 0; i < missingBrackets; i++) {
+                jsonText += '\n  ]';
+            }
+            for (let i = 0; i < missingBraces; i++) {
+                jsonText += '\n}';
+            }
+
+        }
+
+
+
+        let result;
+        try {
+            result = JSON.parse(jsonText);
+
+        } catch (jsonError) {
+            // If parsing fails, log the problematic area around the error position
+            const errorMatch = jsonError.message.match(/position (\d+)/);
+            if (errorMatch) {
+                const errorPos = parseInt(errorMatch[1]);
+                const start = Math.max(0, errorPos - 100);
+                const end = Math.min(jsonText.length, errorPos + 100);
+                console.error('❌ JSON Parse Error at position:', errorPos);
+                console.error('Problematic JSON snippet:', jsonText.substring(start, end));
+                console.error('Character at error position:', jsonText[errorPos], '(code:', jsonText.charCodeAt(errorPos), ')');
+            } else {
+                console.error('❌ JSON Parse Error:', jsonError.message);
+                console.error('Full JSON text:', jsonText);
+            }
+            throw jsonError;
+        }
 
         // Add metadata
         result.id = Date.now().toString();
@@ -1021,10 +1077,13 @@ function saveToHistory() {
 }
 
 function formatNutritionFact(label, value, unit) {
+    // Handle null, undefined, or non-numeric values
+    const displayValue = (value === null || value === undefined || isNaN(value)) ? 0 : value;
+
     return `
         <div style="padding: 0.75rem; background: #f8fffe; border-radius: 10px;">
             <div style="color: #666; font-size: 0.9rem;">${label}</div>
-            <div style="color: #1b5e20; font-size: 1.3rem; font-weight: bold;">${value}${unit}</div>
+            <div style="color: #1b5e20; font-size: 1.3rem; font-weight: bold;">${displayValue}${unit}</div>
         </div>
     `;
 }

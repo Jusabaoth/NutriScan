@@ -60,7 +60,7 @@ async function callGeminiWithRotation(contents: any, generationConfig: any): Pro
                     contents,
                     generationConfig: generationConfig || {
                         temperature: 0.3,
-                        maxOutputTokens: 8192
+                        maxOutputTokens: 32768  // Maximum tokens for Gemini 2.0 Flash
                     }
                 })
             });
@@ -105,7 +105,7 @@ async function callGeminiWithRotation(contents: any, generationConfig: any): Pro
                     contents,
                     generationConfig: generationConfig || {
                         temperature: 0.3,
-                        maxOutputTokens: 8192
+                        maxOutputTokens: 32768  // Maximum tokens for Gemini 2.0 Flash
                     }
                 })
             });
