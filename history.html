@@ -493,15 +493,15 @@
     <!-- CONTENT -->
     <div class="container">
         <div class="page-header">
-            <h1 class="page-title">📚 Riwayat Scan</h1>
-            <p class="page-subtitle">Lihat kembali hasil analisis nutrisi Anda</p>
+            <h1 class="page-title" data-lang-key="history-title">📚 Riwayat Scan</h1>
+            <p class="page-subtitle" data-lang-key="history-subtitle">Lihat kembali hasil analisis nutrisi Anda</p>
         </div>
 
         <!-- Search Bar -->
         <div class="search-container">
             <span class="search-icon">🔍</span>
-            <input type="text" class="search-input" id="searchInput" placeholder="Cari produk berdasarkan nama..."
-                onkeyup="filterHistory()">
+            <input type="text" class="search-input" id="searchInput" data-lang-key="search-placeholder"
+                placeholder="Cari produk berdasarkan nama..." onkeyup="filterHistory()">
         </div>
 
         <!-- History List -->
@@ -511,9 +511,8 @@
 
         <!-- Delete All Button -->
         <div class="delete-section" id="deleteSection">
-            <button class="btn-delete-all" onclick="confirmDeleteAll()">
-                🗑️ Hapus Semua History
-            </button>
+            <button class="btn-delete-all" onclick="confirmDeleteAll()" data-lang-key="history_deleteAll">Hapus Semua
+                History</button>
         </div>
     </div>
 
@@ -528,7 +527,18 @@
         document.addEventListener('DOMContentLoaded', () => {
             checkAuth();
             loadHistory();
+            updateDeleteButtonText();
         });
+
+        function updateDeleteButtonText() {
+            const currentLang = localStorage.getItem('nutriscan_language') || 'id';
+            const deleteBtn = document.querySelector('.btn-delete-all');
+            if (deleteBtn) {
+                deleteBtn.innerHTML = currentLang === 'en'
+                    ? 'Delete All History'
+                    : 'Hapus Semua History';
+            }
+        }
 
         function checkAuth() {
             // If auth flow is disabled globally, skip auth check
@@ -575,8 +585,8 @@
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-icon">📂</div>
-                        <p class="empty-text">Belum ada riwayat scan tersimpan.</p>
-                        <a href="scanner.html" class="btn-scan-now">Mulai Scan Sekarang</a>
+                        <p class="empty-text" data-lang-key="empty-history">Belum ada riwayat scan tersimpan.</p>
+                        <a href="scanner.html" class="btn-scan-now" data-lang-key="btn-scan-now">Mulai Scan Sekarang</a>
                     </div>
                 `;
                 deleteSection.style.display = 'none';
@@ -591,8 +601,60 @@
                     timeStyle: 'short'
                 });
 
-                const riskClass = item.riskAssessment.level; // low, medium, high
+                const riskClass = item.riskAssessment.level;
                 const riskLabel = getRiskLabel(riskClass);
+
+                // Get current language for translations
+                const currentLang = localStorage.getItem('nutriscan_language') || 'id';
+                const t = currentLang === 'en' ? {
+                    servingSize: 'Serving Size:',
+                    riskLevel: 'Risk Level:',
+                    riskFactors: 'Risk Factors:',
+                    nutritionInfo: 'Nutrition Information',
+                    calories: 'Calories',
+                    totalFat: 'Total Fat',
+                    saturatedFat: 'Saturated Fat',
+                    transFat: 'Trans Fat',
+                    cholesterol: 'Cholesterol',
+                    sodium: 'Sodium',
+                    carbs: 'Carbohydrates',
+                    fiber: 'Dietary Fiber',
+                    sugars: 'Sugars',
+                    protein: 'Protein',
+                    bpomTitle: 'BPOM National Health',
+                    whoTitle: 'WHO International Health',
+                    compliant: 'Compliant',
+                    notCompliant: 'Not Compliant',
+                    violations: 'Violations:',
+                    warnings: 'Warnings:',
+                    recommendations: 'Personal Recommendations',
+                    ingredients: 'Ingredients',
+                    analysis: 'Complete Analysis'
+                } : {
+                    servingSize: 'Takaran Saji:',
+                    riskLevel: 'Tingkat Risiko:',
+                    riskFactors: 'Faktor Risiko:',
+                    nutritionInfo: 'Informasi Nilai Gizi',
+                    calories: 'Kalori',
+                    totalFat: 'Lemak Total',
+                    saturatedFat: 'Lemak Jenuh',
+                    transFat: 'Lemak Trans',
+                    cholesterol: 'Kolesterol',
+                    sodium: 'Sodium',
+                    carbs: 'Karbohidrat',
+                    fiber: 'Serat',
+                    sugars: 'Gula',
+                    protein: 'Protein',
+                    bpomTitle: 'BPOM Kesehatan Nasional',
+                    whoTitle: 'WHO Kesehatan Internasional',
+                    compliant: 'Sesuai',
+                    notCompliant: 'Tidak Sesuai',
+                    violations: 'Pelanggaran:',
+                    warnings: 'Peringatan:',
+                    recommendations: 'Rekomendasi Personal',
+                    ingredients: 'Komposisi Bahan',
+                    analysis: 'Analisis Lengkap'
+                };
 
                 const element = document.createElement('div');
                 element.className = 'history-item';
@@ -603,34 +665,113 @@
                         <div class="product-info">
                             <span class="scan-date">${date}</span>
                             <h3>${item.productName}</h3>
-                            <div class="compliance-status">
-                                <span title="BPOM Compliance" class="status-dot ${item.bpomCompliance.compliant ? 'green' : 'red'}"></span>
-                                <span title="WHO Compliance" class="status-dot ${item.whoCompliance.compliant ? 'green' : 'red'}"></span>
-                                <span style="font-size: 0.8rem; color: #666; margin-left: 5px;">Status Rekomendasi</span>
-                            </div>
                         </div>
                         <span class="risk-badge ${riskClass}">${riskLabel}</span>
                     </div>
                     
                     <button class="expand-btn" onclick="toggleExpand(this)">
-                        Tampilkan lebih lanjut... ⬇️
+                        ${currentLang === 'en' ? 'Show more... ⬇' : 'Tampilkan lebih lanjut... ⬇'}
                     </button>
 
                     <div class="history-content">
-                        <div class="detail-grid">
-                            ${formatMiniInfo('Kalori', item.nutritionFacts.calories, 'kcal')}
-                            ${formatMiniInfo('Gula', item.nutritionFacts.sugars, 'g')}
-                            ${formatMiniInfo('Lemak Total', item.nutritionFacts.totalFat, 'g')}
-                            ${formatMiniInfo('Protein', item.nutritionFacts.protein, 'g')}
+                        <!-- Product Info -->
+                        <div style="margin-bottom: 1rem; padding: 1rem; background: #f8fffe; border-radius: 10px;">
+                            <p style="color: #666; margin: 0;"><strong>${t.servingSize}</strong> ${item.nutritionFacts.servingSize}</p>
                         </div>
 
-                        <div class="analysis-text">
-                            <strong>📝 Analisis Lengkap:</strong><br>
-                            ${item.analysisText || 'Tidak ada teks analisis tersedia.'}
+                        <!-- Risk Assessment -->
+                        <div style="margin-bottom: 1rem; padding: 1rem; background: ${getRiskColor(item.riskAssessment.level)}; border-radius: 10px; border-left: 4px solid ${getRiskBorderColor(item.riskAssessment.level)};">
+                            <strong>⚠️ ${t.riskLevel} ${getRiskLabel(item.riskAssessment.level)}</strong>
+                            ${item.riskAssessment.factors && item.riskAssessment.factors.length > 0 ? `
+                                <div style="margin-top: 0.5rem;">
+                                    <strong>${t.riskFactors}</strong>
+                                    <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                                        ${item.riskAssessment.factors.map(f => `<li>${f}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
                         </div>
-                        
-                        <div style="margin-top: 1.5rem;">
-                            <strong>🧪 Komposisi:</strong> ${item.ingredients.join(', ')}
+
+                        <!-- Nutrition Facts Grid -->
+                        <div style="margin-bottom: 1rem; padding: 1rem; background: #fff; border: 2px solid #e0e0e0; border-radius: 10px;">
+                            <strong style="color: #00c853;">📋 ${t.nutritionInfo}</strong>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin-top: 0.75rem;">
+                                ${formatNutritionFact(t.calories, item.nutritionFacts.calories, 'kcal')}
+                                ${formatNutritionFact(t.totalFat, item.nutritionFacts.totalFat, 'g')}
+                                ${formatNutritionFact(t.saturatedFat, item.nutritionFacts.saturatedFat, 'g')}
+                                ${formatNutritionFact(t.transFat, item.nutritionFacts.transFat, 'g')}
+                                ${formatNutritionFact(t.cholesterol, item.nutritionFacts.cholesterol, 'mg')}
+                                ${formatNutritionFact(t.sodium, item.nutritionFacts.sodium, 'mg')}
+                                ${formatNutritionFact(t.carbs, item.nutritionFacts.totalCarbohydrate, 'g')}
+                                ${formatNutritionFact(t.fiber, item.nutritionFacts.dietaryFiber, 'g')}
+                                ${formatNutritionFact(t.sugars, item.nutritionFacts.sugars, 'g')}
+                                ${formatNutritionFact(t.protein, item.nutritionFacts.protein, 'g')}
+                            </div>
+                        </div>
+
+                        <!-- Compliance -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
+                            <div style="padding: 1rem; background: ${item.bpomCompliance.compliant ? '#e8f5e9' : '#ffebee'}; border-radius: 10px; border-left: 4px solid ${item.bpomCompliance.compliant ? '#00c853' : '#ff5252'};">
+                                <strong>🇮🇩 ${t.bpomTitle}</strong>
+                                <p style="font-weight: 600; color: ${item.bpomCompliance.compliant ? '#2e7d32' : '#c62828'}; margin: 0.5rem 0 0 0;">
+                                    ${item.bpomCompliance.compliant ? `✅ ${t.compliant}` : `❌ ${t.notCompliant}`}
+                                </p>
+                                ${item.bpomCompliance.violations && item.bpomCompliance.violations.length > 0 ? `
+                                    <div style="margin-top: 0.5rem;">
+                                        <strong>${t.violations}</strong>
+                                        <ul style="margin: 0.3rem 0; padding-left: 1.2rem; font-size: 0.85rem;">
+                                            ${item.bpomCompliance.violations.map(v => `<li>${v}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div style="padding: 1rem; background: ${item.whoCompliance.compliant ? '#e8f5e9' : '#ffebee'}; border-radius: 10px; border-left: 4px solid ${item.whoCompliance.compliant ? '#00c853' : '#ff5252'};">
+                                <strong>🌍 ${t.whoTitle}</strong>
+                                <p style="font-weight: 600; color: ${item.whoCompliance.compliant ? '#2e7d32' : '#c62828'}; margin: 0.5rem 0 0 0;">
+                                    ${item.whoCompliance.compliant ? `✅ ${t.compliant}` : `❌ ${t.notCompliant}`}
+                                </p>
+                                ${item.whoCompliance.violations && item.whoCompliance.violations.length > 0 ? `
+                                    <div style="margin-top: 0.5rem;">
+                                        <strong>${t.violations}</strong>
+                                        <ul style="margin: 0.3rem 0; padding-left: 1.2rem; font-size: 0.85rem;">
+                                            ${item.whoCompliance.violations.map(v => `<li>${v}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Recommendations -->
+                        ${item.recommendations && item.recommendations.length > 0 ? `
+                            <div style="margin-bottom: 1rem; padding: 1rem; background: #fff7ed; border-radius: 10px; border-left: 4px solid #F59E0B;">
+                                <strong>💡 ${t.recommendations}</strong>
+                                <div style="margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                                    ${item.recommendations.map(rec => `
+                                        <div style="padding: 0.75rem; background: white; border-radius: 8px; border-left: 3px solid ${getRecommendationColor(rec.category)};">
+                                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
+                                                <span>${getRecommendationIcon(rec.category)}</span>
+                                                <strong style="color: ${getRecommendationColor(rec.category)}; font-size: 0.9rem;">${rec.message}</strong>
+                                            </div>
+                                            <p style="color: #666; font-size: 0.85rem; margin: 0;">${rec.reason}</p>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <!-- Ingredients -->
+                        <div style="margin-bottom: 1rem; padding: 1rem; background: #f8fffe; border-radius: 10px;">
+                            <strong>🧪 ${t.ingredients}:</strong>
+                            <p style="color: #666; margin: 0.5rem 0 0 0;">${item.ingredients.join(', ')}</p>
+                        </div>
+
+                        <!-- Analysis Text with Markdown Conversion -->
+                        <div style="padding: 1rem; background: #e8f5e9; border-radius: 10px;">
+                            <strong>📝 ${t.analysis}:</strong>
+                            <div style="color: #333; margin-top: 0.5rem; line-height: 1.6;">
+                                ${convertMarkdownToHTML(item.analysisText || 'Tidak ada analisis tersedia.')}
+                            </div>
                         </div>
                     </div>
                 `;
@@ -648,24 +789,132 @@
         }
 
         function getRiskLabel(level) {
+            const currentLang = localStorage.getItem('nutriscan_language') || 'id';
             const labels = {
-                'low': 'Risiko Rendah',
-                'medium': 'Risiko Sedang',
-                'high': 'Risiko Tinggi'
+                'low': currentLang === 'en' ? 'Low ✅' : 'Rendah ✅',
+                'medium': currentLang === 'en' ? 'Medium ⚠️' : 'Sedang ⚠️',
+                'high': currentLang === 'en' ? 'High ❌' : 'Tinggi ❌'
             };
             return labels[level] || 'Unknown';
+        }
+
+        function getRiskColor(level) {
+            const colors = {
+                'low': '#e8f5e9',
+                'medium': '#fff7ed',
+                'high': '#ffebee'
+            };
+            return colors[level] || '#f5f5f5';
+        }
+
+        function getRiskBorderColor(level) {
+            const colors = {
+                'low': '#00c853',
+                'medium': '#F59E0B',
+                'high': '#ff5252'
+            };
+            return colors[level] || '#999';
+        }
+
+        function getRecommendationColor(category) {
+            const colors = {
+                'avoid': '#ff5252',
+                'limit': '#F59E0B',
+                'safe': '#00c853',
+                'beneficial': '#10B981'
+            };
+            return colors[category] || '#666';
+        }
+
+        function getRecommendationIcon(category) {
+            const icons = {
+                'avoid': '🚫',
+                'limit': '⚠️',
+                'safe': '✅',
+                'beneficial': '⭐'
+            };
+            return icons[category] || '💡';
+        }
+
+        function formatNutritionFact(label, value, unit) {
+            const displayValue = (value === null || value === undefined || isNaN(value)) ? 0 : value;
+            return `
+                <div style="padding: 0.75rem; background: #f8fffe; border-radius: 10px;">
+                    <div style="color: #666; font-size: 0.9rem;">${label}</div>
+                    <div style="color: #1b5e20; font-size: 1.3rem; font-weight: bold;">${displayValue}${unit}</div>
+                </div>
+            `;
+        }
+
+        // Markdown to HTML converter (from scanner.js)
+        function convertMarkdownToHTML(markdown) {
+            if (!markdown) return '';
+
+            let html = markdown;
+
+            // Convert bold text
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+
+            // Convert italic text
+            html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+            html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+
+            // Convert bullet points
+            const lines = html.split('\n');
+            const processedLines = [];
+            let inList = false;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const trimmedLine = line.trim();
+
+                if (trimmedLine.match(/^[\*\-]\s+/)) {
+                    const content = trimmedLine.replace(/^[\*\-]\s+/, '');
+
+                    if (!inList) {
+                        processedLines.push('<ul style="margin: 0.5rem 0; padding-left: 1.5rem;">');
+                        inList = true;
+                    }
+                    processedLines.push(`<li style="margin: 0.3rem 0;">${content}</li>`);
+                } else {
+                    if (inList) {
+                        processedLines.push('</ul>');
+                        inList = false;
+                    }
+
+                    if (trimmedLine) {
+                        processedLines.push(line);
+                    } else {
+                        processedLines.push('<br>');
+                    }
+                }
+            }
+
+            if (inList) {
+                processedLines.push('</ul>');
+            }
+
+            html = processedLines.join('\n');
+
+            return html;
         }
 
         function toggleExpand(btn) {
             const content = btn.nextElementSibling;
             const isExpanded = content.classList.contains('expanded');
+            const currentLang = localStorage.getItem('nutriscan_language') || 'id';
 
             if (isExpanded) {
                 content.classList.remove('expanded');
-                btn.innerHTML = 'Tampilkan lebih lanjut... ⬇️';
+                btn.innerHTML = currentLang === 'en'
+                    ? 'Show more... ⬇'
+                    : 'Tampilkan lebih lanjut... ⬇';
             } else {
                 content.classList.add('expanded');
-                btn.innerHTML = 'Tampilkan lebih sedikit ⬆️';
+                btn.innerHTML = currentLang === 'en'
+                    ? 'Show less ⬆'
+                    : 'Tampilkan lebih sedikit ⬆';
             }
         }
 
@@ -702,13 +951,22 @@
         }
 
         function confirmDeleteAll() {
-            if (confirm('⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus SEMUA riwayat scan? Tindakan ini tidak dapat dibatalkan.')) {
+            const currentLang = localStorage.getItem('nutriscan_language') || 'id';
+            const confirmMsg = currentLang === 'en'
+                ? '⚠️ WARNING: Are you sure you want to delete ALL scan history? This action cannot be undone.'
+                : '⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus SEMUA riwayat scan? Tindakan ini tidak dapat dibatalkan.';
+            const successMsg = currentLang === 'en'
+                ? 'History successfully deleted.'
+                : 'Riwayat berhasil dihapus.';
+
+            if (confirm(confirmMsg)) {
                 localStorage.removeItem(STORAGE_KEY_HISTORY);
                 loadHistory();
-                alert('Riwayat berhasil dihapus.');
+                alert(successMsg);
             }
         }
     </script>
+    <script src="js/language_dictionary.js"></script>
 </body>
 
 </html>

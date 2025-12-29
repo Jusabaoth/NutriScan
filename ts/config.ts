@@ -39,8 +39,6 @@ export const BPOM_LIMITS = {
 
 // ===================================
 // WHO REGULATIONS (World Health Organization)
-// ===================================
-// WHO guidelines for healthy nutrition
 
 export const WHO_LIMITS = {
   // Daily limits for adults (2000 kcal diet)

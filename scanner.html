@@ -653,34 +653,33 @@
         </button>
     </nav>
 
-    <!-- MAIN CONTAINER -->
     <div class="container">
-        <h1 class="page-title">📸 Scanner Nutrisi</h1>
-        <p class="page-subtitle">Upload atau ambil foto label gizi produk untuk dianalisis</p>
+        <h1 class="page-title" data-lang-key="scanner-title">Scanner Nutrisi</h1>
+        <p class="page-subtitle" data-lang-key="scanner-subtitle">Upload atau ambil foto label gizi produk untuk
+            dianalisis</p>
 
-        <!-- MODE TOGGLE -->
         <div class="mode-toggle">
-            <button class="mode-btn active" id="cameraBtn" onclick="switchMode('camera')">
+            <button class="mode-btn active" id="cameraBtn" onclick="switchMode('camera')" data-lang-key="mode-camera">
                 <span>📷</span> Kamera Langsung
             </button>
-            <button class="mode-btn" id="uploadBtn" onclick="switchMode('upload')">
+            <button class="mode-btn" id="uploadBtn" onclick="switchMode('upload')" data-lang-key="mode-upload">
                 <span>📁</span> Upload File
             </button>
         </div>
 
-        <!-- UPLOAD/CAMERA SECTION -->
         <div class="upload-section">
-            <!-- CAMERA MODE -->
             <div class="camera-container active" id="cameraContainer">
                 <div class="camera-preview" id="cameraPreview">
                     <video id="videoElement" autoplay playsinline></video>
                 </div>
                 <div class="camera-controls" id="cameraControls">
-                    <button class="btn-capture" onclick="startCamera()">📷 Aktifkan Kamera</button>
-                    <button class="btn-capture" id="captureBtn" onclick="capturePhoto()" style="display: none;">📸 Ambil
+                    <button class="btn-capture" onclick="startCamera()" data-lang-key="btn-activate-camera">Aktifkan
+                        Kamera</button>
+                    <button class="btn-capture" id="captureBtn" onclick="capturePhoto()" style="display: none;"
+                        data-lang-key="btn-capture">Ambil
                         Foto</button>
-                    <button class="btn-cancel" id="cancelBtn" onclick="stopCamera()" style="display: none;">❌
-                        Batal</button>
+                    <button class="btn-cancel" id="cancelBtn" onclick="stopCamera()" style="display: none;"
+                        data-lang-key="btn-cancel">Batal</button>
                 </div>
             </div>
 
@@ -688,11 +687,12 @@
             <div class="upload-container" id="uploadContainer">
                 <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
                     <div class="drop-zone-icon">📁</div>
-                    <div class="drop-zone-text">Drag & Drop gambar di sini</div>
-                    <div class="drop-zone-hint">atau klik untuk memilih file</div>
-                    <div class="drop-zone-hint">Format: JPG, PNG</div>
+                    <div class="drop-zone-text" data-lang-key="dropzone-title">Drag & Drop gambar di sini</div>
+                    <div class="drop-zone-hint" data-lang-key="dropzone-hint">atau klik untuk memilih file</div>
+                    <div class="drop-zone-hint" data-lang-key="dropzone-format">Format: JPG, PNG</div>
                     <button class="btn-select-file"
-                        onclick="event.stopPropagation(); document.getElementById('fileInput').click();">Pilih
+                        onclick="event.stopPropagation(); document.getElementById('fileInput').click();"
+                        data-lang-key="btn-select-file">Pilih
                         File</button>
                 </div>
                 <input type="file" id="fileInput" class="file-input" accept="image/jpeg,image/png,image/jpg" multiple>
@@ -703,20 +703,22 @@
                 <div class="image-preview-grid" id="imagePreviewGrid">
                     <!-- Dynamically populated -->
                 </div>
-                <p class="image-counter" id="imageCounter">0 / 5 gambar dipilih(produk harus sama)</p>
-                <button class="btn-clear-all" id="btnClearAll" onclick="clearAllImages()" style="display: none;">🗑️
-                    Hapus Semua</button>
+                <p class="image-counter" id="imageCounter">0 / 5 <span data-lang-key="scanner-image-counter">gambar
+                        dipilih(produk harus sama)</span></p>
+                <button class="btn-clear-all" id="btnClearAll" onclick="clearAllImages()" style="display: none;"
+                    data-lang-key="btn-clear-all">Hapus Semua</button>
+            </div>
+
+            <!-- SCAN BUTTON SECTION -->
+            <div class="scan-section">
+                <button class="btn-scan" onclick="performScan()" data-lang-key="btn-analyze">Analisis dengan
+                    AI</button>
             </div>
         </div>
 
-        <!-- SCAN BUTTON SECTION -->
-        <div class="scan-section">
-            <button class="btn-scan" onclick="performScan()">🔍 Analisis dengan AI</button>
-        </div>
-    </div>
-
-    <script src="js/config.js"></script>
-    <script src="js/scanner.js"></script>
+        <script src="js/config.js"></script>
+        <script src="js/scanner.js"></script>
+        <script src="js/language_dictionary.js"></script>
 </body>
 
 </html>

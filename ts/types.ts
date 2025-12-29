@@ -1,8 +1,3 @@
-// ===================================
-// NUTRISCAN TYPE DEFINITIONS
-// ===================================
-// This file contains all TypeScript interfaces and types
-// for the NutriScan application
 
 // ===================================
 // HEALTH & DISEASE TYPES

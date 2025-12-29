@@ -728,69 +728,72 @@
         <section id="beforeState">
             <div class="hero">
                 <div>
-                    <h1>Mulailah Membuat Meal Planner-mu</h1>
-                    <p>Rencanakan makanan sehatmu, wujudkan hidup lebih berkualitas!</p>
-                    <button class="btn-primary" id="ctaButton">Buat Sekarang!</button>
+                    <h1 data-lang-key="planner-hero-title">Mulailah Membuat Meal Planner-mu</h1>
+                    <p data-lang-key="planner-hero-subtitle">Rencanakan makanan sehatmu, wujudkan hidup lebih
+                        berkualitas!</p>
+                    <button class="btn-primary" id="ctaButton" data-lang-key="planner-cta">Buat Sekarang!</button>
                 </div>
                 <div class="state-card">
                     <p class="badge">Tip</p>
-                    <h3 style="margin:0.4rem 0 0.2rem;">Butuh inspirasi cepat?</h3>
-                    <p style="color:var(--muted)">Isi preferensi kamu, biarkan AI kami susun menu sehat yang pas dengan
+                    <h3 style="margin:0.4rem 0 0.2rem;" data-lang-key="planner-tip-title">Butuh inspirasi cepat?</h3>
+                    <p style="color:var(--muted)" data-lang-key="planner-tip-desc">Isi preferensi kamu, biarkan AI kami
+                        susun menu sehat yang pas dengan
                         tujuan, budget, dan kondisi tubuhmu.</p>
                 </div>
             </div>
 
             <div class="section" id="dietInfo">
                 <div class="section-header">
-                    <h2>Kenali Beragam Jenis Diet</h2>
+                    <h2 data-lang-key="diet-info-title">Kenali Beragam Jenis Diet</h2>
                 </div>
                 <div class="diet-grid">
                     <div class="diet-card" style="background: #ecfdf3;">
                         <div class="diet-icon">🥑</div>
-                        <div class="diet-title">Keto</div>
-                        <div class="diet-desc">Tinggi lemak, rendah karbohidrat</div>
+                        <div class="diet-title" data-lang-key="diet-keto">Keto</div>
+                        <div class="diet-desc" data-lang-key="diet-keto-desc">Tinggi lemak, rendah karbohidrat</div>
                     </div>
                     <div class="diet-card" style="background: #eff6ff;">
                         <div class="diet-icon">🥩</div>
-                        <div class="diet-title">Atkins</div>
-                        <div class="diet-desc">Rendah karbohidrat bertahap</div>
+                        <div class="diet-title" data-lang-key="diet-atkins">Atkins</div>
+                        <div class="diet-desc" data-lang-key="diet-atkins-desc">Rendah karbohidrat bertahap</div>
                     </div>
                     <div class="diet-card" style="background: #fff7ed;">
                         <div class="diet-icon">🍇</div>
-                        <div class="diet-title">Mediterania</div>
-                        <div class="diet-desc">Buah, sayur, ikan, minyak zaitun</div>
+                        <div class="diet-title" data-lang-key="diet-mediterranean">Mediterania</div>
+                        <div class="diet-desc" data-lang-key="diet-mediterranean-desc">Buah, sayur, ikan, minyak zaitun
+                        </div>
                     </div>
                     <div class="diet-card" style="background: #fef3c7;">
                         <div class="diet-icon">🍖</div>
-                        <div class="diet-title">Paleo</div>
-                        <div class="diet-desc">Makanan ala manusia purba</div>
+                        <div class="diet-title" data-lang-key="diet-paleo">Paleo</div>
+                        <div class="diet-desc" data-lang-key="diet-paleo-desc">Makanan ala manusia purba</div>
                     </div>
                     <div class="diet-card" style="background: #eef2ff;">
                         <div class="diet-icon">🥕</div>
-                        <div class="diet-title">Vegetarian/Vegan</div>
-                        <div class="diet-desc">Tanpa daging/produk hewani</div>
+                        <div class="diet-title" data-lang-key="diet-vegetarian">Vegetarian/Vegan</div>
+                        <div class="diet-desc" data-lang-key="diet-vegetarian-desc">Tanpa daging/produk hewani</div>
                     </div>
                     <div class="diet-card" style="background: #e0f2fe;">
                         <div class="diet-icon">💓</div>
-                        <div class="diet-title">DASH</div>
-                        <div class="diet-desc">Khusus untuk penderita hipertensi</div>
+                        <div class="diet-title" data-lang-key="diet-dash">DASH</div>
+                        <div class="diet-desc" data-lang-key="diet-dash-desc">Khusus untuk penderita hipertensi</div>
                     </div>
                     <div class="diet-card" style="background: #faf5ff;">
                         <div class="diet-icon">⏱️</div>
-                        <div class="diet-title">Intermittent Fasting</div>
-                        <div class="diet-desc">Puasa berselang (OCD)</div>
+                        <div class="diet-title" data-lang-key="diet-if">Intermittent Fasting</div>
+                        <div class="diet-desc" data-lang-key="diet-if-desc">Puasa berselang (OCD)</div>
                     </div>
                     <div class="diet-card" style="background: #f0fdf4;">
                         <div class="diet-icon">🥗</div>
-                        <div class="diet-title">Mayo Diet</div>
-                        <div class="diet-desc">Diet seimbang untuk semua</div>
+                        <div class="diet-title" data-lang-key="diet-mayo">Mayo Diet</div>
+                        <div class="diet-desc" data-lang-key="diet-mayo-desc">Diet seimbang untuk semua</div>
                     </div>
                 </div>
             </div>
 
             <div class="section" id="formSection">
                 <div class="card">
-                    <label class="field-label">Pilih tujuan meal planner-mu:</label>
+                    <label class="field-label" data-lang-key="planner-goal-label">Pilih tujuan meal planner-mu:</label>
                     <div class="radio-group" id="goalGroup">
                         <label class="radio-tile"><input type="radio" name="goal" value="Keto">Keto</label>
                         <label class="radio-tile"><input type="radio" name="goal" value="Atkins">Atkins</label>
@@ -803,43 +806,49 @@
                         <label class="radio-tile"><input type="radio" name="goal"
                                 value="Intermittent Fasting">Intermittent Fasting</label>
                         <label class="radio-tile"><input type="radio" name="goal" value="Mayo Diet">Mayo Diet</label>
-                        <label class="radio-tile"><input type="radio" name="goal" value="Custom">Custom (Saya punya
-                            tujuan sendiri)</label>
+                        <label class="radio-tile"><input type="radio" name="goal" value="Custom"><span
+                                data-lang-key="planner-goal-custom">Custom (Saya punya
+                                tujuan sendiri)</span></label>
                     </div>
                     <div class="input-control" id="customGoalBox" style="display:none; margin-top:0.8rem;">
-                        <label class="field-label" style="margin:0;">Ceritakan tujuanmu:</label>
-                        <textarea id="customGoal" rows="3"
+                        <label class="field-label" style="margin:0;" data-lang-key="planner-goal-custom-label">Ceritakan
+                            tujuanmu:</label>
+                        <textarea id="customGoal" rows="3" data-lang-key="planner-goal-custom-placeholder"
                             placeholder="Contoh: Diet tinggi protein untuk naik massa otot, tapi tetap ramah kantong."></textarea>
                     </div>
                 </div>
 
                 <div class="card">
-                    <label class="field-label">Berapa lama kamu ingin konsisten?</label>
+                    <label class="field-label" data-lang-key="planner-duration-label">Berapa lama kamu ingin
+                        konsisten?</label>
                     <div class="duration-grid" id="durationGrid">
-                        <div class="duration-card active" data-duration="Seminggu">🗓️ Seminggu</div>
-                        <div class="duration-card" data-duration="Sebulan">📅 Sebulan</div>
-                        <div class="duration-card" data-duration="3 Bulan">📆 3 Bulan</div>
-                        <div class="duration-card" data-duration="Setahun">🎯 Setahun</div>
+                        <div class="duration-card active" data-duration="Seminggu"
+                            data-lang-key="planner-duration-week">🗓️ Seminggu</div>
+                        <div class="duration-card" data-duration="Sebulan" data-lang-key="planner-duration-month">📅
+                            Sebulan</div>
+                        <div class="duration-card" data-duration="3 Bulan" data-lang-key="planner-duration-3months">📆 3
+                            Bulan</div>
                     </div>
                 </div>
 
                 <div class="card">
-                    <label class="field-label">Budget makanan per hari:</label>
+                    <label class="field-label" data-lang-key="planner-budget-label">Budget makanan per hari:</label>
                     <div class="budget-wrap">
                         <div class="budget-labels">
-                            <span>Ekonomis (&lt; Rp 30.000)</span>
-                            <span>Standar (30-75k)</span>
-                            <span>Premium (&gt; 75k)</span>
+                            <span data-lang-key="planner-budget-eco">Ekonomis (&lt; Rp 30.000)</span>
+                            <span data-lang-key="planner-budget-std">Standar (30-75k)</span>
+                            <span data-lang-key="planner-budget-premium">Premium (&gt; 75k)</span>
                         </div>
                         <input type="range" id="budgetRange" min="1" max="3" value="2">
-                        <small style="color:var(--muted);">AI akan menyesuaikan rekomendasi dengan budgetmu</small>
+                        <small style="color:var(--muted);" data-lang-key="planner-budget-hint">AI akan menyesuaikan
+                            rekomendasi dengan budgetmu</small>
                         <strong id="budgetValue">Standar</strong>
                     </div>
                 </div>
 
                 <div style="text-align:center; margin-top:1.5rem;">
-                    <button class="btn-primary" id="analyzeBtn" style="min-width:260px; font-size:1.05rem;">🤖 ANALISIS
-                        DENGAN AI</button>
+                    <button class="btn-primary" id="analyzeBtn" style="min-width:260px; font-size:1.05rem;"
+                        data-lang-key="planner-analyze-btn">ANALISIS DENGAN AI</button>
                 </div>
             </div>
         </section>
@@ -849,10 +858,13 @@
             <div class="state-card">
                 <div class="planner-header">
                     <div>
-                        <h1 style="font-size:2rem;">🎉 Meal Planner-mu Sudah Siap!</h1>
-                        <p style="color:var(--muted);">Tidak puas dengan meal planner ini?</p>
+                        <h1 style="font-size:2rem;" data-lang-key="planner-ready-title">Meal Planner-mu Sudah Siap!
+                        </h1>
+                        <p style="color:var(--muted);" data-lang-key="planner-ready-subtitle">Tidak puas dengan meal
+                            planner ini?</p>
                     </div>
-                    <button class="btn-ghost" id="editBtn" onclick="resetMealPlan()">✏️ Ubah</button>
+                    <button class="btn-ghost" id="editBtn" onclick="resetMealPlan()"
+                        data-lang-key="planner-edit-btn">Ubah</button>
                 </div>
             </div>
 
@@ -870,10 +882,10 @@
                     </div>
                     <div class="sidebar">
                         <div class="card">
-                            <h3>📊 Ringkasan Nutrisi Hari Ini</h3>
+                            <h3 data-lang-key="planner-nutrition-summary">Ringkasan Nutrisi Hari Ini</h3>
                             <div style="margin:1rem 0;">
                                 <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
-                                    <span>Kalori</span>
+                                    <span data-lang-key="planner-calories">Kalori</span>
                                     <span id="currentCalories">0</span>/<span id="targetCalories">2000</span> kcal
                                 </div>
                                 <div class="progress"><span id="calorieProgress" style="width:0%;"></span></div>
@@ -881,27 +893,26 @@
 
                             <div class="macro-grid">
                                 <div class="macro-item">
-                                    <strong>Protein</strong>
+                                    <strong data-lang-key="nutrition-protein">Protein</strong>
                                     <p class="meta"><span id="currentProtein">0</span>/<span
                                             id="targetProtein">100</span>g</p>
                                 </div>
                                 <div class="macro-item">
-                                    <strong>Karbo</strong>
+                                    <strong data-lang-key="nutrition-carbs">Karbo</strong>
                                     <p class="meta"><span id="currentCarbs">0</span>/<span id="targetCarbs">250</span>g
                                     </p>
                                 </div>
                                 <div class="macro-item">
-                                    <strong>Lemak</strong>
+                                    <strong data-lang-key="nutrition-fats">Lemak</strong>
                                     <p class="meta"><span id="currentFat">0</span>/<span id="targetFat">65</span>g</p>
                                 </div>
                             </div>
                         </div>
 
                         <div class="card" id="dietTipsContainer">
-                            <h3>💡 Tips Diet Anda</h3>
+                            <h3 data-lang-key="diet-tips-title">💡 Tips Diet Anda</h3>
                             <ul class="notes-list" id="dietTipsList">
-                                <li>Server Overload atau Rate Limit: Mohon maaf! AI gagal memberikan analisis <em>meal
-                                        plan</em> Anda. Mohon tunggu 1-2 menit dan coba lagi.</li>
+                                <!-- AI-generated tips will be populated here -->
                             </ul>
                         </div>
                     </div>
@@ -912,6 +923,7 @@
 
     <script src="js/config.js"></script>
     <script src="js/mealplanner.js"></script>
+    <script src="js/language_dictionary.js"></script>
 </body>
 
 </html>

@@ -7,6 +7,51 @@ let isCancelled = false; // Flag to prevent fallback after cancel
 const STORAGE_KEY_CURRENT_USER = 'nutriscan_current_user';
 const STORAGE_KEY_USER_DATA = 'nutriscan_user_data_';
 
+// Bilingual alert helper
+function showAlert(messageKey, ...args) {
+    const currentLang = localStorage.getItem('nutriscan_language') || 'id';
+    const messages = {
+        generateFailed: {
+            id: (errorMsg) => `Gagal membuat meal plan: ${errorMsg}`,
+            en: (errorMsg) => `Failed to create meal plan: ${errorMsg}`
+        },
+        someMenusFailed: {
+            id: '⚠️ Beberapa menu tidak berhasil di-generate. Silakan klik "Generate Ulang" untuk mencoba lagi.',
+            en: '⚠️ Some menus failed to generate. Please click "Regenerate" to try again.'
+        }
+    };
+
+    const msg = messages[messageKey];
+    if (!msg) {
+        alert(messageKey);
+        return;
+    }
+
+    const text = typeof msg[currentLang] === 'function' ? msg[currentLang](...args) : msg[currentLang];
+    alert(text);
+}
+
+// Bilingual error messages helper
+function getErrorMessage(key, ...args) {
+    const currentLang = localStorage.getItem('nutriscan_language') || 'id';
+    const errors = {
+        aiConnectionFailed: {
+            id: (apiMsg) => `Gagal menghubungi AI: ${apiMsg}`,
+            en: (apiMsg) => `Failed to connect to AI: ${apiMsg}`
+        },
+        invalidResponse: {
+            id: 'AI tidak memberikan respon yang valid.',
+            en: 'AI did not provide a valid response.'
+        }
+    };
+
+    const error = errors[key];
+    if (!error) return key;
+
+    const message = error[currentLang];
+    return typeof message === 'function' ? message(...args) : message;
+}
+
 // INITIALIZATION
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -143,11 +188,28 @@ function setupFormValidation() {
     const budgetValue = document.getElementById('budgetValue');
 
     if (budgetRange && budgetValue) {
-        budgetRange.addEventListener('input', (e) => {
-            const value = parseInt(e.target.value);
-            const budgetTexts = ['Ekonomis (< Rp 30k)', 'Standar (30-75k)', 'Premium (> 75k)'];
-            budgetValue.textContent = budgetTexts[value - 1] || 'Standar';
+        budgetRange.addEventListener('input', function () {
+            const value = parseInt(this.value);
+            // Get current language and use appropriate budget text
+            const currentLang = localStorage.getItem('nutriscan_language') || 'id';
+            const budgetKeys = ['planner-budget-value-eco', 'planner-budget-value-std', 'planner-budget-value-premium'];
+
+            // Get translation from window if available (lang-switcher.js exposes translations via updatePageLanguage)
+            // Fallback to hardcoded if translation not available yet
+            const budgetTextsID = ['Ekonomis', 'Standar', 'Premium'];
+            const budgetTextsEN = ['Budget', 'Standard', 'Premium'];
+            const budgetTexts = currentLang === 'en' ? budgetTextsEN : budgetTextsID;
+
+            budgetValue.textContent = budgetTexts[value - 1] || budgetTexts[1];
         });
+
+        // Set initial value based on current language
+        const initialValue = parseInt(budgetRange.value) || 2;
+        const currentLang = localStorage.getItem('nutriscan_language') || 'id';
+        const budgetTextsID = ['Ekonomis', 'Standar', 'Premium'];
+        const budgetTextsEN = ['Budget', 'Standard', 'Premium'];
+        const budgetTexts = currentLang === 'en' ? budgetTextsEN : budgetTextsID;
+        budgetValue.textContent = budgetTexts[initialValue - 1] || budgetTexts[1];
     }
 
     const otherConditionTile = document.getElementById('otherConditionTile');
@@ -406,7 +468,7 @@ async function generateMealPlan() {
             errorMessage.includes('exhausted') || errorMessage.includes('rate')) {
             showServerOverloadModal();
         } else {
-            alert('Gagal membuat meal plan: ' + error.message);
+            showAlert('generateFailed', error.message);
         }
     }
 }
@@ -595,18 +657,234 @@ async function generateSingleDayPlan(dayLabel, dayContext, preferences, targets)
     // Health safety
     const allergyList = (allergies && allergies.length > 0) ? allergies.join(', ') : '';
     const conditionList = (conditions && conditions.length > 0) ? conditions.join(', ') : '';
+
+    // Get current language setting
+    const currentLang = localStorage.getItem('nutriscan_language') || 'id';
+    const languageConfig = currentLang === 'en'
+        ? {
+            instruction: 'IMPORTANT: Generate meal plan with ALL content in ENGLISH (dish names, ingredients, tips, descriptions).',
+            example: 'Example JSON format should have English text for all fields.',
+            targetLang: 'English'
+        }
+        : {
+            instruction: 'PENTING: Generate meal plan dengan SEMUA konten dalam BAHASA INDONESIA (nama masakan, bahan, tips, deskripsi).',
+            example: 'Format JSON harus menggunakan Bahasa Indonesia untuk semua field.',
+            targetLang: 'Indonesian'
+        };
+
     // Enhanced prompt with category enforcement + health safety
-    const prompt = `Plan ${dayLabel}/6: ${dayContext}
+    const prompt = `${languageConfig.instruction}
+
+Plan ${dayLabel}/6: ${dayContext}
 CATEGORY: ${category} | PROTEIN: ${protein}
 ${allergyList ? `AVOID: ${allergyList}` : ''}
 ${conditionList ? `Health: ${conditionList}` : ''}
 ${otherNotes ? `Additional Notes: ${otherNotes}` : ''}
 
 JSON (Indonesian):
-{\"meals\":[{\"time\":\"07:00\",\"type\":\"Sarapan\",\"dish\":\"Telur Dadar\",\"items\":[{\"name\":\"Telur Dadar Bayam\",\"g\":150,\"cal\":280,\"p\":18,\"c\":8,\"f\":20,\"ingredients\":[\"Telur 2 butir\",\"Bayam 50g\"]}]},{\"time\":\"10:00\",\"type\":\"Snack Pagi\",\"dish\":\"Buah\",\"items\":[{\"name\":\"Apel Hijau\",\"g\":100,\"cal\":52,\"p\":0,\"c\":14,\"f\":0,\"ingredients\":[\"Apel 1 buah\"]}]},{\"time\":\"12:00\",\"type\":\"Siang\",\"dish\":\"Ayam Goreng\",\"items\":[{\"name\":\"Paha Ayam Goreng\",\"g\":180,\"cal\":420,\"p\":32,\"c\":15,\"f\":26,\"ingredients\":[\"Paha ayam 180g\",\"Tepung\"]}]},{\"time\":\"15:00\",\"type\":\"Snack Sore\",\"dish\":\"Kacang\",\"items\":[{\"name\":\"Kacang Almond\",\"g\":30,\"cal\":170,\"p\":6,\"c\":6,\"f\":15,\"ingredients\":[\"Almond 30g\"]}]},{\"time\":\"19:00\",\"type\":\"Malam\",\"dish\":\"Ikan Bakar\",\"items\":[{\"name\":\"Ikan Tongkol Bakar\",\"g\":160,\"cal\":240,\"p\":28,\"c\":5,\"f\":12,\"ingredients\":[\"Ikan tongkol 160g\"]}]}],\"tips\":[\"Tip\"]}
+{
+  "meals": [
+    {
+      "time": "07:00",
+      "type": "Sarapan",
+      "dish": "Telur Dadar",
+      "items": [
+        {
+          "name": "Telur Dadar Bayam",
+          "g": 150,
+          "cal": 280,
+          "p": 18,
+          "c": 8,
+          "f": 20,
+          "ingredients": [
+            "Telur 2 butir",
+            "Bayam 50g"
+          ]
+        }
+      ]
+    },
+    {
+      "time": "10:00",
+      "type": "Snack Pagi",
+      "dish": "Buah",
+      "items": [
+        {
+          "name": "Apel Hijau",
+          "g": 100,
+          "cal": 52,
+          "p": 0,
+          "c": 14,
+          "f": 0,
+          "ingredients": [
+            "Apel 1 buah"
+          ]
+        }
+      ]
+    },
+    {
+      "time": "12:00",
+      "type": "Siang",
+      "dish": "Ayam Goreng",
+      "items": [
+        {
+          "name": "Paha Ayam Goreng",
+          "g": 180,
+          "cal": 420,
+          "p": 32,
+          "c": 15,
+          "f": 26,
+          "ingredients": [
+            "Paha ayam 180g",
+            "Tepung"
+          ]
+        }
+      ]
+    },
+    {
+      "time": "15:00",
+      "type": "Snack Sore",
+      "dish": "Kacang",
+      "items": [
+        {
+          "name": "Kacang Almond",
+          "g": 30,
+          "cal": 170,
+          "p": 6,
+          "c": 6,
+          "f": 15,
+          "ingredients": [
+            "Almond 30g"
+          ]
+        }
+      ]
+    },
+    {
+      "time": "19:00",
+      "type": "Malam",
+      "dish": "Ikan Bakar",
+      "items": [
+        {
+          "name": "Ikan Tongkol Bakar",
+          "g": 160,
+          "cal": 240,
+          "p": 28,
+          "c": 5,
+          "f": 12,
+          "ingredients": [
+            "Ikan tongkol 160g"
+          ]
+        }
+      ]
+    }
+  ],
+  "tips": [
+    "Tip"
+  ]
+}
+
+JSON (English):
+{
+  "meals": [
+    {
+      "time": "07:00",
+      "type": "Breakfast",
+      "dish": "Omelette",
+      "items": [
+        {
+          "name": "Spinach Omelette",
+          "g": 150,
+          "cal": 280,
+          "p": 18,
+          "c": 8,
+          "f": 20,
+          "ingredients": [
+            "2 eggs",
+            "Spinach 50g"
+          ]
+        }
+      ]
+    },
+    {
+      "time": "10:00",
+      "type": "Morning Snack",
+      "dish": "Fruit",
+      "items": [
+        {
+          "name": "Green Apple",
+          "g": 100,
+          "cal": 52,
+          "p": 0,
+          "c": 14,
+          "f": 0,
+          "ingredients": [
+            "1 apple"
+          ]
+        }
+      ]
+    },
+    {
+      "time": "12:00",
+      "type": "Lunch",
+      "dish": "Fried Chicken",
+      "items": [
+        {
+          "name": "Fried Chicken Thigh",
+          "g": 180,
+          "cal": 420,
+          "p": 32,
+          "c": 15,
+          "f": 26,
+          "ingredients": [
+            "Chicken thigh 180g",
+            "Flour"
+          ]
+        }
+      ]
+    },
+    {
+      "time": "15:00",
+      "type": "Afternoon Snack",
+      "dish": "Nuts",
+      "items": [
+        {
+          "name": "Almonds",
+          "g": 30,
+          "cal": 170,
+          "p": 6,
+          "c": 6,
+          "f": 15,
+          "ingredients": [
+            "Almonds 30g"
+          ]
+        }
+      ]
+    },
+    {
+      "time": "19:00",
+      "type": "Dinner",
+      "dish": "Grilled Fish",
+      "items": [
+        {
+          "name": "Grilled Tuna",
+          "g": 160,
+          "cal": 240,
+          "p": 28,
+          "c": 5,
+          "f": 12,
+          "ingredients": [
+            "Tuna 160g"
+          ]
+        }
+      ]
+    }
+  ],
+  "tips": [
+    "Tip"
+  ]
+}
 
 ${dietGoal} ${cal}kcal. ${budgetGuide}
-🔴 CRITICAL: Plan ${dayLabel} - Follow ${category}, use ${protein}, NO DUPLICATES!
+CRITICAL: Plan ${dayLabel} - Follow ${category}, use ${protein}, NO DUPLICATES!
 ${allergyList ? `NEVER use: ${allergyList}` : ''}
 Rules:
 1. Follow ${dietGoal} strictly
@@ -619,6 +897,7 @@ Rules:
    - Vegetarian/Vegan: 3-4 meals (may need more frequent small meals for protein)
    - Weight Loss: Earlier dinner (17:00-18:30), avoid late eating
    - Muscle Gain/Bulking: 4-5 meals with post-workout timing
+   - If points above not met, use general diet rules(${dietGoal})
    Health condition adjustments:
    - Diabetes: Regular 3 meals + 2 small snacks (stable blood sugar)
    - GERD/Maag: Smaller frequent meals (5-6 times), avoid late dinner
@@ -629,7 +908,7 @@ Rules:
    - Some days: 2 snacks (Snack Pagi + Snack Sore)
    - Some days: 1 snack (Pagi OR Sore)
    - Some days: 0 snacks (hanya 3 main meals)
-4. Snack timing: Pagi (09:00-10:30), Sore (15:00-16:30)
+4. Snack timing: Pagi(Morning) (09:00-10:30), Sore(Afternoon) (15:00-16:30), Siang(Midday) (12:00-13:00) - randomized
 5. Include "ingredients" array
 6. Specific dish names (ex: "Nasi Goreng Telur")
 7. Creative dish names, not just ingredient list
@@ -637,7 +916,8 @@ Rules:
 9. meals must based on user ${budgetGuide}
 10. everyday meal plan must be different - NO DUPLICATE meals across 6 plans (A-F)!
 11. Generate helpful "tips" array (2-3 tips) relevant to ${dietGoal} and ${conditionList ? 'health conditions' : 'user goals'}
-JSON only!`;
+JSON only!
+12. adapt indonesian dish name into english(example: Nasi Goreng Ayam Kampung Paleo -> Chicken fried rice paleo) - ONLY IF USER USE ENGLISH!`;
 
     const requestBody = {
         contents: [{ parts: [{ text: prompt }] }],
@@ -766,103 +1046,93 @@ JSON only!`;
 function getDietRules(dietGoal, targets) {
     const rules = {
         'Intermittent Fasting': `
-ATURAN DIET INTERMITTENT FASTING (WAJIB):
-- Hanya 2 waktu makan dalam 8 jam eating window (contoh: 12:00-20:00)
-- TIDAK ADA sarapan pagi - skip sarapan
-- Fokus makan siang dan makan malam saja
-- Target kalori: ${Math.round(targets.targetDailyCalories)} kcal
-- Tips: puasa 16 jam, makan 8 jam`,
+INTERMITTENT FASTING RULES (MANDATORY):
+- Eating window: 8 hours (example: 12:00–20:00)
+- Fasting window: 16 hours
+- NO breakfast (skip morning meal)
+- Only 2 main meals (lunch & dinner)
+- Water, plain tea, and black coffee are allowed during fasting
+- NO calories during fasting window
+- Daily calorie target: ${Math.round(targets.targetDailyCalories)} kcal
+- Focus on nutrient-dense foods during eating window`,
 
         'Keto': `
-ATURAN DIET KETO (WAJIB):
-- MAKSIMAL 50g karbohidrat per hari
-- Tinggi lemak (70% kalori dari lemak)
-- Protein sedang (25%)
-- DILARANG: nasi, roti, mie, buah manis, sayur bertepung
-- FOKUS: daging, ikan, telur, keju, alpukat, kacang, sayuran hijau`,
+KETOGENIC DIET RULES (MANDATORY):
+- MAX 20–50g net carbohydrates per day
+- Fat: ~70% of total calories
+- Protein: ~25% of total calories
+- Carbs: ~5%
+- STRICTLY AVOID: rice, bread, noodles, sugar, sweet fruits, starchy vegetables
+- FOCUS: meat, fish, eggs, cheese, avocado, nuts, olive oil, leafy greens
+- Monitor ketone adaptation symptoms (keto flu)`,
 
         'Atkins': `
-ATURAN DIET ATKINS (WAJIB):
-- MAKSIMAL 20g karbohidrat per hari
-- TANPA biji-bijian, gula, buah di awal
-- FOKUS: daging, ikan, telur, keju, sayuran rendah karbo
-- Tinggi protein, tinggi lemak`,
-
-        'Mediterania': `
-ATURAN DIET MEDITERANIA (WAJIB):
-- Gunakan minyak zaitun sebagai lemak utama
-- Ikan 2-3x seminggu
-- Biji-bijian utuh, sayuran, buah-buahan
-- BATASI: daging merah (1-2x/bulan saja)
-- TANPA makanan olahan`,
+ATKINS DIET RULES (MANDATORY):
+- Phase 1: MAX 20g net carbs per day
+- NO grains, sugar, or fruit at the initial phase
+- High protein and high fat intake
+- FOCUS: meat, fish, eggs, cheese, low-carb vegetables
+- Gradually reintroduce carbs in later phases`,
 
         'Mediterranean': `
-ATURAN DIET MEDITERANIA (WAJIB):
-- Gunakan minyak zaitun sebagai lemak utama
-- Ikan 2-3x seminggu
-- Biji-bijian utuh, sayuran, buah-buahan
-- BATASI: daging merah (1-2x/bulan saja)
-- TANPA makanan olahan`,
+MEDITERRANEAN DIET RULES (MANDATORY):
+- Olive oil as the main fat source
+- Fish and seafood 2–3 times per week
+- High intake of vegetables, fruits, legumes, and whole grains
+- LIMIT red meat (1–2 times per month)
+- LOW processed foods and added sugar
+- Optional: moderate red wine (adults only)`,
 
         'Paleo': `
-ATURAN DIET PALEO (WAJIB):
-- TANPA biji-bijian (nasi, gandum, jagung)
-- TANPA produk susu
-- TANPA kacang-kacangan
-- TANPA gula olahan
-- FOKUS: daging, ikan, telur, sayuran, buah, kacang pohon`,
-
-        'Vegetarian/Vegan': `
-ATURAN DIET VEGAN (WAJIB):
-- TIDAK BOLEH ada produk hewani sama sekali (tanpa daging, susu, telur, madu)
-- FOKUS: tahu, tempe, kacang-kacangan, sayuran, biji-bijian
-- Pastikan protein cukup dari sumber nabati`,
+PALEO DIET RULES (MANDATORY):
+- NO grains (rice, wheat, corn)
+- NO dairy products
+- NO legumes
+- NO processed sugar
+- FOCUS: meat, fish, eggs, vegetables, fruits, nuts, seeds
+- Prioritize whole and minimally processed foods`,
 
         'Vegetarian': `
-ATURAN DIET VEGETARIAN (WAJIB):
-- TANPA daging atau ikan
-- Boleh telur dan susu
-- FOKUS: tahu, tempe, telur, susu, kacang-kacangan, sayuran`,
+VEGETARIAN DIET RULES (MANDATORY):
+- NO meat or fish
+- Eggs and dairy are allowed
+- FOCUS: tofu, tempeh, eggs, milk, legumes, vegetables, whole grains
+- Ensure adequate protein, iron, and vitamin B12`,
 
         'Vegan': `
-ATURAN DIET VEGAN (WAJIB):
-- TIDAK BOLEH ada produk hewani sama sekali
-- FOKUS: tahu, tempe, kacang-kacangan, sayuran, biji-bijian
-- Pastikan protein dan B12 cukup`,
+VEGAN DIET RULES (MANDATORY):
+- NO animal products (meat, fish, dairy, eggs, honey)
+- FOCUS: tofu, tempeh, legumes, vegetables, fruits, whole grains
+- Ensure sufficient protein, vitamin B12, iron, calcium, and omega-3`,
 
         'DASH': `
-ATURAN DIET DASH (WAJIB):
-- Rendah natrium (MAKS 2300mg/hari)
-- Tinggi kalium, kalsium, magnesium
-- FOKUS: buah, sayuran, biji-bijian utuh, protein rendah lemak
-- Batasi lemak jenuh dan makanan manis`,
-
-        'Mayo Diet': `
-ATURAN DIET MAYO (WAJIB):
-- Piramida makanan: dasar adalah buah/sayuran
-- Biji-bijian utuh lebih baik dari olahan
-- Sumber protein rendah lemak
-- Lemak sehat dalam jumlah sedang
-- Kontrol porsi penting`,
+DASH DIET RULES (MANDATORY):
+- Sodium intake MAX 2300 mg/day (ideal: 1500 mg)
+- High potassium, calcium, and magnesium intake
+- FOCUS: fruits, vegetables, whole grains, low-fat protein
+- LIMIT saturated fat, sugar, and processed foods
+- Suitable for hypertension management`,
 
         'Mayo Clinic Diet': `
-ATURAN DIET MAYO (WAJIB):
-- Piramida makanan: dasar adalah buah/sayuran
-- Biji-bijian utuh lebih baik dari olahan
-- Sumber protein rendah lemak
-- Lemak sehat dalam jumlah sedang
-- Kontrol porsi penting`,
+MAYO CLINIC DIET RULES (MANDATORY):
+- Emphasize fruits and vegetables as the diet foundation
+- Choose whole grains over refined grains
+- Lean protein sources preferred
+- Healthy fats in moderate amounts
+- Portion control is essential
+- Focus on long-term lifestyle change, not rapid weight loss`,
 
         'Custom': `
-ATURAN CUSTOM (WAJIB):
-- Target kalori: ${targets.targetDailyCalories} kcal
-- Protein: ${targets.targetProtein}g, Karbo: ${targets.targetCarbs}g, Lemak: ${targets.targetFat}g
-- Hormati semua alergi dan kondisi kesehatan
-- Makanan seimbang dan bergizi`
+CUSTOM DIET RULES (MANDATORY):
+- Daily calorie target: ${targets.targetDailyCalories} kcal
+- Protein: ${targets.targetProtein}g
+- Carbohydrates: ${targets.targetCarbs}g
+- Fat: ${targets.targetFat}g
+- Respect all allergies and medical conditions
+- Balanced, sustainable, and nutrient-dense meals`
     };
 
-    const result = rules[dietGoal] || rules['Custom'];
-    return result;
+    return rules[dietGoal] || rules['Custom'];
 }
 
 // Seeded random generator for consistent results per week
@@ -1105,7 +1375,7 @@ function createMealPlanFromRecommendations(preferences, targets, recommendations
                     if (!window._mealPlanWarningShown) {
                         window._mealPlanWarningShown = true;
                         setTimeout(() => {
-                            alert('⚠️ Beberapa menu tidak berhasil di-generate. Silakan klik "Generate Ulang" untuk mencoba lagi.');
+                            showAlert('someMenusFailed');
                             window._mealPlanWarningShown = false;
                         }, 500);
                     }
@@ -1242,12 +1512,15 @@ function renderWeekTabs() {
     const weekTabs = document.getElementById('weekTabs');
     if (!weekTabs || !currentMealPlan) return;
 
+    const currentLang = localStorage.getItem('nutriscan_language') || 'id';
+    const weekLabel = currentLang === 'en' ? 'Week' : 'Minggu';
+
     const weeks = currentMealPlan.weeks || [];
     weekTabs.innerHTML = weeks.map(week => `
         <div class="tab ${week.week === currentWeek ? 'active' : ''}" 
              onclick="switchWeek(${week.week})" 
              style="cursor:pointer;">
-            Minggu ${week.week}
+            ${weekLabel} ${week.week}
         </div>
     `).join('');
 }
@@ -1272,6 +1545,32 @@ function renderDayTabs() {
     `).join('');
 }
 
+// Translate meal types
+function translateMealType(mealType) {
+    const currentLang = localStorage.getItem('nutriscan_language') || 'id';
+    if (currentLang === 'id') return mealType; // Already in Indonesian
+
+    const translations = {
+        'Sarapan': 'Breakfast',
+        'Breakfast': 'Breakfast',
+        'Siang': 'Lunch',
+        'Makan Siang': 'Lunch',
+        'Lunch': 'Lunch',
+        'Malam': 'Dinner',
+        'Makan Malam': 'Dinner',
+        'Dinner': 'Dinner',
+        'Snack Pagi': 'Morning Snack',
+        'Morning Snack': 'Morning Snack',
+        'Snack Sore': 'Afternoon Snack',
+        'Afternoon Snack': 'Afternoon Snack',
+        'Snack Siang': 'Midday Snack',
+        'Midday Snack': 'Midday Snack',
+        'Snack': 'Snack'
+    };
+
+    return translations[mealType] || mealType;
+}
+
 function renderMeals() {
     const timeline = document.getElementById('mealTimeline');
     if (!timeline || !currentMealPlan) return;
@@ -1293,7 +1592,7 @@ function renderMeals() {
             <div class="meal-time">${meal.time || '-'}</div>
             <div class="meal-info">
                 <h4>${meal.name || 'Meal'}</h4>
-                <p class="meta">${meal.type || 'Meal'} • ${Math.round(meal.calories || 0)} kcal</p>
+                <p class="meta">${translateMealType(meal.type) || 'Meal'} • ${Math.round(meal.calories || 0)} kcal</p>
                 <p style="color: #666; margin-top: 0.5rem; font-size: 0.9rem;">${meal.description || ''}</p>
                 <div style="margin-top: 0.5rem;">
                     ${vitString}
@@ -1439,6 +1738,26 @@ function showMealDetails(mealId) {
         padding: 2rem;
     `;
 
+    // Language detection for modal labels
+    const currentLang = localStorage.getItem('nutriscan_language') || 'id';
+    const t = currentLang === 'en' ? {
+        totalCal: 'Total Calories',
+        protein: 'Protein',
+        carbs: 'Carbs',
+        fats: 'Fats',
+        searchRecipe: 'Search Recipe',
+        ingredients: 'Ingredients',
+        noRecipe: 'No recipe available'
+    } : {
+        totalCal: 'Total Kalori',
+        protein: 'Protein',
+        carbs: 'Karbo',
+        fats: 'Lemak',
+        searchRecipe: 'Cari Resep',
+        ingredients: 'Bahan Makanan',
+        noRecipe: 'Tidak ada resep tersedia'
+    };
+
     modal.innerHTML = `
         <div style="background: white; border-radius: 20px; max-width: 650px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 2rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
@@ -1454,19 +1773,19 @@ function showMealDetails(mealId) {
             <!-- Total Nutrition Summary -->
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.5rem;">
                 <div style="padding: 0.75rem; background: #e8f5e9; border-radius: 10px; text-align: center;">
-                    <div style="color: #666; font-size: 0.8rem;">Total Kalori</div>
+                    <div style="color: #666; font-size: 0.8rem;">${t.totalCal}</div>
                     <div style="color: #00c853; font-size: 1.2rem; font-weight: 700;">${Math.round(meal.calories || 0)}</div>
                 </div>
                 <div style="padding: 0.75rem; background: #e3f2fd; border-radius: 10px; text-align: center;">
-                    <div style="color: #666; font-size: 0.8rem;">Protein</div>
+                    <div style="color: #666; font-size: 0.8rem;">${t.protein}</div>
                     <div style="color: #1976d2; font-size: 1.2rem; font-weight: 700;">${Math.round(meal.protein || 0)}g</div>
                 </div>
                 <div style="padding: 0.75rem; background: #fff3e0; border-radius: 10px; text-align: center;">
-                    <div style="color: #666; font-size: 0.8rem;">Karbo</div>
+                    <div style="color: #666; font-size: 0.8rem;">${t.carbs}</div>
                     <div style="color: #f57c00; font-size: 1.2rem; font-weight: 700;">${Math.round(meal.carbs || 0)}g</div>
                 </div>
                 <div style="padding: 0.75rem; background: #fce4ec; border-radius: 10px; text-align: center;">
-                    <div style="color: #666; font-size: 0.8rem;">Lemak</div>
+                    <div style="color: #666; font-size: 0.8rem;">${t.fats}</div>
                     <div style="color: #c2185b; font-size: 1.2rem; font-weight: 700;">${Math.round(meal.fat || 0)}g</div>
                 </div>
             </div>
@@ -1474,7 +1793,7 @@ function showMealDetails(mealId) {
             <!-- Recipe Links Section -->
             <div style="margin-bottom: 1.5rem;">
                 <h3 style="color: #1b5e20; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
-                    📖 Cari Resep
+                    📖 ${t.searchRecipe}
                 </h3>
                 <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                     ${recipeLinksHtml}
@@ -1484,7 +1803,7 @@ function showMealDetails(mealId) {
             <!-- Ingredients Table Section -->
             <div>
                 <h3 style="color: #1b5e20; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
-                    🥗 Bahan Makanan
+                    🥗 ${t.ingredients}
                 </h3>
                 ${meal.items && meal.items.length > 0 && meal.items.some(item => item.ingredients && item.ingredients.length > 0)
             ? `<div style="background: #f9fafb; padding: 1rem; border-radius: 12px; border: 2px solid #e0e0e0;">
@@ -1547,26 +1866,41 @@ function showServerOverloadModal() {
         padding: 2rem;
     `;
 
+    const currentLang = localStorage.getItem('nutriscan_language') || 'id';
+    const t = currentLang === 'en' ? {
+        title: 'AI Server Busy',
+        message: 'Sorry! Our AI server is experiencing <strong>overload</strong> due to high demand.',
+        wait: '⏳ Wait 1-2 minutes then try again',
+        tip: 'Tips: Try generating during off-peak hours (morning/afternoon) for faster results.',
+        button: 'OK, I Understand'
+    } : {
+        title: 'Server AI Sedang Sibuk',
+        message: 'Maaf! Server AI kami sedang mengalami <strong>overload</strong> karena banyaknya permintaan.',
+        wait: '⏳ Tunggu 1-2 menit lalu coba lagi',
+        tip: 'Tips: Coba generate di waktu yang tidak sibuk (pagi/siang) untuk hasil lebih cepat.',
+        button: 'OK, Saya Mengerti'
+    };
+
     modal.innerHTML = `
         <div style="background: white; border-radius: 20px; max-width: 450px; width: 100%; padding: 2.5rem; text-align: center;">
             <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
-            <h2 style="color: #f57c00; margin-bottom: 1rem;">Server AI Sedang Sibuk</h2>
+            <h2 style="color: #f57c00; margin-bottom: 1rem;">${t.title}</h2>
             <p style="color: #666; line-height: 1.6; margin-bottom: 1.5rem;">
-                Maaf! Server AI kami sedang mengalami <strong>overload</strong> karena banyaknya permintaan.
+                ${t.message}
             </p>
             <div style="background: #fff3e0; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem;">
                 <p style="color: #e65100; margin: 0; font-weight: 600;">
-                    ⏳ Tunggu 1-2 menit lalu coba lagi
+                    ${t.wait}
                 </p>
             </div>
             <p style="color: #888; font-size: 0.9rem; margin-bottom: 1.5rem;">
-                Tips: Coba generate di waktu yang tidak sibuk (pagi/siang) untuk hasil lebih cepat.
+                ${t.tip}
             </p>
             <button onclick="this.closest('.server-overload-modal').remove()" 
                     style="background: linear-gradient(135deg, #f57c00, #ff9800); color: white; border: none; 
                            padding: 0.75rem 2rem; border-radius: 25px; font-size: 1rem; font-weight: 600; 
                            cursor: pointer; box-shadow: 0 4px 15px rgba(245,124,0,0.3);">
-                OK, Saya Mengerti
+                ${t.button}
             </button>
         </div>
     `;
@@ -1608,18 +1942,31 @@ function showLoadingTimeoutWarning() {
         padding: 2rem;
     `;
 
+    const currentLang = localStorage.getItem('nutriscan_language') || 'id';
+    const t = currentLang === 'en' ? {
+        title: 'Taking Too Long',
+        message: 'Meal plan analysis has been running for more than <strong>1 minute</strong>. AI is working <strong>very hard</strong> to create your meal plan.',
+        question: 'Would you like to <strong>cancel</strong> and try again later,<br>or <strong>continue</strong> waiting?',
+        cancelBtn: 'Cancel',
+        continueBtn: 'Continue Waiting'
+    } : {
+        title: 'Proses Terlalu Lama',
+        message: 'Analisis meal plan sudah berjalan lebih dari <strong>1 menit</strong>. AI sedang berusaha <strong>sangat keras</strong> untuk membuat meal plan Anda.',
+        question: 'Apakah Anda ingin <strong>batalkan</strong> dan coba lagi nanti,<br>atau <strong>lanjutkan</strong> menunggu?',
+        cancelBtn: 'Batalkan',
+        continueBtn: 'Lanjutkan Menunggu'
+    };
+
     modal.innerHTML = `
         <div style="background: white; border-radius: 20px; max-width: 450px; width: 100%; padding: 2.5rem; text-align: center;">
             <div style="font-size: 4rem; margin-bottom: 1rem;">⏳</div>
-            <h2 style="color: #f57c00; margin-bottom: 1rem;">Proses Terlalu Lama</h2>
+            <h2 style="color: #f57c00; margin-bottom: 1rem;">${t.title}</h2>
             <p style="color: #666; line-height: 1.6; margin-bottom: 1.5rem;">
-                Analisis meal plan sudah berjalan lebih dari <strong>1 menit</strong>.
-                AI sedang berusaha <strong>sangat keras</strong> untuk membuat meal plan Anda.
+                ${t.message}
             </p>
             <div style="background: #fff3e0; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem;">
                 <p style="color: #e65100; margin: 0; font-size: 0.95rem;">
-                    Apakah Anda ingin <strong>batalkan</strong> dan coba lagi nanti,<br>
-                    atau <strong>lanjutkan</strong> menunggu?
+                    ${t.question}
                 </p>
             </div>
             <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
@@ -1627,13 +1974,13 @@ function showLoadingTimeoutWarning() {
                         style="background: #ff5252; color: white; border: none; 
                                padding: 0.75rem 1.5rem; border-radius: 25px; font-size: 1rem; font-weight: 600; 
                                cursor: pointer; box-shadow: 0 4px 15px rgba(255,82,82,0.3);">
-                    ❌ Batalkan
+                    ❌ ${t.cancelBtn}
                 </button>
                 <button id="continueLoadingBtn"
                         style="background: linear-gradient(135deg, #00c853, #00e676); color: white; border: none; 
                                padding: 0.75rem 1.5rem; border-radius: 25px; font-size: 1rem; font-weight: 600; 
                                cursor: pointer; box-shadow: 0 4px 15px rgba(0,200,83,0.3);">
-                    ✅ Lanjutkan Menunggu
+                    ✅ ${t.continueBtn}
                 </button>
             </div>
         </div>
@@ -1669,8 +2016,13 @@ function showLoadingTimeoutWarning() {
 
 
 function resetMealPlan() {
+    const currentLang = localStorage.getItem('nutriscan_language') || 'id';
+    const confirmMsg = currentLang === 'en'
+        ? 'Are you sure you want to create a new meal plan? Current meal plan will be deleted.'
+        : 'Yakin ingin membuat meal plan baru? Meal plan saat ini akan dihapus.';
+
     // Show single confirmation dialog
-    if (confirm('Yakin ingin membuat meal plan baru? Meal plan saat ini akan dihapus.')) {
+    if (confirm(confirmMsg)) {
         localStorage.removeItem('nutriscan_current_meal_plan');
         currentMealPlan = null;
         currentWeek = 1;
@@ -1689,25 +2041,26 @@ function showLoadingState() {
     const overlay = document.createElement('div');
     overlay.id = 'loadingOverlay';
     overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.7);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.7); display: flex;
+        align-items: center; justify-content: center; z-index: 10000;
     `;
+
+    const currentLang = localStorage.getItem('nutriscan_language') || 'id';
+    const t = currentLang === 'en' ? {
+        title: 'Generating Your Meal Plan...',
+        message: 'AI is creating a personalized meal plan for you based on your preferences and health conditions. This process takes about 30-60 seconds.'
+    } : {
+        title: 'Membuat Meal Plan Anda...',
+        message: 'AI sedang menyusun meal plan personal untuk Anda berdasarkan preferensi dan kondisi kesehatan Anda. Proses ini membutuhkan waktu sekitar 30-60 detik.'
+    };
 
     overlay.innerHTML = `
         <div style="background: white; padding: 3rem; border-radius: 20px; text-align: center; max-width: 500px;">
             <div style="font-size: 4rem; margin-bottom: 1rem;">🤖</div>
-            <h2 style="color: #00c853; margin-bottom: 1rem;">Generating Your Meal Plan...</h2>
+            <h2 style="color: #00c853; margin-bottom: 1rem;">${t.title}</h2>
             <p style="color: #666; margin-bottom: 1.5rem; line-height: 1.6;">
-                AI sedang menyusun meal plan personal untuk Anda berdasarkan preferensi dan kondisi kesehatan Anda. 
-                Proses ini membutuhkan waktu sekitar 30-60 detik.
+                ${t.message}
             </p>
             <div style="width: 100%; height: 8px; background: #e0e0e0; border-radius: 10px; overflow: hidden;">
                 <div style="width: 100%; height: 100%; background: linear-gradient(90deg, #00e676, #00c853); animation: loading 1.5s ease-in-out infinite;"></div>

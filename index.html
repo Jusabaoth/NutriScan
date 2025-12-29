@@ -147,6 +147,116 @@
             transform: translateY(-2px);
         }
 
+        /* LANGUAGE TOGGLE */
+        .lang-toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: 2rem;
+        }
+
+        .lang-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .lang-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .lang-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .lang-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .lang-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked+.lang-slider {
+            background-color: #00c853;
+        }
+
+        input:checked+.lang-slider:before {
+            transform: translateX(20px);
+        }
+
+        /* MOBILE LANGUAGE TOGGLE */
+        .lang-toggle-mobile {
+            display: none;
+            margin-right: 0.5rem;
+        }
+
+        .lang-switch-mobile {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .lang-switch-mobile input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .lang-slider-mobile {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .lang-slider-mobile:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked+.lang-slider-mobile {
+            background-color: #00c853;
+        }
+
+        input:checked+.lang-slider-mobile:before {
+            transform: translateX(20px);
+        }
+
         /* MOBILE MENU TOGGLE */
         .menu-toggle {
             display: none;
@@ -723,6 +833,14 @@
                 display: flex;
             }
 
+            .lang-toggle-container {
+                display: none;
+            }
+
+            .lang-toggle-mobile {
+                display: flex;
+            }
+
             .user-profile {
                 gap: 0.5rem;
             }
@@ -1084,21 +1202,38 @@
             <div class="logo">NutriScan</div>
         </div>
         <div class="nav-menu">
-            <a href="index.html" id="dashboardLink">Dashboard</a>
-            <a href="scanner.html" id="scannerLink">Scanner</a>
-            <a href="mealplanner.html" id="mealplannerLink">Meal Planner</a>
-            <a href="history.html" id="historyLink">History</a>
+            <div class="lang-toggle-container" style="display: inline-flex; margin-left: 1rem; align-items: center;">
+                <span class="lang-label" data-lang-key="lang-id">ID</span>
+                <label class="lang-switch">
+                    <input type="checkbox" id="langToggle" onchange="toggleLanguage()">
+                    <span class="lang-slider"></span>
+                </label>
+                <span class="lang-label" data-lang-key="lang-en">EN</span>
+            </div>
+            <a href="index.html" id="dashboardLink" data-lang-key="nav-dashboard">Dashboard</a>
+            <a href="scanner.html" id="scannerLink" data-lang-key="nav-scanner">Scanner</a>
+            <a href="mealplanner.html" id="mealplannerLink" data-lang-key="nav-mealplanner">Meal Planner</a>
+            <a href="history.html" id="historyLink" data-lang-key="nav-history">History</a>
         </div>
         <div class="mobile-menu" id="mobileMenu">
-            <a href="index.html" id="mobileDashboardLink">Dashboard</a>
-            <a href="scanner.html" id="mobileScannerLink">Scanner</a>
-            <a href="mealplanner.html" id="mobileMealplannerLink">Meal Planner</a>
-            <a href="history.html" id="mobileHistoryLink">History</a>
+            <a href="index.html" id="mobileDashboardLink" data-lang-key="nav-dashboard">Dashboard</a>
+            <a href="scanner.html" id="mobileScannerLink" data-lang-key="nav-scanner">Scanner</a>
+            <a href="mealplanner.html" id="mobileMealplannerLink" data-lang-key="nav-mealplanner">Meal Planner</a>
+            <a href="history.html" id="mobileHistoryLink" data-lang-key="nav-history">History</a>
         </div>
         <div class="user-profile" id="userProfile" style="display: none;">
             <div class="user-avatar" id="userAvatar">U</div>
             <span class="user-name" id="userName">User</span>
-            <button class="btn-logout" onclick="logout()">Logout</button>
+            <button class="btn-logout" onclick="logout()" data-lang-key="btn-logout">Keluar</button>
+        </div>
+        <!-- LANGUAGE TOGGLE (MOBILE) -->
+        <div class="lang-toggle-mobile">
+            <span class="lang-label" data-lang-key="lang-id">ID</span>
+            <label class="lang-switch-mobile">
+                <input type="checkbox" id="langToggleMobile" onchange="toggleLanguage()">
+                <span class="lang-slider-mobile"></span>
+            </label>
+            <span class="lang-label" data-lang-key="lang-en">EN</span>
         </div>
         <button class="menu-toggle" id="menuToggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">
             <span></span>
@@ -1114,107 +1249,120 @@
     <div class="post-login-content" id="postLoginContent">
         <!-- WELCOME BANNER -->
         <section class="welcome-banner">
-            <h1>Selamat datang, <span id="welcomeName">User</span>! 👋</h1>
-            <p>Lengkapi profil kesehatan untuk rekomendasi nutrisi yang lebih personal</p>
+            <h1><span data-lang-key="welcome-text">Selamat datang</span> <span id="welcomeName"
+                    style="display: none;">User!</span></h1>
+            <p data-lang-key="welcome-subtitle-text">Lengkapi profil kesehatan untuk rekomendasi nutrisi yang lebih
+                personal</p>
             <button class="health-profile-button" id="healthProfileButton" onclick="openHealthProfileModal()">
-                <span id="healthButtonIcon">🏥</span> <span id="healthButtonText">Setup Profil Kesehatan</span>
+                <span id="healthButtonText" data-lang-key="health-profile-btn">Setup Profil Kesehatan</span>
             </button>
-            <button class="scanner-cta-button" onclick="navigateToScanner()" style="margin-top: 1rem;">
-                <span>📸</span> Mulai Scan Sekarang
+            <button class="scanner-cta-button" onclick="navigateToScanner()" style="margin-top:  1rem;"
+                data-lang-key="scanner-cta">
+                Mulai Scan Sekarang
             </button>
         </section>
 
         <!-- ACTION CARDS -->
         <section class="action-cards">
-            <h2 class="section-title">Mulai dari Sini</h2>
+            <h2 class="section-title" data-lang-key="action-cards-title">Mulai dari Sini</h2>
             <div class="action-grid">
                 <div class="action-card">
                     <div class="icon">👤</div>
-                    <h3>Lengkapi Profil</h3>
-                    <p>Atur kondisi kesehatan untuk rekomendasi yang lebih personal</p>
+                    <h3 data-lang-key="action-card-1-title">Lengkapi Profil</h3>
+                    <p data-lang-key="action-card-1-desc">Atur kondisi kesehatan untuk rekomendasi yang lebih personal
+                    </p>
                 </div>
                 <div class="action-card">
                     <div class="icon">📸</div>
-                    <h3>Scan Pertamamu</h3>
-                    <p>Ambil foto label produk dan dapatkan analisis nutrisi instan</p>
+                    <h3 data-lang-key="action-card-2-title">Scan Pertamamu</h3>
+                    <p data-lang-key="action-card-2-desc">Ambil foto label produk dan dapatkan analisis nutrisi instan
+                    </p>
                 </div>
-                <div class="action-card"">
-                    <div class=" icon">📚</div>
-                <h3>Belajar Nutrisi</h3>
-                <p>Akses artikel dan tips kesehatan dari para ahli</p>
-            </div>
-    </div>
-    </section>
+                <div class="action-card">
+                    <div class="icon">📚</div>
+                    <h3 data-lang-key="action-card-3-title">Belajar Nutrisi</h3>
+                    <p data-lang-key="action-card-3-desc">Akses artikel dan tips kesehatan dari para ahli</p>
+                </div>
+        </section>
 
-    <!-- EDUCATIONAL CONTENT -->
-    <section class="educational-content" id="educationalSection">
-        <h2 class="section-title">📚 Konten Edukasi</h2>
-        <div class="articles-scroll">
-            <div class="article-card">
-                <div class="article-image">📋</div>
-                <div class="article-content">
-                    <h3>Tujuan Membaca Label Gizi</h3>
-                    <p>Mengetahui kandungan gizi dalam makanan/minuman seperti gula, garam (natrium), lemak, protein,
-                        serat, dll.
-                        Membantu kita untuk memilih produk mana yang lebih sehat dan aman dikonsumsi.</p>
+        <!-- EDUCATIONAL CONTENT -->
+        <section class="educational-content" id="educationalSection">
+            <h2 class="section-title" data-lang-key="edu-title">📚 Konten Edukasi</h2>
+            <div class="articles-scroll">
+                <div class="article-card">
+                    <div class="article-image">📋</div>
+                    <div class="article-content">
+                        <h3 data-lang-key="edu-1-title">Tujuan Membaca Label Gizi</h3>
+                        <p data-lang-key="edu-1-desc">Mengetahui kandungan gizi dalam makanan/minuman seperti gula,
+                            garam (natrium), lemak, protein,
+                            serat, dll.
+                            Membantu kita untuk memilih produk mana yang lebih sehat dan aman dikonsumsi.</p>
+                    </div>
+                </div>
+                <div class="article-card">
+                    <div class="article-image">⚖️</div>
+                    <div class="article-content">
+                        <h3 data-lang-key="edu-2-title">Apa itu takaran saji?</h3>
+                        <p data-lang-key="edu-2-desc">Berat suatu makanan/minuman(biasanya dalam gram) yang dijadikan
+                            acuan untuk menghitung kandungan
+                            gizi pada label.
+                            contoh : Takaran saji: 30 g, Isi kemasan: 2 sajian, gula: 10 g, natrium: 100 mg, jika
+                            seluruh
+                            isinya dimakan sama saja seperti mengomsumsi 60 g gula dan 200 mg natrium.</p>
+                    </div>
+                </div>
+                <div class="article-card">
+                    <div class="article-image">🥗</div>
+                    <div class="article-content">
+                        <h3 data-lang-key="edu-3-title">Apa itu Kalori dan Funsinya?</h3>
+                        <p data-lang-key="edu-3-desc">Jumlah energi yang diperoleh tubuh dari makanan/minuman. Fungsi
+                            utamanya yaitu untuk menjalani
+                            aktivitas sehari-hari, Menjaga fungsi organ tubuh, dan mendukung pertumbuhan.</p>
+                    </div>
+                </div>
+                <div class="article-card">
+                    <div class="article-image">🍔</div>
+                    <div class="article-content">
+                        <h3 data-lang-key="edu-4-title">Lemak Trans(SANGAT BERBAHAYA)</h3>
+                        <p data-lang-key="edu-4-desc">Lemak trans adalah lemak buatan hasil hidrogenasi yang mengubah
+                            lemak cair menjadi padat agar
+                            makanan lebih tahan lama. Lemak ini terdapat pada margarin, <em>fast food</em>, dan biskuit,
+                            serta meningkatkan kolesterol jahat, menurunkan menurunkan kolesterol baik, dan meningkatkan
+                            resiko penyakit jantung.</p>
+                    </div>
+                </div>
+                <div class="article-card">
+                    <div class="article-image">🍟</div>
+                    <div class="article-content">
+                        <h3 data-lang-key="edu-5-title">Lemak Teroksidasi(BERBAHAYA)</h3>
+                        <p data-lang-key="edu-5-desc">Lemak teroksidasi adalah lemak yang sudah rusak akibat pemanasan
+                            berulang atau terlalu lama,
+                            seperti pada minyak goreng yang dipakai berkali-kali. Lemak ini berbahaya karena dapat
+                            memicu
+                            peradangan, merusak sel tubuh, dan meningkatkan risiko penyakit kronis.</p>
+                    </div>
+                </div>
+                <div class="article-card">
+                    <div class="article-image">🍖</div>
+                    <div class="article-content">
+                        <h3 data-lang-key="edu-6-title">Lemak Jenuh(DIBATASI)</h3>
+                        <p data-lang-key="edu-6-desc">Lemak jenuh adalah lemak yang umumnya padat pada suhu ruang dan
+                            banyak terdapat pada daging
+                            berlemak, santan, minyak kelapa dan sawit. Beresiko meningkatkan kolesterol jahat(jika
+                            dikonsumsi berlebihan).</p>
+                    </div>
+                </div>
+                <div class="article-card">
+                    <div class="article-image">🍽️</div>
+                    <div class="article-content">
+                        <h3 data-lang-key="edu-7-title">Angka Kebutuhan Gizi(AKG)</h3>
+                        <p data-lang-key="edu-7-desc">AKG menunjukkan persentase kebutuhan gizi harian yang dipenuhi
+                            oleh 1 porsi makanan. Contoh :
+                            Lemak: 10% AKG, berarti 1 porsi makanan mengandung 10% dari kebutuhan lemak harian.</p>
+                    </div>
                 </div>
             </div>
-            <div class="article-card">
-                <div class="article-image">⚖️</div>
-                <div class="article-content">
-                    <h3>Apa itu takaran saji?</h3>
-                    <p>Berat suatu makanan/minuman(biasanya dalam gram) yang dijadikan acuan untuk menghitung kandungan
-                        gizi pada label.
-                        contoh : Takaran saji: 30 g, Isi kemasan: 2 sajian, gula: 10 g, natrium: 100 mg, jika seluruh
-                        isinya dimakan sama saja seperti mengomsumsi 60 g gula dan 200 mg natrium.</p>
-                </div>
-            </div>
-            <div class="article-card">
-                <div class="article-image">🥗</div>
-                <div class="article-content">
-                    <h3>Apa itu Kalori dan Funsinya?</h3>
-                    <p>Jumlah energi yang diperoleh tubuh dari makanan/minuman. Fungsi utamanya yaitu untuk menjalani
-                        aktivitas sehari-hari, Menjaga fungsi organ tubuh, dan mendukung pertumbuhan.</p>
-                </div>
-            </div>
-            <div class="article-card">
-                <div class="article-image">🍔</div>
-                <div class="article-content">
-                    <h3>Lemak Trans(SANGAT BERBAHAYA)</h3>
-                    <p>Lemak trans adalah lemak buatan hasil hidrogenasi yang mengubah lemak cair menjadi padat agar
-                        makanan lebih tahan lama. Lemak ini terdapat pada margarin, <em>fast food</em>, dan biskuit,
-                        serta meningkatkan kolesterol jahat, menurunkan menurunkan kolesterol baik, dan meningkatkan
-                        resiko penyakit jantung.</p>
-                </div>
-            </div>
-            <div class="article-card">
-                <div class="article-image">🍟</div>
-                <div class="article-content">
-                    <h3>Lemak Teroksidasi(BERBAHAYA)</h3>
-                    <p>Lemak teroksidasi adalah lemak yang sudah rusak akibat pemanasan berulang atau terlalu lama,
-                        seperti pada minyak goreng yang dipakai berkali-kali. Lemak ini berbahaya karena dapat memicu
-                        peradangan, merusak sel tubuh, dan meningkatkan risiko penyakit kronis.</p>
-                </div>
-            </div>
-            <div class="article-card">
-                <div class="article-image">🍖</div>
-                <div class="article-content">
-                    <h3>Lemak Jenuh(DIBATASI)</h3>
-                    <p>Lemak jenuh adalah lemak yang umumnya padat pada suhu ruang dan banyak terdapat pada daging
-                        berlemak, santan, minyak kelapa dan sawit. Beresiko meningkatkan kolesterol jahat(jika
-                        dikonsumsi berlebihan).</p>
-                </div>
-            </div>
-            <div class="article-card">
-                <div class="article-image">🍽️</div>
-                <div class="article-content">
-                    <h3>Angka Kebutuhan Gizi(AKG)</h3>
-                    <p>AKG menunjukkan persentase kebutuhan gizi harian yang dipenuhi oleh 1 porsi makanan. Contoh :
-                        Lemak: 10% AKG, berarti 1 porsi makanan mengandung 10% dari kebutuhan lemak harian.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+        </section>
     </div>
 
     <!-- HEALTH PROFILE MODAL -->
@@ -1222,21 +1370,23 @@
         <div class="health-modal" onclick="event.stopPropagation()">
             <button class="health-modal-close" onclick="closeHealthProfileModal()">&times;</button>
 
-            <h2 class="health-modal-title">🏥 Setup Profil Kesehatan</h2>
-            <p class="health-modal-subtitle">Lengkapi data fisik untuk perhitungan kalori harian yang akurat dan
+            <h2 class="health-modal-title" data-lang-key="health-modal-title">Setup Profil Kesehatan</h2>
+            <p class="health-modal-subtitle" data-lang-key="health-modal-subtitle">Lengkapi data fisik untuk perhitungan
+                kalori harian yang akurat dan
                 personalisasi AI</p>
 
             <form id="healthProfileForm" onsubmit="saveHealthProfile(event)">
                 <!-- Profil Fisik -->
                 <div class="form-group">
-                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.2rem;">Profil Fisik</h3>
+                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.2rem;"
+                        data-lang-key="health-profile-physical">Profil Fisik</h3>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div>
-                            <label>Berat Badan (kg)</label>
+                            <label data-lang-key="health-weight">Berat Badan (kg)</label>
                             <input type="number" id="weight" min="1" max="300" placeholder="70" required>
                         </div>
                         <div>
-                            <label>Tinggi Badan (cm)</label>
+                            <label data-lang-key="health-height">Tinggi Badan (cm)</label>
                             <input type="number" id="height" min="1" max="300" placeholder="170" required>
                         </div>
                     </div>
@@ -1245,20 +1395,21 @@
                 <div class="form-group">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div>
-                            <label>Umur (tahun)</label>
+                            <label data-lang-key="health-age">Umur (tahun)</label>
                             <input type="number" id="age" min="1" max="150" placeholder="25" required>
                         </div>
                         <div>
-                            <label>Jenis Kelamin</label>
+                            <label data-lang-key="health-gender">Jenis Kelamin</label>
                             <div class="checkbox-group" style="gap: 1.5rem; margin-top: 0.5rem;">
                                 <label
                                     style="display: flex; align-items: center; font-weight: normal; cursor: pointer;">
-                                    <input type="checkbox" name="gender" value="male" onclick="selectGender(this)"> Pria
+                                    <input type="checkbox" name="gender" value="male" onclick="selectGender(this)">
+                                    <span data-lang-key="health-gender-male">Pria</span>
                                 </label>
                                 <label
                                     style="display: flex; align-items: center; font-weight: normal; cursor: pointer;">
                                     <input type="checkbox" name="gender" value="female" onclick="selectGender(this)">
-                                    Wanita
+                                    <span data-lang-key="health-gender-female">Wanita</span>
                                 </label>
                             </div>
                         </div>
@@ -1266,21 +1417,28 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Aktivitas Harian</label>
+                    <label data-lang-key="health-activity">Aktivitas Harian</label>
                     <select id="activity" required>
-                        <option value="" disabled selected>Pilih tingkat aktivitas</option>
-                        <option value="sedentary">Jarang olahraga (Sedentari)</option>
-                        <option value="light">Olahraga 1-2x/minggu (Ringan)</option>
-                        <option value="moderate">Olahraga 3-5x/minggu (Sedang)</option>
-                        <option value="active">Olahraga 6-7x/minggu (Berat)</option>
+                        <option value="" disabled selected data-lang-key="health-activity-placeholder">Pilih tingkat
+                            aktivitas</option>
+                        <option value="sedentary" data-lang-key="health-activity-sedentary">Jarang olahraga (Sedentari)
+                        </option>
+                        <option value="light" data-lang-key="health-activity-light">Olahraga 1-2x/minggu (Ringan)
+                        </option>
+                        <option value="moderate" data-lang-key="health-activity-moderate">Olahraga 3-5x/minggu (Sedang)
+                        </option>
+                        <option value="active" data-lang-key="health-activity-active">Olahraga 6-7x/minggu (Berat)
+                        </option>
                     </select>
                 </div>
 
                 <!-- 1. Alergi Makanan -->
                 <div class="form-group">
-                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.1rem; margin-top: 1.5rem;">1. Alergi
+                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.1rem; margin-top: 1.5rem;"
+                        data-lang-key="health-allergies-title">1. Alergi
                         Makanan</h3>
-                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">Reaksi abnormal sistem kekebalan
+                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;"
+                        data-lang-key="health-allergies-desc">Reaksi abnormal sistem kekebalan
                         tubuh terhadap makanan tertentu</p>
                     <div class="checkbox-group" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
                         <label><input type="checkbox" name="allergies" value="susu"> Susu dan produk olahannya
@@ -1300,9 +1458,11 @@
 
                 <!-- 2. Penyakit Metabolik -->
                 <div class="form-group">
-                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.1rem; margin-top: 1.5rem;">2. Penyakit
+                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.1rem; margin-top: 1.5rem;"
+                        data-lang-key="health-metabolic-title">2. Penyakit
                         Metabolik</h3>
-                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">Penyakit/kelainan metabolisme
+                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;"
+                        data-lang-key="health-metabolic-desc">Penyakit/kelainan metabolisme
                         tubuh</p>
                     <div class="checkbox-group" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
                         <label><input type="checkbox" name="conditions" value="diabetes"> Diabetes Mellitus</label>
@@ -1317,9 +1477,11 @@
 
                 <!-- 3. Penyakit Kardiovaskular -->
                 <div class="form-group">
-                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.1rem; margin-top: 1.5rem;">3. Penyakit
+                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.1rem; margin-top: 1.5rem;"
+                        data-lang-key="health-cardio-title">3. Penyakit
                         Kardiovaskular</h3>
-                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">Gangguan jantung dan pembuluh
+                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;"
+                        data-lang-key="health-cardio-desc">Gangguan jantung dan pembuluh
                         darah</p>
                     <div class="checkbox-group" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
                         <label><input type="checkbox" name="conditions" value="jantung_koroner"> Penyakit Jantung
@@ -1332,7 +1494,8 @@
 
                 <!-- 4. Gangguan Pernapasan -->
                 <div class="form-group">
-                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.1rem; margin-top: 1.5rem;">4. Gangguan
+                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.1rem; margin-top: 1.5rem;"
+                        data-lang-key="health-respiratory-title">4. Gangguan
                         Pernapasan</h3>
                     <div class="checkbox-group" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
                         <label><input type="checkbox" name="conditions" value="ppok"> PPOK</label>
@@ -1343,7 +1506,8 @@
 
                 <!-- 5. Kanker -->
                 <div class="form-group">
-                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.1rem; margin-top: 1.5rem;">5. Kanker
+                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.1rem; margin-top: 1.5rem;"
+                        data-lang-key="health-cancer-title">5. Kanker
                     </h3>
                     <div class="checkbox-group" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
                         <label><input type="checkbox" name="conditions" value="kanker_payudara"> Kanker Payudara</label>
@@ -1356,7 +1520,8 @@
 
                 <!-- 6. Gangguan Pencernaan -->
                 <div class="form-group">
-                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.1rem; margin-top: 1.5rem;">6. Gangguan
+                    <h3 style="color: #1b5e20; margin-bottom: 1rem; font-size: 1.1rem; margin-top: 1.5rem;"
+                        data-lang-key="health-digestive-title">6. Gangguan
                         Pencernaan</h3>
                     <div class="checkbox-group" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
                         <label><input type="checkbox" name="conditions" value="gerd"> GERD</label>
@@ -1368,15 +1533,17 @@
 
                 <!-- Lainnya -->
                 <div class="form-group">
-                    <label>Lainnya</label>
-                    <input type="text" id="otherConditions"
+                    <label data-lang-key="health-other-label">Lainnya</label>
+                    <input type="text" id="otherConditions" data-lang-key="health-other-placeholder"
                         placeholder="Tuliskan kondisi lain, contoh : Maag, Anemia, dll">
                 </div>
 
                 <!-- Actions -->
                 <div class="health-modal-actions">
-                    <button type="button" class="btn-cancel-health" onclick="closeHealthProfileModal()">Batal</button>
-                    <button type="submit" class="btn-save-health">💾 Simpan Profil</button>
+                    <button type="button" class="btn-cancel-health" onclick="closeHealthProfileModal()"
+                        data-lang-key="health-btn-cancel">Batal</button>
+                    <button type="submit" class="btn-save-health" data-lang-key="health-btn-save">💾 Simpan
+                        Profil</button>
                 </div>
             </form>
         </div>
@@ -1388,7 +1555,6 @@
         window.ENABLE_AUTH_FLOW = false;
         const ENABLE_AUTH_FLOW = window.ENABLE_AUTH_FLOW;
 
-        // Save to localStorage for cross-page persistence
         localStorage.setItem('nutriscan_enable_auth_flow', ENABLE_AUTH_FLOW ? 'true' : 'false');
 
         // Storage Keys
@@ -1617,12 +1783,12 @@
 
             if (healthData) {
                 // Data exists - show "Edit" button
-                icon.textContent = '✏️';
-                text.textContent = 'Ubah Profil Kesehatan';
+                if (icon) icon.textContent = '✏️';
+                if (text) text.textContent = 'Ubah Profil Kesehatan';
             } else {
                 // No data - show "Setup" button
-                icon.textContent = '🏥';
-                text.textContent = 'Setup Profil Kesehatan';
+                if (icon) icon.textContent = '🏥';
+                if (text) text.textContent = 'Setup Profil Kesehatan';
             }
         }
 
@@ -2014,6 +2180,8 @@
             }
         }
     </script>
+    <!-- Language Switcher -->
+    <script src="js/language_dictionary.js"></script>
 </body>
 
 </html>

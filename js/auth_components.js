@@ -112,9 +112,7 @@ const AUTH_COMPONENTS_HTML = `
     </section>
 `;
 
-/**
- * Commands to control Authentication UI
- */
+
 const AuthCommand = {
     show: function (mode = 'signup') {
         const container = document.getElementById('preLoginContent');
@@ -161,15 +159,11 @@ const AuthCommand = {
         const postLogin = document.getElementById('postLoginContent');
         if (postLogin) postLogin.classList.add('active');
 
-        // Note: Enabling links is handled by showPostLoginContent (via checkAuthStatus)
-        // or manually if needed, but we rely on the main app logic for that state now
-        // to support the 'Locked Mode' properly.
     }
 };
 
-// ==========================================
 // AUTH CSS
-// ==========================================
+
 const AUTH_CSS = `
 /* AUTH FORMS */
 .auth-section {
@@ -301,9 +295,9 @@ style.textContent = AUTH_CSS;
 document.head.appendChild(style);
 
 
-// ==========================================
+
 // AUTH LOGIC
-// ==========================================
+
 
 // Validate email format
 function isValidEmail(email) {

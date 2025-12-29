@@ -59,8 +59,8 @@ async function callGeminiWithRotation(contents: any, generationConfig: any): Pro
                 body: JSON.stringify({
                     contents,
                     generationConfig: generationConfig || {
-                        temperature: 0.3,
-                        maxOutputTokens: 32768  // Maximum tokens for Gemini 2.0 Flash
+                        temperature: 0.7,
+                        maxOutputTokens: 32768  // Maximum tokens
                     }
                 })
             });
