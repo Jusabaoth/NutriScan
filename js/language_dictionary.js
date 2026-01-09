@@ -188,7 +188,7 @@ const translations = {
         'health-other-label': 'Lainnya',
         'health-other-placeholder': 'Tuliskan kondisi lain, contoh : Maag, Anemia, dll',
         'health-btn-cancel': 'Batal',
-        'health-btn-save': '💾 Simpan Profil',
+        'health-btn-save': 'Simpan Profil',
     },
 
     en: {

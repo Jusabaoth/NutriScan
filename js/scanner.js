@@ -946,7 +946,7 @@ function displayResults(result) {
             <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 1rem; align-items: center;">
                 ${result.productName !== "Gagal Menganalisis" ? `
                     <button onclick="saveToHistory()" id="btnSaveHistory" style="width: 100%; max-width: 300px; padding: 1rem; background: white; color: #00c853; border: 2px solid #00c853; border-radius: 30px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                        <span>💾</span> ${t.saveHistory}
+                        ${t.saveHistory}
                     </button>
                 ` : ''}
                 

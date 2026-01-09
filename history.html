@@ -316,10 +316,11 @@
         }
 
         .history-content.expanded {
-            max-height: 2000px;
-            /* Arbitrary large number for expansion */
+            max-height: none;
+            /* Allow full content display */
             padding-bottom: 1.5rem;
             border-top: 1px solid #f0f0f0;
+            transition: all 0.3s ease-in-out;
         }
 
         .detail-grid {
@@ -354,6 +355,9 @@
             line-height: 1.6;
             color: #333;
             white-space: pre-line;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
         }
 
         .expand-btn {
@@ -521,10 +525,8 @@
         </div>
     </div>
 
-    <!-- SCRIPTS -->
     <script src="js/config.js"></script>
     <script>
-        // Use same key as scanner.js
         const STORAGE_KEY_HISTORY = 'nutriscan_scan_history';
         const STORAGE_KEY_CURRENT_USER = 'nutriscan_current_user';
         const STORAGE_KEY_USER_DATA = 'nutriscan_user_data_';
@@ -546,9 +548,7 @@
         }
 
         function checkAuth() {
-            // If auth flow is disabled globally, skip auth check
             if (typeof ENABLE_AUTH_FLOW !== 'undefined' && !ENABLE_AUTH_FLOW) {
-                // Hide profile
                 const profileEl = document.getElementById('userProfile');
                 if (profileEl) profileEl.style.display = 'none';
                 return;
