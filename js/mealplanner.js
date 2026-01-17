@@ -2049,10 +2049,10 @@ function showLoadingState() {
     const currentLang = localStorage.getItem('nutriscan_language') || 'id';
     const t = currentLang === 'en' ? {
         title: 'Generating Your Meal Plan...',
-        message: 'AI is creating a personalized meal plan for you based on your preferences and health conditions. This process takes about 30-60 seconds.'
+        message: 'AI is creating a personalized meal plan for you based on your preferences and health conditions. This process takes about 30 seconds.'
     } : {
         title: 'Membuat Meal Plan Anda...',
-        message: 'AI sedang menyusun meal plan personal untuk Anda berdasarkan preferensi dan kondisi kesehatan Anda. Proses ini membutuhkan waktu sekitar 30-60 detik.'
+        message: 'AI sedang menyusun meal plan personal untuk Anda berdasarkan preferensi dan kondisi kesehatan Anda. Proses ini membutuhkan waktu sekitar 30 detik.'
     };
 
     overlay.innerHTML = `
