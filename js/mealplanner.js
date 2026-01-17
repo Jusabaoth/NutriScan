@@ -2054,7 +2054,7 @@ function showLoadingState() {
         title: 'Membuat Meal Plan Anda...',
         message: 'AI sedang menyusun meal plan personal untuk Anda berdasarkan preferensi dan kondisi kesehatan Anda. Proses ini membutuhkan waktu sekitar 30 detik.'
     };
-
+    dss
     overlay.innerHTML = `
         <div style="background: white; padding: 3rem; border-radius: 20px; text-align: center; max-width: 500px;">
             <div style="font-size: 4rem; margin-bottom: 1rem;">🤖</div>
