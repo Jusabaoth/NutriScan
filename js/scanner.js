@@ -504,11 +504,13 @@ REGULASI BPOM (per hari untuk diet 2000 kkal):
 - Lemak Total: max 67g | Lemak Jenuh: max 20g | Lemak Trans: max 2g
 - Kolesterol: max 300mg | Sodium: max 2000mg
 - Karbohidrat: max 300g | Gula: max 50g | Serat: min 25g | Protein: 50g
+- pilihan yang tertera diatas mungkin tidak selengkap data asli BPOM, sehingga kamu bisa sesuaikan juga dengan data dari situs resmi BPOM 
 
 REGULASI WHO (per hari untuk diet 2000 kkal):
 - Lemak Total: max 66g (<30% energi) | Lemak Jenuh: max 22g (<10% energi)
 - Lemak Trans: max 2.2g (<1% energi) | Sodium: max 2000mg
 - Gula Bebas: max 50g (<10% energi, ideal <5% = 25g) | Serat: min 25g
+- pilihan yang tertera diatas mungkin tidak selengkap data asli WHO, sehingga kamu bisa sesuaikan juga dengan data dari situs resmi WHO 
 
 BATASAN KHUSUS BERDASARKAN PENYAKIT:
 - Diabetes: gula <25g/hari, serat >30g/hari
@@ -572,6 +574,7 @@ CRITICAL INSTRUCTIONS:
 5. Gunakan bahasa yang mudah dipahami namun tetap ilmiah dan profesional
 6. Pastikan semua kurung kurawal dan kurung siku JSON ditutup dengan benar
 7. ${languageInstruction}
+8. Meskipun produk makanan memiliki resiko rendah, sedang, maupun tinggi tetap harus diberikan rekomendasi atau violations(jika diperlukan)
 
 Berikan analisis yang DETAIL, LENGKAP, dan PERSONAL sesuai kondisi kesehatan pengguna!`;
 
