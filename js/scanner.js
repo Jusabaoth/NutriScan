@@ -561,22 +561,18 @@ Berikan output dalam format JSON berikut:
 }
 
 CRITICAL INSTRUCTIONS:
-1. WAJIB isi field "analysisText" dengan analisis yang LENGKAP, DETAIL, dan KOMPREHENSIF (minimal 300-500 kata)
-2. Dalam "analysisText", jelaskan secara rinci:
-   - Ringkasan komposisi nutrisi produk ini
-   - Analisis DETAIL setiap nutrisi yang melebihi atau kurang dari standar BPOM/WHO
-   - Dampak spesifik terhadap kondisi kesehatan pengguna (jika ada)
-   - Perbandingan dengan kebutuhan harian pengguna
-   - Rekomendasi konsumsi yang aman dan spesifik
-   - Tips praktis untuk mengonsumsi produk ini dengan lebih sehat
-3. JANGAN PERNAH mengosongkan atau meringkas "analysisText" dan PASTIKAN berikan poin-poin/sub-poin/semacamnya penting agar teksnya menarik dibaca
-4. Berikan analisis yang PERSONAL berdasarkan kondisi kesehatan pengguna
-5. Gunakan bahasa yang mudah dipahami namun tetap ilmiah dan profesional
-6. Pastikan semua kurung kurawal dan kurung siku JSON ditutup dengan benar
-7. ${languageInstruction}
-8. Meskipun produk makanan memiliki resiko rendah, sedang, maupun tinggi tetap harus diberikan rekomendasi atau violations(jika diperlukan)
+1. WAJIB isi field "analysisText" dengan gaya bahasa yang MENARIK, ENERGIK, dan MUDAH DIBACA (Gunakan format markdown seperti cetak tebal, bullet points, dan emoji yang relevan). Hindari blok paragraf panjang yang membosankan dan terlalu akademis/monoton.
+2. Strukturkan "analysisText" agar asyik dibaca menggunakan bagian-bagian berikut:
+   - **Nutri-Check Ringkas** 📊 (Gunakan ringkasan singkat dengan emoji jempol 👍, peringatan ⚠️, atau silang ❌ untuk meringkas kelayakan produk secara cepat)
+   - 🌟 **Sisi Baik Produk ini** (Sebutkan kelebihan nutrisi atau bahan yang aman/bermanfaat)
+   - ⚠️ **Hal yang Perlu Diwaspadai!** (Analisis kandungan gizi yang berisiko, hubungkan secara personal dengan kondisi kesehatan pengguna seperti riwayat penyakit atau pantangannya)
+   - 💡 **Saran Penyajian Pintar** (Tips praktis yang menyenangkan untuk mengonsumsinya agar tetap sehat, misalnya kombinasi porsi atau waktu konsumsi)
+3. Tetap pertahankan analisis yang KOMPREHENSIF dan PERSONAL (sekitar 300-500 kata total), tetapi bawakan dengan nada bicara seperti seorang Coach Kesehatan Pribadi yang ramah dan suportif, bukan laporan laboratorium yang dingin.
+4. Pastikan seluruh struktur JSON ditutup dengan benar.
+5. ${languageInstruction}
+6. Meskipun produk makanan memiliki resiko rendah, sedang, maupun tinggi tetap harus diberikan rekomendasi atau violations (jika diperlukan).
 
-Berikan analisis yang DETAIL, LENGKAP, dan PERSONAL sesuai kondisi kesehatan pengguna!`;
+Berikan analisis yang DETAIL, LENGKAP, MENARIK, dan PERSONAL sesuai kondisi kesehatan pengguna!`;
 
     const parts = [
         { text: prompt },
