@@ -22,7 +22,6 @@
     "node-fetch": "^2.7.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2",
-    "supabase": "^2.67.1"
+    "nodemon": "^3.0.2"
   }
 }

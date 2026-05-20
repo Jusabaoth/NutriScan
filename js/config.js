@@ -1,9 +1,7 @@
 // ENVIRONMENT DETECTION
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-// CONFIGURATION
-const SUPABASE_PROJECT_URL = window.SUPABASE_PROJECT_URL || 'https://zclpywientjorspzzybk.supabase.co';
-const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjbHB5d2llbnRqb3JzcHp6eWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNjYwNTYsImV4cCI6MjA4MDk0MjA1Nn0.0AgBqMwm2lZjjiiLdyPqGWFmZrh5XVIx3pJ_hIuH8dE';
+// CONFIGURATION (Supabase disabled, using Vercel serverless backend)
 
 // AUTH FLOW CONFIGURATION (shared across all pages)
 // Read from localStorage first (set by Index.html), fallback to window or default true
@@ -13,18 +11,9 @@ const ENABLE_AUTH_FLOW = storedAuthFlow !== null
     : (window.ENABLE_AUTH_FLOW !== undefined ? window.ENABLE_AUTH_FLOW : true);
 
 const API_ENDPOINTS = {
-    // If localhost, use local Express server (server.js). If production, use Supabase Edge Functions.
-    ANALYZE: isLocalhost
-        ? 'http://localhost:3000/api/analyze'
-        : `${SUPABASE_PROJECT_URL}/functions/v1/analyze`,
-
-    ANALYZE_MEAL_PLAN: isLocalhost
-        ? 'http://localhost:3000/api/analyze-meal-plan'
-        : `${SUPABASE_PROJECT_URL}/functions/v1/analyze-meal-plan`,
-
-    HEALTH: isLocalhost
-        ? 'http://localhost:3000/api/health'
-        : `${SUPABASE_PROJECT_URL}/functions/v1/health`
+    ANALYZE: '/api/analyze',
+    ANALYZE_MEAL_PLAN: '/api/analyze-meal-plan',
+    HEALTH: '/api/health'
 };
 
 /**
@@ -49,10 +38,7 @@ async function callGeminiAPI(requestBody, type = 'default') {
         'Content-Type': 'application/json',
     };
 
-    // Only add Supabase Auth header if NOT localhost
-    if (!isLocalhost) {
-        headers['Authorization'] = `Bearer ${SUPABASE_ANON_KEY}`;
-    }
+    // No Supabase Auth headers needed for Vercel backend
 
     try {
         const response = await fetch(endpoint, {
@@ -92,7 +78,6 @@ async function checkBackendHealth() {
 // ENVIRONMENT DETECTION
 
 const CONFIG = {
-    SUPABASE_PROJECT_URL,
     API_ENDPOINTS,
     IS_DEVELOPMENT: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
     IS_PRODUCTION: !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1',

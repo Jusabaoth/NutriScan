@@ -15,18 +15,25 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Load all available API keys
-const API_KEYS = [
-    process.env.GEMINI_API_KEY,
-    process.env.GEMINI_API_KEY2,
-    process.env.GEMINI_API_KEY3,
-    process.env.GEMINI_API_KEY4,
-    process.env.GEMINI_API_KEY5,
-    process.env.GEMINI_API_KEY6,
-    process.env.GEMINI_API_KEY7,
-    process.env.GEMINI_API_KEY8,
-    process.env.GEMINI_API_KEY9,
-    process.env.GEMINI_API_KEY10,
-].filter(key => key); // Remove undefined keys
+let API_KEYS = [];
+if (process.env.GEMINI_API_KEYS) {
+    // Split by comma and clean whitespace
+    API_KEYS = process.env.GEMINI_API_KEYS.split(',').map(key => key.trim()).filter(key => key);
+} else {
+    // Fallback to individual keys
+    API_KEYS = [
+        process.env.GEMINI_API_KEY,
+        process.env.GEMINI_API_KEY2,
+        process.env.GEMINI_API_KEY3,
+        process.env.GEMINI_API_KEY4,
+        process.env.GEMINI_API_KEY5,
+        process.env.GEMINI_API_KEY6,
+        process.env.GEMINI_API_KEY7,
+        process.env.GEMINI_API_KEY8,
+        process.env.GEMINI_API_KEY9,
+        process.env.GEMINI_API_KEY10,
+    ].filter(key => key); // Remove undefined keys
+}
 
 if (API_KEYS.length === 0) {
     console.error('❌ ERROR: No GEMINI_API_KEY found in .env file');
@@ -122,8 +129,8 @@ app.post('/api/analyze', async (req, res) => {
             });
         }
 
-        const geminiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
-        console.log('🔵 Server: Calling Gemini 2.0 Flash Experimental API...');
+        const geminiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent';
+        console.log('🔵 Server: Calling Gemini 3.5 Flash API...');
 
         const requestBody = {
             contents,
@@ -170,14 +177,14 @@ app.post('/api/analyze-meal-plan', async (req, res) => {
             });
         }
 
-        const geminiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
-        console.log('🔵 Meal Plan: Calling Gemini 2.0 Flash API...');
+        const geminiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent';
+        console.log('🔵 Meal Plan: Calling Gemini 3.5 Flash API...');
 
         const requestBody = {
             contents,
             generationConfig: generationConfig || {
                 temperature: 0.7,
-                maxOutputTokens: 32768  // Maximum tokens for Gemini 2.0 Flash
+                maxOutputTokens: 65536  // Maximum tokens for Gemini 3.5 Flash
             }
         };
 
@@ -225,8 +232,12 @@ app.use((req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-    console.log(`✅ NutriScan Server running on http://localhost:${PORT}`);
-    console.log(`📁 Static files served from: ${path.join(__dirname)}`);
-    console.log(`🔐 API Key dimuat dari .env file (tersembunyi)`);
-});
+if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`✅ NutriScan Server running on http://localhost:${PORT}`);
+        console.log(`📁 Static files served from: ${path.join(__dirname)}`);
+        console.log(`🔐 API Key dimuat dari .env file (tersembunyi)`);
+    });
+}
+
+module.exports = app;
